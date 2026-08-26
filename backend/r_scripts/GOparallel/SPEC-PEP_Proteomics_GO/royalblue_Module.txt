@@ -1,0 +1,4 @@
+GeneSymbol	SystemCode
+C4B	Sy
+C7	Sy
+LTBP2	Sy

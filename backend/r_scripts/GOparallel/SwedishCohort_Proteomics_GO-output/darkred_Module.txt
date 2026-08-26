@@ -1,0 +1,13 @@
+GeneSymbol	SystemCode
+SERPINA1	Sy
+SERPINA3	Sy
+C3	Sy
+ENTPD4	Sy
+FAT2	Sy
+FHL1	Sy
+GPC1	Sy
+IGFBP6	Sy
+MYDGF	Sy
+NRCAM	Sy
+CHGB	Sy
+	Sy

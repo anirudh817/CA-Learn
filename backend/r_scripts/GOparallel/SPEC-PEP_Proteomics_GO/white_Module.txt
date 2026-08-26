@@ -1,0 +1,7 @@
+GeneSymbol	SystemCode
+KRT14	Sy
+KRT1	Sy
+KRT3	Sy
+KRT9	Sy
+KRT2	Sy
+KRT77	Sy

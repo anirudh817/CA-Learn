@@ -1,0 +1,11 @@
+GeneSymbol	SystemCode
+TTR	Sy
+PSAP	Sy
+SOD3	Sy
+SPARC	Sy
+F5	Sy
+NID1	Sy
+PLOD1	Sy
+ENPP2	Sy
+IGFBP7	Sy
+C2orf40	Sy

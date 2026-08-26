@@ -1,0 +1,70 @@
+{
+  "contract": "Pi sidecar standalone profile and skill fixture matrix",
+  "purpose": "Small deterministic fixtures for automated regression and repeatable manual testing before real Tier-1 and Tier-2 content is introduced.",
+  "case_count": 7,
+  "cases": [
+    {
+      "id": "PI-PROFILE-001",
+      "kind": "profile",
+      "name": "Grounded Proteomics Reviewer",
+      "asset": "tests/fixtures/pi_runtime/profiles/grounded-proteomics-reviewer.md",
+      "inspiration": "Tier-1 Proteomics Scientist",
+      "automation": "Verify the profile is discoverable, tool-independent, and requires artifact citations plus explicit missing-evidence language.",
+      "manual_prompt": "Review this run's differential-abundance result. Cite only supplied artifacts and state what cannot be concluded."
+    },
+    {
+      "id": "PI-PROFILE-002",
+      "kind": "profile",
+      "name": "Instrument Metadata Skeptic",
+      "asset": "tests/fixtures/pi_runtime/profiles/instrument-metadata-skeptic.md",
+      "inspiration": "Tier-1 Mass Spectrometrist",
+      "automation": "Verify the profile refuses to invent calibration, mass-accuracy, resolution, or system-suitability facts.",
+      "manual_prompt": "Assess whether the run supports confident identification and quantitation from the available metadata."
+    },
+    {
+      "id": "PI-PROFILE-003",
+      "kind": "profile",
+      "name": "Statistical Evidence Reviewer",
+      "asset": "tests/fixtures/pi_runtime/profiles/statistical-evidence-reviewer.md",
+      "inspiration": "Tier-1 Biostatistician and Bioinformatician",
+      "automation": "Verify the profile distinguishes raw p-values from adjusted p-values and asks for effect sizes and design context.",
+      "manual_prompt": "Audit the statistical claims in this run and list the minimum evidence needed to trust them."
+    },
+    {
+      "id": "PI-SKILL-001",
+      "kind": "skill",
+      "name": "Table Summary",
+      "asset": "tests/fixtures/pi_runtime/skills/table-summary/SKILL.md",
+      "script": "tests/fixtures/pi_runtime/skills/table-summary/scripts/summarize_table.py",
+      "automation": "Execute the Python script against a tiny CSV and assert deterministic schema, row count, and numeric summaries.",
+      "manual_prompt": "Use the table-summary skill on the selected run artifact and save summary.json as an artifact."
+    },
+    {
+      "id": "PI-SKILL-002",
+      "kind": "skill",
+      "name": "SVG Scatter Preview",
+      "asset": "tests/fixtures/pi_runtime/skills/svg-scatter-preview/SKILL.md",
+      "script": "tests/fixtures/pi_runtime/skills/svg-scatter-preview/scripts/render_scatter.py",
+      "automation": "Execute the Python script and assert a deterministic SVG containing one point per valid row.",
+      "manual_prompt": "Use the scatter-preview skill to plot log2FC against -log10 adjusted p-value and register the SVG artifact."
+    },
+    {
+      "id": "PI-SKILL-003",
+      "kind": "skill",
+      "name": "Run Manifest",
+      "asset": "tests/fixtures/pi_runtime/skills/run-manifest/SKILL.md",
+      "script": "tests/fixtures/pi_runtime/skills/run-manifest/scripts/build_manifest.py",
+      "automation": "Execute the Python script and assert stable relative paths, sizes, and SHA-256 hashes without including AI output folders.",
+      "manual_prompt": "Create a manifest of the selected run inputs and save it as a generated artifact."
+    },
+    {
+      "id": "PI-SKILL-004",
+      "kind": "skill",
+      "name": "Runtime Probe",
+      "asset": "tests/fixtures/pi_runtime/skills/runtime-probe/SKILL.md",
+      "script": "tests/fixtures/pi_runtime/skills/runtime-probe/scripts/runtime_probe.py",
+      "automation": "Exercise success and non-zero-exit modes now; later use sleep and environment modes to test timeout, cancellation, and secret stripping in the Pi executor.",
+      "manual_prompt": "Run the runtime probe in success mode, then verify its tool trace and registered JSON artifact."
+    }
+  ]
+}

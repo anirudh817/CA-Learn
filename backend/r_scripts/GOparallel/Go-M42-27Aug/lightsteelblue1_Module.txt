@@ -1,0 +1,5 @@
+GeneSymbol	SystemCode
+ALCAM	Sy
+CST3	Sy
+HBA1	Sy
+HBB	Sy

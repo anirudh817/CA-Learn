@@ -1,0 +1,5 @@
+GeneSymbol	SystemCode
+ALB	Sy
+APOA4	Sy
+CFH	Sy
+TF	Sy

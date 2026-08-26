@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SignalFold — Deep Research: Answer Synthesis Spec</title>
+<style>
+:root{
+  --bg:#ffffff;--fg:#1a1d23;--muted:#5b6470;--accent:#2563eb;--accent-soft:#eff6ff;
+  --border:#e5e7eb;--code-bg:#f4f5f7;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;
+  --radius:8px;--maxw:1200px;--content-maxw:880px;
+  --shadow:0 1px 2px rgba(0,0,0,.04),0 4px 12px rgba(0,0,0,.05);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1115;--fg:#e6e8eb;--muted:#9aa3ad;--accent:#60a5fa;--accent-soft:rgba(30,58,138,.25);
+  --border:#2a2f37;--code-bg:#161a20;--ok:#4ade80;--warn:#fbbf24;--danger:#f87171;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.5);
+}}
+:root[data-theme="dark"]{
+  --bg:#0f1115;--fg:#e6e8eb;--muted:#9aa3ad;--accent:#60a5fa;--accent-soft:rgba(30,58,138,.25);
+  --border:#2a2f37;--code-bg:#161a20;--ok:#4ade80;--warn:#fbbf24;--danger:#f87171;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.5);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:1rem;font-size:17px}
+body{margin:0;background:var(--bg);color:var(--fg);
+  font:1rem/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif}
+.so-layout{display:grid;grid-template-columns:minmax(0,1fr);max-width:var(--maxw);margin:0 auto;padding:2rem 1.25rem 6rem}
+@media(min-width:1100px){.so-layout{grid-template-columns:minmax(0,1fr) 240px;gap:2.5rem;padding:2.5rem 1.25rem 6rem}}
+.so-main{min-width:0}
+.so-main>*{max-width:var(--content-maxw)}
+.so-main table,.so-main .wide,.so-main .mock{max-width:100%}
+.so-toc{display:none}
+@media(min-width:1100px){.so-toc{display:block;position:sticky;top:2rem;align-self:start;max-height:calc(100vh - 4rem);overflow-y:auto;padding:1rem 0 1rem 1rem;border-left:1px solid var(--border);font-size:.85rem}
+.so-toc h4{margin:0 0 .5rem;font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.so-toc ul{list-style:none;padding:0;margin:0}
+.so-toc li{margin:.12rem 0}
+.so-toc a{color:var(--muted);display:block;padding:.12rem .5rem;border-left:2px solid transparent;text-decoration:none}
+.so-toc a:hover{color:var(--fg);background:var(--code-bg)}}
+.so-toolbar{position:fixed;top:.75rem;right:.75rem;z-index:50}
+.so-toolbar button{background:var(--bg);color:var(--fg);border:1px solid var(--border);border-radius:6px;padding:.35rem .7rem;font-size:.82rem;cursor:pointer;box-shadow:var(--shadow)}
+.so-toolbar button:hover{border-color:var(--accent)}
+h1,h2,h3,h4{line-height:1.25;margin:2rem 0 .8rem;scroll-margin-top:1rem}
+h1{font-size:2rem;padding-bottom:.4rem;border-bottom:1px solid var(--border);margin-top:.5rem}
+h2{font-size:1.4rem;padding-bottom:.3rem;border-bottom:1px solid var(--border);margin-top:2.8rem}
+h3{font-size:1.1rem}
+h4{font-size:.98rem;color:var(--muted)}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+code{background:var(--code-bg);padding:.1rem .35rem;border-radius:4px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.88em}
+pre{background:var(--code-bg);padding:1rem;border-radius:var(--radius);overflow-x:auto;border:1px solid var(--border);margin:1rem 0}
+pre code{background:transparent;padding:0;font-size:.84em;line-height:1.5}
+table{border-collapse:collapse;margin:1rem 0;width:100%;font-size:.9em}
+th,td{border:1px solid var(--border);padding:.5rem .7rem;text-align:left;vertical-align:top}
+th{background:var(--code-bg);font-weight:600}
+tbody tr:nth-child(even){background:rgba(0,0,0,.02)}
+:root[data-theme="dark"] tbody tr:nth-child(even){background:rgba(255,255,255,.02)}
+.so-hero{margin:0 0 1.5rem;padding:1.5rem 1.75rem;background:linear-gradient(135deg,var(--accent-soft),transparent);border:1px solid var(--border);border-radius:var(--radius)}
+.so-hero h1{margin:0 0 .5rem;border:none;padding:0;font-size:1.9rem}
+.so-hero .tag{margin:0 0 1rem;color:var(--muted);font-size:1.02rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem}
+.pill{display:inline-block;padding:.12rem .55rem;font-size:.72rem;font-weight:500;color:var(--muted);background:var(--code-bg);border:1px solid var(--border);border-radius:999px;vertical-align:middle}
+.pill.ok{color:var(--ok);border-color:var(--ok);background:rgba(34,197,94,.08)}
+.pill.warn{color:var(--warn);border-color:var(--warn);background:rgba(217,119,6,.08)}
+.pill.danger{color:var(--danger);border-color:var(--danger);background:rgba(220,38,38,.08)}
+.pill.accent{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.75rem;margin:1rem 0 1.5rem}
+.kpi{padding:.85rem 1rem;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius)}
+.kpi .v{font-size:1.15rem;font-weight:600;line-height:1.15}
+.kpi .l{font-size:.74rem;color:var(--muted);margin-top:.25rem;text-transform:uppercase;letter-spacing:.04em}
+.callout{border:1px solid var(--border);border-left:3px solid var(--accent);background:var(--accent-soft);padding:.8rem 1rem;border-radius:8px;margin:1.1rem 0}
+.callout.key{border-left-color:var(--ok)}
+.callout.warn{border-left-color:var(--warn);background:rgba(217,119,6,.08)}
+.callout.danger{border-left-color:var(--danger);background:rgba(220,38,38,.08)}
+.callout p{margin:.3rem 0}
+.tier{display:inline-block;font-size:.68rem;font-weight:700;padding:.08rem .4rem;border-radius:4px;border:1px solid var(--border);background:var(--code-bg);white-space:nowrap}
+.muted{color:var(--muted)}
+.lead{font-size:1.05rem}
+.legend{font-size:.82rem;color:var(--muted);border:1px dashed var(--border);border-radius:8px;padding:.6rem .9rem;margin:1rem 0}
+hr{border:none;border-top:1px solid var(--border);margin:2.5rem 0}
+.part{font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-weight:700;margin-top:2rem}
+.del{color:var(--danger);text-decoration:line-through}
+.add{color:var(--ok)}
+/* answer-panel mock */
+.mock{border:1px solid var(--border);border-radius:12px;padding:1.1rem 1.2rem;margin:1.2rem 0;background:var(--bg);box-shadow:var(--shadow)}
+.mock .eyebrow{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 .35rem}
+.mock .verdict{display:inline-block;font-size:.74rem;font-weight:700;padding:.16rem .55rem;border-radius:999px;border:1px solid var(--warn);color:var(--warn);background:rgba(217,119,6,.1);vertical-align:middle}
+.mock .vmodel{display:inline-block;font-size:.66rem;font-weight:600;padding:.12rem .45rem;border-radius:999px;border:1px solid var(--border);color:var(--muted);margin-left:.4rem}
+.mock h3{margin:.5rem 0 .3rem;font-size:1.18rem}
+.mock .imp{margin:.3rem 0 .7rem}
+.mock .metrics{display:flex;flex-wrap:wrap;gap:.5rem;margin:.5rem 0}
+.mock .metric{border:1px solid var(--border);border-radius:8px;padding:.4rem .65rem;font-size:.8rem;background:var(--code-bg)}
+.mock .metric b{font-size:1.05rem;display:block}
+.mock .cta{margin-top:.7rem;display:flex;gap:.5rem;flex-wrap:wrap}
+.mock .btn{font-size:.8rem;padding:.4rem .8rem;border-radius:7px;border:1px solid var(--accent);background:var(--accent);color:#fff}
+.mock .btn.sub{background:transparent;color:var(--accent)}
+.mock .evidence{margin-top:.6rem;font-size:.78rem;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="so-toolbar"><button id="themeToggle">◐ Theme</button></div>
+<div class="so-layout">
+<main class="so-main">
+
+<div class="so-hero">
+  <h1>Deep Research — Answer Synthesis</h1>
+  <p class="tag">Turn a completed research job from a pile of 12 equal-weight artifacts into a coherent, trustworthy <strong>answer</strong>: bottom-line-up-front, evidence woven into a readable narrative, honest about limits — the primary deliverable, with raw artifacts as supporting evidence beneath.</p>
+  <div class="chips">
+    <span class="pill warn">Status: spec — for review</span>
+    <span class="pill">Captured 2026-06-23</span>
+    <span class="pill accent">Deterministic spine + gated LLM narrator</span>
+    <span class="pill">Scope: finding-stress-test only</span>
+  </div>
+</div>
+
+<div class="legend">
+  <strong>Reading conventions.</strong> File references like <code>service.ts:328</code> point at the live <code>ai-sidecar/src</code> tree as of this capture. Decisions marked <span class="pill ok">locked</span> were confirmed in review; <span class="pill warn">open</span> items still need a call. This spec supersedes nothing in the two sibling docs (<a href="ai-insights-deep-research-brainstorm.html">brainstorm</a>, <a href="ai-insights-deep-research-implementation-plan.html">implementation plan</a>) — it implements deliverables&nbsp;#1 and #2 from §7 of the latter at the altitude they promised.</p>
+</div>
+
+<p class="lead">A Deep Research job today computes real evidence and then fails to say what it means. This spec adds the missing final phase: a per-workflow <strong>synthesis skill</strong> that reads the actual computed outputs, decides the answer deterministically, and (when permitted) narrates it with an LLM under strict anti-fabrication guards.</p>
+
+<div class="kpis">
+  <div class="kpi"><div class="v">12 → 1+11</div><div class="l">flat files → 1 answer + evidence</div></div>
+  <div class="kpi"><div class="v">decide() offline</div><div class="l">verdict is reproducible</div></div>
+  <div class="kpi"><div class="v">narrate() gated</div><div class="l">LLM, cost-capped, guarded</div></div>
+  <div class="kpi"><div class="v">1 of 6</div><div class="l">workflows wired now</div></div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="problem">1 · The problem</h2>
+<p class="part">Why this exists</p>
+<p>A completed job runs three deterministic skills, then <a href="#"><code>buildPackage()</code></a> (<code>service.ts:338</code>) emits eight templated files plus the computed artifacts — about twelve deliverables. Two of those slots are supposed to <em>answer the question</em>; both are stubs:</p>
+<ul>
+<li><code>claim.text</code> is a fixed string — "<em>{workflow} completed against the frozen run scope</em>" (<code>service.ts:346</code>). It never states a finding.</li>
+<li><code>decision-summary.txt</code> interpolates <em>counts</em> ("N artifacts and M computations", <code>service.ts:357</code>), not the result.</li>
+<li><code>reportHtml()</code> (<code>service.ts:372</code>) reports <code>scope.artifacts.length</code> and <code>computations.length</code> — it never opens <code>threshold-sensitivity.csv</code>.</li>
+<li>The verdict is <code>computations.length ? "differentiated" : "standard-equivalent"</code> (<code>service.ts:350</code>) — a "did anything run" flag, not a scientific answer.</li>
+<li>The UI lists all twelve files as equal-weight download links (<code>app.js:683</code>). No answer is surfaced.</li>
+</ul>
+<div class="callout warn"><p>The literal answer is <strong>already on disk, unread</strong>: <code>runStability</code> writes <code>features_passing</code> per threshold (<code>runner.ts:141</code>); <code>runEda</code> writes row/column/missingness (<code>runner.ts:129</code>); <code>runPathway</code> writes ranked terms (<code>runner.ts:153</code>). Nothing reads them back and says what they mean.</p></div>
+
+<!-- ============================================================ -->
+<h2 id="goal">2 · Goal &amp; success criteria</h2>
+<p class="part">Definition of done</p>
+<p>A completed run must produce a coherent synthesis that (a) answers the original objective <strong>bottom-line-up-front</strong>, (b) weaves pipeline evidence + new computation into a readable narrative, (c) is honest about limitations, and (d) is the <strong>primary deliverable</strong> — a prominent inline answer panel + a genuinely readable HTML report — with raw artifacts demoted to supporting evidence beneath.</p>
+<table>
+<thead><tr><th>#</th><th>Acceptance criterion</th><th>Verified by</th></tr></thead>
+<tbody>
+<tr><td>G1</td><td>The completed view shows a top-of-page answer that addresses the objective in plain language.</td><td>live app @ :4317</td></tr>
+<tr><td>G2</td><td>The HTML report reads as a coherent, cited narrative — not a count dump.</td><td>open report; test asserts headline + real numbers + cited path</td></tr>
+<tr><td>G3</td><td>Every number/citation in the answer traces to a computed output or scope artifact; nothing is fabricated.</td><td>guard + test (no path outside scope; numbers ∈ metrics)</td></tr>
+<tr><td>G4</td><td>The deterministic verdict is reproducible: same inputs → identical answer.</td><td>test asserts fixture verdict; <code>rerun</code> reproduces spine</td></tr>
+<tr><td>G5</td><td>The job completes offline with no key/cap; the LLM only upgrades readability.</td><td>default test path (no synthesizer) stays green &amp; offline</td></tr>
+<tr><td>G6</td><td><code>npm test</code> + <code>npm run typecheck</code> green; OCC shows the synthesis step with provenance.</td><td>CI + OCC @ :4317/operations</td></tr>
+</tbody>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="principle">3 · Core principle — deterministic spine, optional narrator</h2>
+<p class="part">The one idea</p>
+<p>Synthesis splits into two layers with a hard boundary:</p>
+<ol>
+<li><strong>Interpreter / <code>decide()</code> — pure code, offline.</strong> Reads the computed outputs, derives the verdict and the numbers, assembles a structured <code>AnswerModel</code>. This is the source of truth and what <code>rerun</code> reproduces bit-for-bit. <em>This alone fixes the problem</em> even with zero LLM.</li>
+<li><strong>Narrator / <code>narrate()</code> — optional LLM, gated.</strong> Takes the <code>AnswerModel</code> — numbers and citations already decided — and writes readable prose. It never picks the verdict and never sources a number. Labeled model-generated, provenance-stamped, and validated against the spine before it ships.</li>
+</ol>
+<div class="callout key"><p><strong>The trust property:</strong> the LLM cannot fabricate because it is not the one deciding anything factual. It is a phrasing engine over a frozen fact set. That is what makes a non-deterministic component safe inside a "deterministic, reproducible" product.</p></div>
+
+<h3 id="stance">Determinism &amp; provenance stance</h3>
+<table>
+<thead><tr><th>Layer</th><th>Deterministic?</th><th>Reproducible?</th><th>Provenance</th></tr></thead>
+<tbody>
+<tr><td>Computations, hashes, scope manifest</td><td>✅</td><td>✅ bit-for-bit</td><td>already recorded (ComputationRecord)</td></tr>
+<tr><td>Interpreter verdict + metrics (<code>decide()</code>)</td><td>✅</td><td>✅ bit-for-bit</td><td>derived from hashed inputs; in evidence record</td></tr>
+<tr><td>LLM narrative prose (<code>narrate()</code>)</td><td>❌</td><td>❌ — auditable, not reproducible</td><td>model id + prompt SHA + output SHA + guard result in computation-manifest</td></tr>
+</tbody>
+</table>
+<p>The honest one-liner: <strong>numbers reproducible; phrasing attributable.</strong> A job always completes offline. If there is no key, the cost cap is 0, or the LLM/guard fails, it ships deterministic prose. <code>rerun</code> reproduces the spine exactly and re-narrates (prose may differ; the answer cannot).</p>
+
+<!-- ============================================================ -->
+<h2 id="decisions">4 · Locked decisions</h2>
+<p class="part">Confirmed in review</p>
+<table>
+<thead><tr><th>Decision</th><th>Choice</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>Layers</td><td>Deterministic interpreter <strong>and</strong> optional LLM narrator, shipped together; narrator gated with guaranteed deterministic fallback.</td><td><span class="pill ok">locked</span></td></tr>
+<tr><td>Structure</td><td>One <strong>synthesis skill per workflow</strong> owning <code>decide()</code> (the decisions) and <code>prompt()</code> (the narrator prompt). A shared engine owns the LLM call, anti-fabrication guard, scrubbing, and provenance.</td><td><span class="pill ok">locked</span></td></tr>
+<tr><td>Network model</td><td>Don't remove the offline gate — <strong>widen the policy</strong>. <code>network.policy: "none" | "llm" | "curated"</code>, gated per-policy. Compute stays <code>none</code>; synthesis is <code>llm</code>; external corroboration (future) is <code>curated</code>.</td><td><span class="pill ok">locked</span></td></tr>
+<tr><td>Execution</td><td>Synthesis is a <strong>cataloged native skill</strong> that runs as the <strong>final step</strong> of the existing loop — visible in the stepper + OCC, cost flows through <code>spend_usd</code>. The runner becomes policy-aware and gains a gated narrator dependency (injected like <code>recordArtifact</code>).</td><td><span class="pill ok">locked</span></td></tr>
+<tr><td>Narrator model</td><td>Prefer Anthropic Claude when an Anthropic key is available (policy is Claude-tuned); else fall back to the job's selected model.</td><td><span class="pill ok">locked</span></td></tr>
+<tr><td>Scope</td><td>Only <code>finding-stress-test</code> gets a real <code>decide()</code>/<code>prompt()</code> now. The registry is keyed by <code>workflowId</code> to hold the rest as they come online.</td><td><span class="pill ok">locked</span></td></tr>
+</tbody>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="network">5 · Network policy model</h2>
+<p class="part">How "offline" becomes a capability</p>
+<p>There are two networks, and only one was ever gated.</p>
+<table>
+<thead><tr><th>Network</th><th>Used by</th><th>Status today</th></tr></thead>
+<tbody>
+<tr><td><strong>A · LLM provider</strong> (Anthropic / OpenRouter)</td><td>chat path: <code>runtime.ts:343</code> (<code>setRuntimeApiKey</code>) → <code>runtime.ts:299</code> (<code>session.prompt()</code>)</td><td><strong>Already on.</strong> Nothing blocks it; research just never calls it.</td></tr>
+<tr><td><strong>B · external skill fetch</strong> (UniProt/Reactome/STRING/PubMed, web)</td><td>research computation skills; <code>scope.sources</code> (<code>research-scope.ts:30</code>)</td><td><strong>Gated</strong> (see below); default empty / offline.</td></tr>
+</tbody>
+</table>
+<p>The offline gate (Network B) lives in exactly four places:</p>
+<table>
+<thead><tr><th>Where</th><th>What it does</th><th>Change</th></tr></thead>
+<tbody>
+<tr><td><code>runner.ts:78</code></td><td>runtime gate: throws if <code>entrypoint.network.policy !== "none"</code></td><td>per-policy gate (allow <code>none</code> always; <code>llm</code> iff narrator configured; <code>curated</code> iff allowlist+safety chain)</td></tr>
+<tr><td><code>catalog.ts:52</code></td><td>load gate: diagnostic "v1 research skills must be offline" → not-ready</td><td>allow <code>llm</code> as ready; keep <code>curated</code> deferred</td></tr>
+<tr><td><code>catalog.ts:13</code></td><td>type: <code>policy: "none" | "curated"</code></td><td>add <code>"llm"</code></td></tr>
+<tr><td><code>signalfold.skill.json</code></td><td>declares <code>"network": {"policy": "none"}</code> per entrypoint</td><td>synthesis manifest declares <code>"llm"</code>, <code>deterministic:false</code></td></tr>
+</tbody>
+</table>
+<div class="callout key"><p>Compute skills <strong>stay <code>none</code></strong> on purpose — reproducible-to-the-cell computation is the moat (brainstorm Part I). Network becomes a <em>declared capability per skill</em>, gated by what's configured, not a global on/off. AI Insights as a product is online (chat needs a provider); only the evidence <em>spine</em> is offline.</p></div>
+
+<!-- ============================================================ -->
+<h2 id="answermodel">6 · The AnswerModel</h2>
+<p class="part">The one shape everything renders</p>
+<pre><code>// src/research/synthesis/types.ts
+export interface AnswerMetric {
+  label: string;                 // "features passing at adj-p ≤ 0.05"
+  value: string | number;        // 2
+  cite: { path: string; rowIds?: Array&lt;number | string&gt; };  // stage1/volcano_results.tsv
+}
+
+export type VerdictLabel =
+  | "stable" | "threshold-sensitive" | "sample-driven"
+  | "context-dependent" | "insufficient-evidence";       // §8 plain tags, no GRADE
+
+export interface AnswerModel {
+  schemaVersion: "1.0";
+  objective: string;
+  workflowId: string;
+  verdictLabel: VerdictLabel;                  // the scientific answer
+  marginalValue: "differentiated" | "standard-equivalent";  // existing gate, kept
+  headline: string;            // deterministic BLUF one-liner
+  summary: string;             // 2–4 sentence deterministic synopsis (spine's own words)
+  metrics: AnswerMetric[];     // every number with provenance
+  pipelineFacts: Array&lt;{ path: string; family: string; sha256: string;
+                         rowIds: Array&lt;number|string&gt;; configRefs: string[] }&gt;;
+  computationFacts: Array&lt;{ skillId: string; entrypoint: string;
+                          params: Record&lt;string,unknown&gt;; seed: number|null;
+                          outputs: string[]; deterministicRerun: string }&gt;;
+  decisionImplication: string;
+  limitations: string[];
+  chart?: { kind: "sweep"; xLabel: string; yLabel: string;
+            series: Array&lt;{ label: string; value: number }&gt; };  // data for the real figure
+  narrative?: {
+    text: string;
+    generatedBy: "model" | "deterministic";
+    model?: string; promptSha?: string; outputSha?: string;
+    costUsd?: number; guard?: "passed" | "rejected" | "skipped";
+  };
+}</code></pre>
+<p><code>headline</code>, <code>summary</code>, <code>metrics</code>, <code>chart</code>, and <code>verdictLabel</code> are produced <strong>only</strong> by <code>decide()</code> (deterministic). <code>narrative</code> is produced by <code>narrate()</code> and is the only model-touched field.</p>
+
+<!-- ============================================================ -->
+<h2 id="verdict">7 · Verdict derivation — finding-stress-test</h2>
+<p class="part">The decisions, made in code</p>
+<p><code>decide()</code> reads <code>threshold-sensitivity.csv</code> (from the <code>stage1-finding-stability</code> computation) into <code>(threshold → count)</code>, sorted ascending. With counts <code>c[0..n-1]</code>:</p>
+<table>
+<thead><tr><th>Condition</th><th>verdictLabel</th></tr></thead>
+<tbody>
+<tr><td>all counts == 0</td><td><code>insufficient-evidence</code></td></tr>
+<tr><td><code>c[0] === c[n-1]</code> and <code>c[0] &gt; 0</code> (count constant across the range)</td><td><code>stable</code></td></tr>
+<tr><td>count varies across thresholds</td><td><code>threshold-sensitive</code></td></tr>
+<tr><td colspan="2" class="muted"><code>sample-driven</code> reserved until leave-one-out influence is computed; <code>context-dependent</code> reserved for the external (curated) arm. Both are out of scope here but in the enum so the report vocabulary is stable.</td></tr>
+</tbody>
+</table>
+<p>It also computes a <strong>per-feature</strong> note: if a feature named in the objective (or the top feature) survives every threshold, say so even when the overall set is threshold-sensitive — that nuance <em>is</em> the useful answer.</p>
+<div class="callout"><p><strong>Worked example (the test fixture).</strong> APOE adj-p 0.002, CLU 0.04, APP 0.5 at thresholds [0.01, 0.05, 0.1] → counts <code>[1, 2, 2]</code>. <code>c[0]=1 ≠ c[2]=2</code> → <code>threshold-sensitive</code>.<br>
+<strong>Headline:</strong> "Threshold-sensitive: 1→2 features pass as the cutoff loosens from 0.01 to 0.1. APOE clears every cutoff; CLU enters only at adj-p ≤ 0.05."<br>
+<strong>Metrics:</strong> features_passing@0.01 = 1, @0.05 = 2, @0.1 = 2 — each citing <code>stage1/volcano_results.tsv</code> rows. <strong>Chart:</strong> a 3-bar sweep of those counts.</p></div>
+
+<!-- ============================================================ -->
+<h2 id="contract">8 · The synthesis skill contract</h2>
+<p class="part">One per workflow</p>
+<pre><code>// src/research/synthesis/types.ts
+export interface SynthesisContext {
+  job: { id: string; runId: string; workflowId: string; objective: string;
+         budgetUsd: number; model: string };
+  scope: ResearchScopeManifest;          // frozen artifacts + configs + hashes + sources
+  computations: ComputationRecord[];     // prior offline steps (skillId, params, output paths, sha256)
+  readOutput: (relPath: string) =&gt; string;  // safe read under {jobRoot}/artifacts (path-escape guarded)
+}
+
+export interface SynthesisSkill {
+  id: string;                 // "finding-stress-test-synthesis"
+  workflowId: string;         // "finding-stress-test"
+  version: string;            // semver, mirrored in the manifest
+  reads: { computations: string[]; families: string[] };   // declared inputs, validated before decide()
+  decide(ctx: SynthesisContext): AnswerModel;              // DETERMINISTIC — verdict, metrics, headline, chart
+  prompt(answer: AnswerModel): { system: string; user: string };  // workflow-tailored narrator prompt
+  fallbackProse(answer: AnswerModel): string;             // deterministic prose when the LLM is off/guarded
+}</code></pre>
+<p>The shared <code>system</code> prompt reuses <code>DEEP_RESEARCH_SYNTHESIS_POLICY</code> (<code>evidence.ts:19</code>) + the ready-made §9 card-generation prompt; each skill's <code>prompt()</code> appends only the workflow-specific framing and the <code>AnswerModel</code> facts as the <code>user</code> turn. <strong>finding-stress-test is implemented; other workflows register a stub</strong> that throws <code>NotImplemented</code> at <code>decide()</code> — caught by the engine and surfaced as a clean "synthesis pending for this workflow" rather than a job failure.</p>
+
+<!-- ============================================================ -->
+<h2 id="engine">9 · The synthesis engine</h2>
+<p class="part">Shared: LLM + guard + provenance</p>
+<pre><code>// src/research/synthesis/engine.ts
+async function runSynthesis(ctx): Promise&lt;AnswerModel&gt; {
+  const skill = registry[ctx.job.workflowId];
+  if (!skill) return null;                       // no synthesis for this workflow → engine no-ops
+  assertReads(skill.reads, ctx);                 // declared inputs present + hashes match scope
+  const answer = skill.decide(ctx);              // deterministic; ALWAYS produced
+  answer.narrative = await narrate(skill, answer, ctx);   // gated; NEVER throws
+  return answer;
+}
+
+async function narrate(skill, answer, ctx) {
+  const cap = remainingCap(ctx.job);             // §14 cost-cap coordination
+  if (!narratorConfigured(ctx) || estCost(answer) &gt; cap)
+    return { text: skill.fallbackProse(answer), generatedBy: "deterministic", guard: "skipped" };
+  try {
+    const { system, user } = skill.prompt(answer);
+    const raw  = await narrator.complete({ system, user, model: pickModel(ctx) }); // no tools, no skills
+    const prose = scrubOutput(raw.text);                         // security.ts
+    const v = validateSynthesisAgainstEvidence(prose, answer);   // NEW guard
+    if (!v.ok) return { text: skill.fallbackProse(answer), generatedBy: "deterministic", guard: "rejected" };
+    return { text: prose, generatedBy: "model", model: raw.model,
+             promptSha: sha(system + user), outputSha: sha(prose), costUsd: raw.costUsd, guard: "passed" };
+  } catch {
+    return { text: skill.fallbackProse(answer), generatedBy: "deterministic", guard: "skipped" };
+  }
+}</code></pre>
+<p><code>narrator.complete()</code> is the one-shot LLM helper (new, <code>src/research/synthesis/narrator.ts</code>). It mirrors the proven session setup in <code>sessionFor()</code> (<code>runtime.ts:333</code>) — <code>AuthStorage</code> → <code>ModelRegistry</code> → <code>createAgentSession</code> with <code>tools: []</code> and an empty skills override → <code>session.prompt()</code> → accumulate <code>text_delta</code> → return. <code>pickModel()</code> resolves Claude-if-keyed-else-job-model via <code>keyResolver</code> + <code>models.resolve</code>.</p>
+<div class="callout warn"><p><strong>Spike (1 of 1).</strong> Confirm whether <code>@earendil-works/pi-ai</code> exposes a lighter non-session completion. If yes, use it; if not, the <code>createAgentSession</code> path above is the safe reuse. Either way the helper's signature is unchanged.</p></div>
+
+<!-- ============================================================ -->
+<h2 id="trust">10 · Anti-fabrication &amp; trust</h2>
+<p class="part">Why the prose can be trusted</p>
+<ul>
+<li><strong>No tools, no skills, no private data beyond the AnswerModel.</strong> The narrator session is created with <code>tools: []</code> and an empty skills override — the lethal trifecta is broken by construction.</li>
+<li><strong>Output scrubbing.</strong> <code>scrubOutput()</code> (<code>security.ts</code>) on the prose before storage/render, identical to the chat path (<code>runtime.ts:200</code>).</li>
+<li><strong>New numeric + citation guard.</strong> <code>validateSynthesisAgainstEvidence(prose, answer)</code>: every number-like token in the prose must appear in <code>answer.metrics</code> (within tolerance), and every cited path must be in <code>scope.artifacts</code>. Any violation → discard prose, fall back to deterministic, record <code>guard:"rejected"</code>. Cheap, deterministic, and makes fabrication structurally unable to reach the user.</li>
+<li><strong>Labeled in the UI and report</strong> whenever <code>generatedBy === "model"</code>, with the model id shown.</li>
+<li><strong>Provenance recorded</strong> in <code>computation-manifest.json</code> and a <code>synthesis_completed</code> event: model, promptSha, outputSha, costUsd, guard result.</li>
+</ul>
+
+<!-- ============================================================ -->
+<h2 id="deliverables">11 · Reshaped deliverables &amp; the answer panel</h2>
+<p class="part">The primary deliverable</p>
+<p>No new deliverable slots — this fills §7's #1 (Decision summary) and #2 (Research report) properly, and surfaces #1 inline:</p>
+<table>
+<thead><tr><th>Slot</th><th>Before</th><th>After</th></tr></thead>
+<tbody>
+<tr><td>#1 Decision summary</td><td>"N artifacts and M computations" template</td><td>Real BLUF: verdict + headline + strongest evidence + caveat + decision implication. Rendered <strong>inline</strong> as the answer panel, and written to <code>decision-summary.txt</code>.</td></tr>
+<tr><td>#2 Research report</td><td>thin count template</td><td>Narrative: BLUF → what we tested → what we found (metrics table + real sweep chart, narrative if narrated) → evidence arms (paths/hashes/rows) → limitations → how to reproduce.</td></tr>
+<tr><td>#4 Generated artifacts / figure</td><td>placeholder SVG (<code>runner.ts:156</code>)</td><td>real sweep chart emitted from <code>answer.chart</code>.</td></tr>
+<tr><td>#3,5,6,7,8 + computed</td><td>as today</td><td>unchanged; demoted under "Supporting evidence".</td></tr>
+</tbody>
+</table>
+
+<h3>Completed-view wireframe</h3>
+<div class="mock">
+  <p class="eyebrow">finding-stress-test · answered</p>
+  <span class="verdict">⚠ Threshold-sensitive</span><span class="vmodel">narrated · claude-sonnet-4-5</span>
+  <h3>1→2 features pass as the cutoff loosens from 0.01 to 0.1. APOE clears every cutoff; CLU enters only at adj-p ≤ 0.05.</h3>
+  <p class="imp"><strong>Decision implication.</strong> Treat APOE as the robust anchor; confirm CLU with leave-one-out before adding it to the follow-up panel.</p>
+  <div class="metrics">
+    <div class="metric">features @ ≤0.01<b>1</b></div>
+    <div class="metric">features @ ≤0.05<b>2</b></div>
+    <div class="metric">features @ ≤0.1<b>2</b></div>
+    <div class="metric">missing cells<b>0%</b></div>
+  </div>
+  <div class="cta"><span class="btn">Open full report</span><span class="btn sub">Re-run exactly</span></div>
+  <p class="evidence">Supporting evidence (11) · threshold-sensitivity.csv · eda-summary.json · evidence-record.json · computation-manifest.json · scope-manifest.json · …</p>
+</div>
+<p class="muted">The panel reads from the enriched <code>job.claims[0]</code> (no new endpoint). The verdict chip color keys off <code>verdictLabel</code>; the "narrated" badge appears only when <code>narrative.generatedBy === "model"</code>. Raw files collapse into the evidence line.</p>
+
+<!-- ============================================================ -->
+<h2 id="changemap">12 · Change map</h2>
+<p class="part">Files touched</p>
+<h3>New files</h3>
+<table>
+<thead><tr><th>File</th><th>Responsibility</th></tr></thead>
+<tbody>
+<tr><td><code>src/research/synthesis/types.ts</code></td><td><code>AnswerModel</code>, <code>SynthesisSkill</code>, <code>SynthesisContext</code>.</td></tr>
+<tr><td><code>src/research/synthesis/engine.ts</code></td><td><code>runSynthesis()</code>, <code>narrate()</code>, gating, provenance assembly.</td></tr>
+<tr><td><code>src/research/synthesis/narrator.ts</code></td><td>one-shot LLM helper + <code>pickModel()</code> (Claude-if-keyed).</td></tr>
+<tr><td><code>src/research/synthesis/guard.ts</code></td><td><code>validateSynthesisAgainstEvidence()</code> (numeric + path).</td></tr>
+<tr><td><code>src/research/synthesis/registry.ts</code></td><td><code>workflowId → SynthesisSkill</code>.</td></tr>
+<tr><td><code>src/research/synthesis/workflows/finding-stress-test.ts</code></td><td><code>decide()</code> / <code>prompt()</code> / <code>fallbackProse()</code> for workflow 1.</td></tr>
+<tr><td><code>skills/research/native/finding-stress-test-synthesis/signalfold.skill.json</code></td><td>manifest: <code>kind:native</code>, <code>network.policy:"llm"</code>, <code>deterministic:false</code>.</td></tr>
+</tbody>
+</table>
+<h3>Edited files</h3>
+<table>
+<thead><tr><th>File</th><th>Change</th></tr></thead>
+<tbody>
+<tr><td><code>src/skills/catalog.ts:13,52</code></td><td>add <code>"llm"</code> to the policy enum; treat <code>llm</code> as ready.</td></tr>
+<tr><td><code>src/skills/runner.ts:78</code></td><td>per-policy gate; add <code>runSynthesis</code> dispatch; accept injected narrator + prior computations for the synthesis step.</td></tr>
+<tr><td><code>src/research/service.ts:290–370</code></td><td>append the synthesis step to the loop / call the engine after compute; rewrite <code>buildPackage()</code> to write the enriched claim, real <code>decision-summary.txt</code>, narrative <code>reportHtml()</code>, and the real chart; record synthesis provenance + event.</td></tr>
+<tr><td><code>src/research/service.ts:17–37</code></td><td><code>RESEARCH_WORKFLOWS["finding-stress-test"].skills</code> gains the synthesis entrypoint as its final step.</td></tr>
+<tr><td><code>src/server.ts:56</code></td><td>construct <code>ResearchService</code> with the narrator built from <code>models</code> + <code>keyResolver</code> + <code>config</code> (null in tests → deterministic).</td></tr>
+<tr><td><code>public/app.js:658–705</code> + styles</td><td>render the answer panel at top of the completed view; demote deliverables to "Supporting evidence".</td></tr>
+</tbody>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="schema">13 · Schema &amp; data changes</h2>
+<p class="part">Additive only</p>
+<ul>
+<li><strong>Claim object</strong> (stored in <code>ai_research_claims.claim_json</code>) gains <code>headline</code>, <code>verdictLabel</code>, <code>summary</code>, <code>metrics</code>, <code>chart</code>, <code>narrative</code>. <code>validateResearchClaim()</code> (<code>evidence.ts:3</code>) is unchanged — it only checks required fields, so extra fields pass. <em>Optionally</em> extend it to require <code>headline</code> + <code>verdictLabel</code> for completed jobs.</li>
+<li><strong>No DB migrations.</strong> All research tables are JSON-column based; the enrichment rides in existing columns.</li>
+<li><strong>Network policy enum</strong> widens in the manifest type only; existing <code>none</code> manifests are untouched.</li>
+<li><strong>computation-manifest.json</strong> gains a <code>synthesis</code> block (model, promptSha, outputSha, costUsd, guard, generatedBy).</li>
+</ul>
+
+<!-- ============================================================ -->
+<h2 id="cost">14 · Cost-cap coordination</h2>
+<p class="part">First real token spend in research</p>
+<p>Compute skills cost $0; synthesis is the first priced operation. Gate it:</p>
+<ul>
+<li><code>narrate()</code> runs the LLM only if a key exists <em>and</em> <code>estCost(answer) ≤ remainingCap</code>, where the cap is <code>job.budgetUsd</code> / <code>scope.budget.maxCostUsd</code> (<code>research-scope.ts:108</code>, default 1.25; workflow <code>defaultBudgetUsd</code> is 0 today → deterministic-only until a budget is set).</li>
+<li><code>estCost</code> = <code>model.promptCost/completionCost</code> (<code>models.ts</code>) × token estimate of <code>{system,user}</code> + a max-output allowance.</li>
+<li>Actual cost is recorded in <code>spend_usd</code> and in the synthesis provenance.</li>
+</ul>
+<div class="callout warn"><p><strong>Coordinate with the pass-2 cap work.</strong> This consumes the cap; it must not re-implement it. If the cap API changes shape, <code>remainingCap()</code> is the single integration point.</p></div>
+
+<!-- ============================================================ -->
+<h2 id="tests">15 · Test plan</h2>
+<p class="part">Offline by default</p>
+<p>The default <code>buildServer()</code> test path injects <strong>no</strong> narrator, so synthesis is deterministic and the suite stays offline + temp-dir isolated.</p>
+<table>
+<thead><tr><th>Test</th><th>Asserts</th></tr></thead>
+<tbody>
+<tr><td>extend <code>research.test.ts</code> e2e</td><td>completed claim has non-empty <code>headline</code>, <code>verdictLabel ∈ enum</code>, <code>metrics[].cite.path ∈ scope</code>; fixture verdict = <code>threshold-sensitive</code> with APOE-stable note.</td></tr>
+<tr><td>report content</td><td><code>research-report.html</code> contains the headline, the real counts (1, 2), and a cited path (<code>stage1/volcano_results.tsv</code>); contains <strong>no</strong> path outside scope.</td></tr>
+<tr><td>figure</td><td>a <code>research-figure</code> deliverable encodes the sweep values (not the placeholder).</td></tr>
+<tr><td><code>decide()</code> unit</td><td>synthetic computations/scope → expected verdict + metrics (incl. all-zero → insufficient, constant → stable).</td></tr>
+<tr><td>guard unit</td><td>prose with a fabricated number / out-of-scope path → <code>!ok</code> → fallback used; <code>guard:"rejected"</code>.</td></tr>
+<tr><td>injected-stub narrator</td><td>canned prose appears in the report, is scrubbed + labeled model-generated; provenance (model, promptSha, guard:"passed") lands in the manifest.</td></tr>
+<tr><td>OCC</td><td>the synthesis step appears with execution detail + outputs; <code>skillRuns</code> count includes it.</td></tr>
+<tr><td>regression</td><td>the existing table-driven both-workflows e2e still passes (ranked-pathway has no synthesis skill yet → engine no-ops cleanly, deliverables intact).</td></tr>
+</tbody>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="verify">16 · Verification (end-to-end)</h2>
+<p class="part">Unit-green ≠ done</p>
+<ol>
+<li><code>npm test</code> + <code>npm run typecheck</code> green.</li>
+<li>Restart sidecar (<code>./run.sh stop &amp;&amp; ./run.sh bg</code>) — backend changes need a restart.</li>
+<li>At :4317: pick a completed run → Deep Research → finding-stress-test → objective → Approve &amp; run → completed.</li>
+<li>Confirm <strong>G1</strong> (top answer panel states the verdict in plain language), <strong>G2</strong> (report reads as a cited narrative with real numbers), files demoted beneath. No console errors.</li>
+<li>OCC at :4317/operations shows the job + synthesis step + (if narrated) model/promptSha provenance.</li>
+<li>Exercise both paths: no-key (deterministic) and, if an Anthropic key is present, a small cap (LLM narrated + guard:"passed").</li>
+</ol>
+<p class="muted">The existing <code>RUN-E2E-VERIFY</code> demo job won't show the new answer — it completed under the old package; verification runs a fresh job.</p>
+
+<!-- ============================================================ -->
+<h2 id="scope">17 · Scope &amp; future</h2>
+<p class="part">Honest boundary</p>
+<ul>
+<li><strong>In scope now:</strong> the synthesis layer (interpreter + gated narrator + guard), the network-policy widening, the answer panel + narrative report + real chart, and the <code>finding-stress-test</code> synthesis skill.</li>
+<li><strong>Next workflows:</strong> each adds one <code>SynthesisSkill</code> file (<code>decide()</code> + <code>prompt()</code>) + a manifest. <code>ranked-pathway-investigation</code> is the natural second (headline = top ORA term + FDR + count below 0.05).</li>
+<li><strong>External corroboration (<code>curated</code> policy):</strong> the third arm — UniProt/Reactome/STRING/PubMed bound to rows, behind the <code>external_lookups</code> safety chain. Unlocks <code>context-dependent</code> verdicts and interpretation/hypothesis claim types. Deferred.</li>
+<li><strong>Not now:</strong> leave-one-out (<code>sample-driven</code>), RO-Crate export, multi-agent fan-out, isolation backend.</li>
+</ul>
+
+<!-- ============================================================ -->
+<h2 id="risks">18 · Risks &amp; open questions</h2>
+<table>
+<thead><tr><th>Risk / question</th><th>Mitigation / proposed answer</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>Pi one-shot completion API may not exist; <code>createAgentSession</code> is heavy for a batch call.</td><td>Spike first; fall back to the proven session path with tools/skills disabled. Helper signature is stable either way.</td><td><span class="pill warn">spike</span></td></tr>
+<tr><td>Numeric guard false-positives (e.g. a year or a hash fragment in prose).</td><td>Tokenize on standalone numerics; allow values present in metrics within tolerance; ignore tokens inside cited hashes/paths. Err toward fallback, never toward shipping unverified prose.</td><td><span class="pill warn">open</span></td></tr>
+<tr><td>Policy vocabulary — is <code>none|llm|curated</code> the right set?</td><td>Proposed. <code>llm</code> = provider only; <code>curated</code> = allowlisted external fetch. Confirm before locking the enum.</td><td><span class="pill warn">open</span></td></tr>
+<tr><td>Should <code>validateResearchClaim()</code> hard-require <code>headline</code>/<code>verdictLabel</code>?</td><td>Recommend yes for completed jobs, so a regressed synthesis fails loudly rather than shipping a blank panel.</td><td><span class="pill warn">open</span></td></tr>
+<tr><td>Synthesis step failure shouldn't fail the job.</td><td><code>narrate()</code> never throws; <code>decide()</code> failure for an unimplemented workflow is caught and surfaced as "pending", job still completes with compute deliverables.</td><td><span class="pill ok">handled</span></td></tr>
+</tbody>
+</table>
+
+<hr>
+<p class="src muted">Spec captured 2026-06-23 for review. No code, config, or tests were changed in producing it. Implementation begins on approval; <code>finding-stress-test</code> only.</p>
+
+</main>
+<aside class="so-toc">
+<h4>On this page</h4>
+<ul>
+<li><a href="#problem">1 Problem</a></li>
+<li><a href="#goal">2 Goal &amp; criteria</a></li>
+<li><a href="#principle">3 Core principle</a></li>
+<li><a href="#decisions">4 Locked decisions</a></li>
+<li><a href="#network">5 Network policy</a></li>
+<li><a href="#answermodel">6 AnswerModel</a></li>
+<li><a href="#verdict">7 Verdict logic</a></li>
+<li><a href="#contract">8 Skill contract</a></li>
+<li><a href="#engine">9 Synthesis engine</a></li>
+<li><a href="#trust">10 Anti-fabrication</a></li>
+<li><a href="#deliverables">11 Deliverables + panel</a></li>
+<li><a href="#changemap">12 Change map</a></li>
+<li><a href="#schema">13 Schema changes</a></li>
+<li><a href="#cost">14 Cost cap</a></li>
+<li><a href="#tests">15 Test plan</a></li>
+<li><a href="#verify">16 Verification</a></li>
+<li><a href="#scope">17 Scope &amp; future</a></li>
+<li><a href="#risks">18 Risks</a></li>
+</ul>
+</aside>
+</div>
+<script>
+(function(){
+  var btn=document.getElementById('themeToggle');
+  var root=document.documentElement;
+  btn.addEventListener('click',function(){
+    var cur=root.getAttribute('data-theme');
+    root.setAttribute('data-theme', cur==='dark' ? 'light' : 'dark');
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,2 @@
+GeneSymbol	SystemCode
+APOB	Sy

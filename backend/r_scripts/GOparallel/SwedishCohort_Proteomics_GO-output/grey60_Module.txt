@@ -1,0 +1,14 @@
+GeneSymbol	SystemCode
+ORM1	Sy
+LRG1	Sy
+SERPINA3	Sy
+APOB	Sy
+CP	Sy
+C9	Sy
+DDAH1	Sy
+ENO	Sy
+FGA	Sy
+GALNT18	Sy
+IGLON5	Sy
+NME3	Sy
+	Sy

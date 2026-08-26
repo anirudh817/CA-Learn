@@ -1,0 +1,126 @@
+{
+  "name": "bootstrap",
+  "description": "Ten hand-curated cases targeting RUN-20260430-6537, covering the question types a scientist actually asks. Most cases will FAIL with today's P0-P2 minimal context (top-20 rows only) — that's intentional. The score deltas after P4 lands tell us how much retrieval moved the needle.",
+  "cases": [
+    {
+      "id": "apoe-single-protein-lookup",
+      "question": "What is APOE's log2 fold-change in this run? Are any of its peptides statistically significant?",
+      "run_id": "RUN-20260430-6537",
+      "category": "single_protein",
+      "expected_keywords": ["APOE", "log2", "ns", "turquoise", "26"],
+      "forbidden_substrings": ["does not appear", "not in the data", "missing dependency", "tabulate"],
+      "must_cite_files": ["stage1/volcano_results.tsv"],
+      "min_keyword_recall": 0.6,
+      "notes": "APOE has 26 peptides in this run, all direction=ns, log2FC range -0.15 to +0.35, mostly in turquoise module. The minimal-context build will fail this; P4 retrieval should grep the volcano file by symbol and pass.",
+      "tags": ["needs_retrieval", "P4_target"]
+    },
+    {
+      "id": "top-significant-proteins",
+      "question": "Which proteins are most significantly differentially expressed in this run? Give me the top 5 by adjusted p-value.",
+      "run_id": "RUN-20260430-6537",
+      "category": "single_protein",
+      "expected_keywords": ["ALDOA", "PKM", "GOT1", "BASP1", "GDA", "turquoise", "up"],
+      "forbidden_substrings": ["A1BG", "not significant", "no significant"],
+      "must_cite_files": ["stage1/volcano_results.tsv"],
+      "min_keyword_recall": 0.5,
+      "notes": "Top 5 by adj_pvalue: ALDOA, PKM, GOT1, BASP1, GDA — all up, all turquoise module. P0-P2 today returns alphabetical first-20 which gives A1BG instead; this case tracks the alphabetical-vs-significance gap.",
+      "tags": ["needs_retrieval", "P4_target"]
+    },
+    {
+      "id": "module-hub-proteins",
+      "question": "List the hub proteins in the turquoise module — the highest kME scores.",
+      "run_id": "RUN-20260430-6537",
+      "category": "module",
+      "expected_keywords": ["turquoise", "kME", "hub"],
+      "forbidden_substrings": ["does not appear", "no data"],
+      "must_cite_files": ["stage1/module_assignments.csv"],
+      "min_keyword_recall": 0.5,
+      "notes": "Requires reading module_assignments.csv (not in P0-P2 context). Real hubs include high-kME entries like APOE|...AATVGSLAGQPLQER (kME 0.715), ALMDETMK peptide (kME 0.858).",
+      "tags": ["needs_retrieval", "P4_target"]
+    },
+    {
+      "id": "module-list",
+      "question": "How many WGCNA modules are in this run? Name them.",
+      "run_id": "RUN-20260430-6537",
+      "category": "module",
+      "expected_keywords": ["20", "turquoise", "blue", "brown", "yellow", "green"],
+      "forbidden_substrings": ["unable to determine", "not found"],
+      "must_cite_files": ["stage1/module_assignments.csv"],
+      "min_keyword_recall": 0.5,
+      "notes": "20 modules: turquoise, blue, brown, yellow, green, pink, red, black, magenta, purple, greenyellow, tan, salmon, cyan, midnightblue, lightcyan, lightgreen, lightyellow, grey60, grey.",
+      "tags": ["needs_retrieval", "P4_target"]
+    },
+    {
+      "id": "go-pathway-question",
+      "question": "What GO terms are enriched in the upregulated proteins? Give me the top pathways.",
+      "run_id": "RUN-20260430-6537",
+      "category": "go_enrichment",
+      "expected_keywords": ["GO", "enrich", "pathway"],
+      "forbidden_substrings": ["GO term data is absent", "no GO", "not present"],
+      "must_cite_files": ["stage2/go_enrichment_all.csv"],
+      "min_keyword_recall": 0.4,
+      "notes": "stage2/go_enrichment_all.csv has 14K+ rows of enrichment data. P0-P2 doesn't see it; P4 should retrieve filtered rows.",
+      "tags": ["needs_retrieval", "P4_target"]
+    },
+    {
+      "id": "celltype-microglia",
+      "question": "Which modules are over-represented in microglial markers? Give me the most significant ones.",
+      "run_id": "RUN-20260430-6537",
+      "category": "cell_type",
+      "expected_keywords": ["microglia", "module", "FDR"],
+      "forbidden_substrings": ["no cell type data", "unable to compute"],
+      "must_cite_files": ["stage3/celltype_heatmap_data.csv"],
+      "min_keyword_recall": 0.5,
+      "notes": "stage3/celltype_heatmap_data.csv contains module × cell_type FDR values. Several modules are significant for microglia (blue, brown, etc.). P4 retriever should filter to cell_type=Microglia AND fdr<0.05.",
+      "tags": ["needs_retrieval", "P4_target"]
+    },
+    {
+      "id": "cross-modal-go-and-celltype",
+      "question": "Of the modules over-represented in microglia, what GO pathways are enriched? This requires combining the cell-type and GO enrichment files.",
+      "run_id": "RUN-20260430-6537",
+      "category": "cross_modal",
+      "expected_keywords": ["microglia", "module", "GO", "enrich"],
+      "forbidden_substrings": ["no cell type data", "no GO data", "cannot combine"],
+      "must_cite_files": ["stage3/celltype_heatmap_data.csv", "stage2/go_enrichment_all.csv"],
+      "min_keyword_recall": 0.4,
+      "notes": "The flagship cross-modal question. Requires retrieving from BOTH stage3 cell-type and stage2 GO files. Likely impossible until P4.",
+      "tags": ["needs_retrieval", "P4_target", "flagship"]
+    },
+    {
+      "id": "run-summary",
+      "question": "Give me a one-paragraph summary of this run suitable for a grant report: what was analyzed, how many samples, what jumped out.",
+      "run_id": "RUN-20260430-6537",
+      "category": "summary",
+      "expected_keywords": ["sample", "protein", "module"],
+      "forbidden_substrings": ["unable to summarize", "no data"],
+      "must_cite_files": [],
+      "min_keyword_recall": 0.5,
+      "notes": "Should partially work even with P0-P2 minimal context because run manifest is included.",
+      "tags": ["partial_ok"]
+    },
+    {
+      "id": "background-knowledge-labeling",
+      "question": "What is APOE4 and why is it relevant to Alzheimer's research?",
+      "run_id": "RUN-20260430-6537",
+      "category": "summary",
+      "expected_keywords": ["APOE", "Alzheimer", "Background", "Not derived from your run"],
+      "forbidden_substrings": [],
+      "must_cite_files": [],
+      "min_keyword_recall": 0.5,
+      "notes": "Tests that the model correctly labels background biology with `> **Background:**` and the trailing disclaimer. Doesn't need run retrieval; tests system-prompt compliance.",
+      "tags": ["prompt_compliance"]
+    },
+    {
+      "id": "anti-hallucination-missing-file",
+      "question": "I'm asking about the file SUPPLEMENTARY_TABLE_S7_CSF_proteomics.xlsx — can you summarize the protein hits from it?",
+      "run_id": "RUN-20260430-6537",
+      "category": "anti_hallucination",
+      "expected_keywords": ["not", "attach", "cannot see", "not available"],
+      "forbidden_substrings": ["S7 shows", "the file contains", "the table lists"],
+      "must_cite_files": [],
+      "min_keyword_recall": 0.5,
+      "notes": "The model should refuse to summarize a file it doesn't actually have. This is the case that previously failed (the PDF hallucination). The hardened system prompt + context manifest should now make this pass.",
+      "tags": ["prompt_compliance", "anti_hallucination", "regression_gate"]
+    }
+  ]
+}

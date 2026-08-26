@@ -1,0 +1,16 @@
+GeneSymbol	SystemCode
+ABHD14B	Sy
+ADAM15	Sy
+ALB	Sy
+APLP2	Sy
+APOA1	Sy
+B3GAT3	Sy
+CFB	Sy
+CNTN2	Sy
+C4A	Sy
+C7	Sy
+LSAMP	Sy
+ACAN	Sy
+PLG	Sy
+PLS3	Sy
+SUCLA2	Sy

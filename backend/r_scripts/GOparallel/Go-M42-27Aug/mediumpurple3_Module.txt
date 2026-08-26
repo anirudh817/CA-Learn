@@ -1,0 +1,9 @@
+GeneSymbol	SystemCode
+CHI3L2	Sy
+C3	Sy
+GSN	Sy
+IGFBP6	Sy
+PTGDS	Sy
+RBP4	Sy
+SERPINA7	Sy
+F2	Sy

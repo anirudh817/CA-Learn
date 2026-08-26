@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SignalFold Deep Research — Detailed Implementation &amp; Handoff Plan</title>
+<style>
+:root{--bg:#fbfcfe;--panel:#fff;--fg:#172033;--muted:#627086;--line:#dfe5ee;--blue:#2457d6;--blue2:#edf3ff;--cyan:#0e7490;--green:#18794e;--green2:#eaf8f1;--amber:#a15c00;--amber2:#fff7e8;--red:#b42318;--red2:#fff0ee;--purple:#6d3bd1;--purple2:#f3efff;--code:#f3f5f8;--shadow:0 8px 30px rgba(23,32,51,.08);--r:12px;--max:1240px}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f131b;--panel:#151b25;--fg:#e9edf5;--muted:#a4afc0;--line:#2b3442;--blue:#7aa2ff;--blue2:#172647;--cyan:#5bd2ea;--green:#5bd49a;--green2:#123225;--amber:#ffca70;--amber2:#382a11;--red:#ff8b82;--red2:#3c1d1a;--purple:#b99aff;--purple2:#2b2047;--code:#1b222d;--shadow:0 10px 34px rgba(0,0,0,.35)}}
+:root[data-theme="dark"]{--bg:#0f131b;--panel:#151b25;--fg:#e9edf5;--muted:#a4afc0;--line:#2b3442;--blue:#7aa2ff;--blue2:#172647;--cyan:#5bd2ea;--green:#5bd49a;--green2:#123225;--amber:#ffca70;--amber2:#382a11;--red:#ff8b82;--red2:#3c1d1a;--purple:#b99aff;--purple2:#2b2047;--code:#1b222d;--shadow:0 10px 34px rgba(0,0,0,.35)}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:16px;font-size:17px}body{margin:0;background:var(--bg);color:var(--fg);font:1rem/1.62 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif}.layout{display:grid;grid-template-columns:minmax(0,1fr);max-width:var(--max);margin:auto;padding:30px 22px 80px}.main{min-width:0}.toc{display:none}.toolbar{position:fixed;right:14px;top:14px;z-index:10}.toolbar button{border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--fg);padding:7px 11px;box-shadow:var(--shadow);cursor:pointer}@media(min-width:1160px){.layout{grid-template-columns:minmax(0,1fr) 250px;gap:34px}.toc{display:block;position:sticky;top:24px;align-self:start;max-height:calc(100vh - 48px);overflow:auto;border-left:1px solid var(--line);padding-left:16px;font-size:.82rem}.toc strong{display:block;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-size:.7rem;margin-bottom:8px}.toc a{display:block;color:var(--muted);padding:3px 7px;border-left:2px solid transparent;text-decoration:none}.toc a:hover,.toc a.active{color:var(--blue);background:var(--blue2);border-left-color:var(--blue)}}
+h1,h2,h3,h4{line-height:1.25;color:var(--fg)}h1{font-size:2rem;margin:0 0 10px}h2{font-size:1.45rem;margin:42px 0 14px;padding-bottom:7px;border-bottom:1px solid var(--line)}h3{font-size:1.13rem;margin:28px 0 9px}h4{font-size:.98rem;margin:0 0 5px}p{margin:.55rem 0 1rem}a{color:var(--blue)}code{background:var(--code);padding:.1rem .34rem;border-radius:4px;font: .88em ui-monospace,SFMono-Regular,Menlo,monospace}pre{background:var(--code);border:1px solid var(--line);border-radius:10px;padding:15px;overflow:auto;font-size:.82rem;line-height:1.5;white-space:pre-wrap}table{width:100%;border-collapse:collapse;margin:14px 0 20px;font-size:.88rem}th,td{border:1px solid var(--line);padding:9px 10px;text-align:left;vertical-align:top}th{background:var(--code)}tbody tr:nth-child(even){background:color-mix(in srgb,var(--code) 55%,transparent)}ul,ol{padding-left:1.35rem}li{margin:.28rem 0}.hero{background:linear-gradient(135deg,var(--blue2),var(--panel) 62%,var(--purple2));border:1px solid var(--line);border-radius:16px;padding:27px 29px;box-shadow:var(--shadow)}.hero p{font-size:1.05rem;color:var(--muted);max-width:920px}.chips{display:flex;flex-wrap:wrap;gap:7px}.pill{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:3px 8px;font-size:.7rem;color:var(--muted);background:var(--panel)}.pill.blue{color:var(--blue);border-color:var(--blue);background:var(--blue2)}.pill.green{color:var(--green);border-color:var(--green);background:var(--green2)}.pill.amber{color:var(--amber);border-color:var(--amber);background:var(--amber2)}.pill.red{color:var(--red);border-color:var(--red);background:var(--red2)}.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:18px 0}.kpi,.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:0 2px 8px rgba(23,32,51,.04)}.kpi{padding:13px 15px}.kpi b{font-size:1.55rem;display:block;line-height:1.1}.kpi span{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}.callout{border:1px solid var(--line);border-left:4px solid var(--blue);border-radius:9px;background:var(--blue2);padding:12px 15px;margin:15px 0}.callout strong:first-child{color:var(--blue)}.callout.green{background:var(--green2);border-left-color:var(--green)}.callout.green strong:first-child{color:var(--green)}.callout.amber{background:var(--amber2);border-left-color:var(--amber)}.callout.amber strong:first-child{color:var(--amber)}.callout.red{background:var(--red2);border-left-color:var(--red)}.callout.red strong:first-child{color:var(--red)}.muted{color:var(--muted)}.grid2,.grid3,.workflow-grid,.deliverables{display:grid;grid-template-columns:1fr;gap:12px}.card{padding:15px 16px}.card p:last-child{margin-bottom:0}.card .num{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--blue2);color:var(--blue);font-weight:700;margin-right:7px}@media(min-width:760px){.grid2{grid-template-columns:repeat(2,1fr)}.grid3{grid-template-columns:repeat(3,1fr)}.workflow-grid{grid-template-columns:repeat(2,1fr)}.deliverables{grid-template-columns:repeat(4,1fr)}}
+.diagram{background:#fff;border:1px solid var(--line);border-radius:12px;padding:15px;margin:16px 0;overflow:auto;box-shadow:var(--shadow);cursor:zoom-in}.diagram svg{display:block;width:100%;height:auto;min-width:720px}.diagram figcaption{text-align:center;color:#667085;font-size:.8rem;margin-top:8px}.mock{display:grid;grid-template-columns:170px minmax(430px,1fr) 240px;min-width:850px;border:1px solid #cbd5e1;border-radius:12px;overflow:hidden;background:#fff;color:#172033;box-shadow:var(--shadow)}.mock>div{min-height:520px;padding:14px}.mock .left{background:#f7f9fc;border-right:1px solid #dfe5ee}.mock .right{background:#fbfcfe;border-left:1px solid #dfe5ee}.mock h4{color:#172033}.mock small,.mock p{color:#667085}.mock .job{border:1px solid #dfe5ee;border-radius:8px;background:#fff;padding:8px;margin:8px 0}.mock .job.active{border-color:#2457d6;background:#edf3ff}.mock .prompt{border:1px solid #dfe5ee;border-radius:9px;padding:10px;color:#344054}.mock .wf{display:grid;grid-template-columns:1fr 1fr;gap:8px}.mock .wf div{border:1px solid #dfe5ee;border-radius:8px;padding:10px;background:#fff}.mock .plan{margin-top:12px;border-left:3px solid #2457d6;padding-left:10px}.mock .step{padding:6px 0;border-bottom:1px dashed #dfe5ee}.mock .approve{display:inline-block;background:#2457d6;color:white;border-radius:7px;padding:7px 11px;margin-top:8px}.mock .tabs{display:flex;gap:5px;flex-wrap:wrap}.mock .tabs b{font-size:.7rem;border:1px solid #dfe5ee;padding:4px 6px;border-radius:6px}.mock .tabs b:first-child{color:#2457d6;border-color:#2457d6}.state{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.state span{padding:7px 10px;border:1px solid var(--line);border-radius:7px;background:var(--panel);font-size:.78rem}.state i{color:var(--muted)}.evidence-card{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:15px 0;background:var(--panel);box-shadow:var(--shadow)}.evidence-card header{padding:13px 15px;background:var(--blue2);display:flex;justify-content:space-between;gap:12px}.evidence-card .body{padding:14px 15px}.arms{display:grid;grid-template-columns:1fr;gap:8px}.arm{border:1px solid var(--line);border-radius:8px;padding:9px}.arm.pipeline{border-left:4px solid var(--blue)}.arm.compute{border-left:4px solid var(--purple)}.arm.external{border-left:4px solid var(--green)}@media(min-width:760px){.arms{grid-template-columns:repeat(3,1fr)}}.checklist li::marker{color:var(--green)}.phase{border-left:3px solid var(--blue);padding:0 0 18px 18px;margin-left:6px}.phase:last-child{padding-bottom:0}.phase h3{margin-top:0}.phase .exit{background:var(--green2);border-radius:8px;padding:8px 10px}.schema{font-size:.78rem}.foot{margin-top:45px;padding-top:15px;border-top:1px solid var(--line);color:var(--muted);font-size:.8rem}.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.84);z-index:30;display:none;align-items:center;justify-content:center;padding:25px}.lightbox.open{display:flex}.lightbox .stage{width:100%;height:100%;overflow:auto;background:#fff;border-radius:12px;padding:24px;position:relative}.lightbox svg{width:100%;height:auto}.close{position:fixed;right:38px;top:35px;background:#172033;color:white;border:0;border-radius:7px;padding:7px 10px;cursor:pointer}@media print{.toolbar,.toc{display:none}.layout{display:block;max-width:none;padding:0}.hero,.card,.kpi,.diagram{box-shadow:none;break-inside:avoid}a{color:inherit;text-decoration:none}}
+</style>
+</head>
+<body>
+<div class="toolbar"><button id="theme" type="button">Theme</button></div>
+<div class="layout">
+<main class="main">
+<header class="hero">
+  <h1>SignalFold Deep Research</h1>
+  <p><strong>Detailed implementation and new-session hand-off.</strong> Build a plan-approved research workspace that computes new, reproducible evidence on a selected SignalFold run and corroborates biological interpretation with traceable external research. It is not a generic “search the web and write a report” feature.</p>
+  <div class="chips"><span class="pill">reviewed 2026-06-23</span><span class="pill blue">start with latest Standard grounding</span><span class="pill green">8 required deliverables</span><span class="pill amber">17 curated skills</span><span class="pill">implementation not yet started</span></div>
+</header>
+
+<div class="kpis">
+  <div class="kpi"><b>1</b><span>shared grounding substrate</span></div>
+  <div class="kpi"><b>6</b><span>launch workflows</span></div>
+  <div class="kpi"><b>17</b><span>curated scientific skills</span></div>
+  <div class="kpi"><b>8</b><span>outputs per completed job</span></div>
+  <div class="kpi"><b>3</b><span>evidence arms</span></div>
+</div>
+
+<section id="decision">
+<h2>1. The decision in one page</h2>
+<div class="callout green"><strong>Recommendation.</strong> Implement Deep Research as a durable research-job layer over the existing Pi sidecar. First extract the latest adaptive/BM25 Standard grounding into a shared service. Then add approved, manifest-driven skills and curated external lookups. Every result card must say what SignalFold processed, what a new computation added, and what external research supports or challenges—without blending those into one opaque answer.</div>
+<div class="grid3">
+  <div class="card"><h3>What the user does</h3><p>Selects a completed run, chooses a concrete investigation, answers at most two useful clarifiers, reviews scope/cost/skills, and approves a plan. The job continues independently of the open chat.</p></div>
+  <div class="card"><h3>What SignalFold does</h3><p>Freezes a run-evidence manifest from the same grounding index as Standard Mode; executes only allow-listed skills against explicit inputs; performs bounded external corroboration; records every transformation and source.</p></div>
+  <div class="card"><h3>What the user receives</h3><p>A decision-first result containing eight durable outputs: summary, HTML report, evidence record, artifacts, computation manifest, re-run action, open questions, and recommended next step.</p></div>
+</div>
+<div class="callout amber"><strong>Product boundary.</strong> This mode produces auditable analysis and research hypotheses. It does not claim causal mechanism, clinical validation, biological novelty, or experimental confirmation. A job that performs no new computation, finds no new corroboration, and surfaces no contradiction must be labeled <em>Standard-equivalent</em>.</div>
+</section>
+
+<section id="bootstrap">
+<h2>2. New-session bootstrap: start here</h2>
+<p>This section is intentionally operational. A fresh implementation session should perform these steps before changing the UI or importing skills.</p>
+<ol class="checklist">
+  <li>Verify branch <code>ssb1</code> and preserve unrelated worktree changes. Do not create a feature branch unless explicitly requested.</li>
+  <li>Read this document, the brainstorm, <code>docs/explanations/the-science-of-signalfold.html</code>, and <code>docs/scientific-agents-profiles.html</code>.</li>
+  <li>Confirm the latest grounding baseline in <code>ai-sidecar/src/standard-grounding.ts:192-285</code>: deterministic run card, artifact-family routing, bounded evidence selection, row identifiers, and BM25 lexical fallback. The current checkpoint is commit <code>9c4ea5a</code>, followed by explanatory commit <code>fbc1160</code>.</li>
+  <li>Confirm the current Deep Research fork in <code>ai-sidecar/src/runtime.ts:237-285</code>. Standard uses <code>buildStandardGrounding</code>; Deep Research still uses <code>groundingSnapshot(..., 180_000)</code>. Replace this split before building research cards.</li>
+  <li>Write characterization tests that freeze Standard grounding behavior. Refactor to a policy-neutral index/retrieval service; do not rewrite or regress Standard Mode.</li>
+  <li>Implement a frozen <code>ResearchScopeManifest</code> using that shared service: selected artifacts, row IDs, stage configuration, file hashes, exclusions, budget, query/plan, and creation time.</li>
+  <li>Only after the grounding tests pass, add the job schema, plan approval, skill runner, and UI in the phases below.</li>
+</ol>
+<div class="callout red"><strong>Do not start by wiring all 17 skills.</strong> The first risk is not missing Python; it is producing plausible cards that silently ignore how SignalFold generated the selected run. Phase 0 makes that impossible by contract.</div>
+</section>
+
+<section id="product">
+<h2>3. Product definition and differentiation</h2>
+<table>
+<thead><tr><th></th><th>Standard Mode</th><th>Deep Research Mode</th></tr></thead>
+<tbody>
+<tr><td><strong>Purpose</strong></td><td>Fast, grounded explanation of existing run outputs.</td><td>Plan, compute, stress-test, corroborate, and package a decision.</td></tr>
+<tr><td><strong>Time shape</strong></td><td>One synchronous turn.</td><td>Durable asynchronous job with checkpoints, pause/resume, and a result workspace.</td></tr>
+<tr><td><strong>Run evidence</strong></td><td>Question-adaptive bounded retrieval.</td><td>Same shared retrieval, frozen as a scope manifest and expanded step-by-step with provenance.</td></tr>
+<tr><td><strong>Computation</strong></td><td>None.</td><td>Approved scripts through <code>run_skill</code>; explicit inputs, parameters, seeds, hashes, and outputs.</td></tr>
+<tr><td><strong>External research</strong></td><td>Optional contextual lookup.</td><td>Claim-specific corroboration/contradiction via curated databases and literature sources.</td></tr>
+<tr><td><strong>Outcome</strong></td><td>Answer with run citations.</td><td>Eight-output research package plus re-run path.</td></tr>
+</tbody></table>
+<p>The moat is not generic browsing. General LLM research products can search papers. They do not possess the user’s immutable SignalFold run, its normalization and threshold choices, feature/module/pathway/cell-type tables, or a re-runnable computation manifest bound to those exact files. The differentiated object is therefore:</p>
+<div class="callout"><strong>Private run evidence + pipeline-aware interpretation + reproducible computation + curated external corroboration + claim-level provenance.</strong></div>
+</section>
+
+<section id="workflow">
+<h2>4. End-to-end user workflow</h2>
+<figure class="diagram">
+<svg viewBox="0 0 1100 410" role="img" aria-label="Deep Research user sequence">
+<defs><marker id="arr" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#52647e"/></marker></defs>
+<rect x="20" y="20" width="1060" height="370" rx="16" fill="#f8fafc" stroke="#cbd5e1"/>
+<g font-family="system-ui" font-size="15" fill="#172033">
+<g text-anchor="middle" font-weight="700"><text x="115" y="55">Researcher</text><text x="365" y="55">Deep Research UI</text><text x="640" y="55">Job runtime</text><text x="925" y="55">Evidence services</text></g>
+<g stroke="#cbd5e1" stroke-dasharray="5 5"><line x1="115" y1="70" x2="115" y2="365"/><line x1="365" y1="70" x2="365" y2="365"/><line x1="640" y1="70" x2="640" y2="365"/><line x1="925" y1="70" x2="925" y2="365"/></g>
+<g stroke="#52647e" marker-end="url(#arr)"><line x1="115" y1="92" x2="355" y2="92"/><line x1="365" y1="132" x2="630" y2="132"/><line x1="640" y1="174" x2="375" y2="174"/><line x1="365" y1="215" x2="630" y2="215"/><line x1="640" y1="255" x2="915" y2="255"/><line x1="925" y1="296" x2="650" y2="296"/><line x1="640" y1="337" x2="375" y2="337"/></g>
+<g font-size="13"><text x="165" y="85">select run + workflow/question</text><text x="430" y="124">scope + at most 2 clarifiers</text><text x="435" y="166">plan, skills, outputs, cost/time</text><text x="440" y="207">approve or edit plan</text><text x="700" y="247">pipeline evidence → skills → research</text><text x="690" y="288">sources, artifacts, contradictions</text><text x="430" y="329">8 deliverables + re-run action</text></g>
+<rect x="535" y="350" width="210" height="24" rx="12" fill="#eaf8f1" stroke="#18794e"/><text x="640" y="367" text-anchor="middle" font-size="12" fill="#18794e">checkpointed; safe to leave the page</text>
+</g></svg>
+<figcaption>The plan approval is the control boundary; the job is durable after approval.</figcaption>
+</figure>
+<ol>
+  <li><strong>Enter Deep Research.</strong> In AI Insights, the mode switch changes the central surface from a chat stream to a research workspace. The currently selected completed run is always visible.</li>
+  <li><strong>Choose an entry point.</strong> Use one of six workflow cards or type a question. Cards are opinionated templates, not canned reports.</li>
+  <li><strong>Preflight.</strong> SignalFold checks required artifacts, sample/group sufficiency, skill availability, external credentials, network policy, estimated compute, and spend cap.</li>
+  <li><strong>Clarify only what changes the plan.</strong> Ask at most two inline questions, such as the focal module/protein or whether alternative thresholds are acceptable. Infer everything else from the run.</li>
+  <li><strong>Review a concrete plan.</strong> Show objective, exact run inputs, steps, skills, external sources, output types, estimated time/cost, and known limitations. Let the user edit the objective, scope, thresholds, sources, or budget.</li>
+  <li><strong>Approve.</strong> Approval freezes <code>ResearchScopeManifest</code>, model, source policy, skill versions, and spending ceiling. No networked or computational work begins before this.</li>
+  <li><strong>Observe or leave.</strong> The stepper reports grounding, computation, corroboration, synthesis, packaging, and costs. The user may pause, resume, or stop; closing the view does not abort the job.</li>
+  <li><strong>Review findings.</strong> Result cards lead with decisions and contradictions, not a long essay. Each card expands into pipeline rows, computation records, and external sources.</li>
+  <li><strong>Act.</strong> Re-run the full plan, fork it with changed parameters, open an artifact, export the HTML research package, or start the recommended next investigation.</li>
+</ol>
+</section>
+
+<section id="surface">
+<h2>5. Deep Research UI/UX</h2>
+<div class="diagram" aria-label="Deep Research UI wireframe">
+<div class="mock">
+  <div class="left"><h4>Research jobs</h4><small>Run: Alzheimer cohort 04</small><div class="job active"><b>APOE module robustness</b><br><small>Running · 3/6 · $0.42</small></div><div class="job"><b>Ranked pathway scan</b><br><small>Completed · 8 outputs</small></div><div class="job"><b>Next experiment</b><br><small>Draft plan</small></div><p><span class="pill blue">+ New research</span></p></div>
+  <div><h4>What do you want to decide?</h4><div class="prompt">Is the turquoise module’s APOE / microglia story robust, or is it driven by a few samples and thresholds?</div><h4>Suggested workflows</h4><div class="wf"><div><b>Finding Stress Test</b><br><small>thresholds · leave-one-out · assumptions</small></div><div><b>Module Hub Investigation</b><br><small>kME · centrality · external evidence</small></div></div><div class="plan"><b>Proposed plan</b><div class="step">1. Freeze Stage 1–3 evidence and configs</div><div class="step">2. Recompute sensitivity and influence</div><div class="step">3. Corroborate APOE/microglia claims</div><div class="step">4. Generate evidence cards and package</div><small>Skills: statsmodels, networkx, gget, citation-management<br>Estimate: 6–10 min · cap $1.25</small><br><span class="approve">Approve &amp; run</span></div></div>
+  <div class="right"><h4>Inspector</h4><div class="tabs"><b>Context</b><b>Research</b><b>Skills</b><b>Artifacts</b></div><p><b>Pipeline context</b><br><small>Stage 1: Welch + BH<br>WGCNA: signed / bicor / β 6<br>Stage 2: FET, measured background<br>Stage 3: human marker union</small></p><p><b>Selected evidence</b><br><small>8 artifacts · 42 rows<br>scope hash 31f…a90</small></p><p><b>Limits</b><br><small>n=8/condition<br>missingness filtered<br>association only</small></p></div>
+</div>
+</div>
+<h3>Surface behavior by state</h3>
+<table><thead><tr><th>State</th><th>Center surface</th><th>Primary action</th><th>Right inspector</th></tr></thead><tbody>
+<tr><td>Empty</td><td>Question box + six workflow cards + examples scoped to selected run.</td><td>Start research</td><td>Run card and artifact readiness.</td></tr>
+<tr><td>Scoping</td><td>One or two inline clarifiers; preflight warnings are visible immediately.</td><td>Continue</td><td>Required vs available inputs.</td></tr>
+<tr><td>Plan proposed</td><td>Editable objective and ordered steps with skills, sources, outputs, time, cost.</td><td>Approve &amp; run</td><td>Scope manifest preview and safety policy.</td></tr>
+<tr><td>Queued/running</td><td>Step timeline, concise status, partial artifacts, checkpoint marker, budget.</td><td>Pause / Stop</td><td>Context, operations, skills, artifacts.</td></tr>
+<tr><td>Paused/failed</td><td>Last successful checkpoint and plain-language reason.</td><td>Resume / Retry step</td><td>Failed input/tool details without secrets.</td></tr>
+<tr><td>Completed</td><td>Decision summary, finding cards, contradictions, open questions, next step.</td><td>Open report / Re-run</td><td>Evidence graph, manifest, all artifacts.</td></tr>
+</tbody></table>
+<div class="callout"><strong>Standalone SignalFold surface.</strong> Keep run-scoped workspaces, a workflow launch dialog, parallel durable jobs, shared artifacts, selected model, visible costs, a hard spend cap, and inspectable skills entirely within this repository. Skills are selected through a structured allow-list that the runtime enforces; they are never merely appended to a prompt or discovered from a required external project.</div>
+</section>
+
+<section id="workflows">
+<h2>6. Six launch workflows and tangible outcomes</h2>
+<div class="workflow-grid">
+<article class="card"><h3>1 · Finding Stress Test</h3><p><strong>User asks:</strong> “Does this protein/module/cell-type result survive reasonable analytical choices?”</p><p><strong>Work:</strong> threshold sweep, leave-one-sample-out influence, alternative multiple-testing cutoffs, distribution/assumption checks.</p><p><strong>Skills:</strong> <code>statsmodels</code>, <code>statistical-power</code>, <code>exploratory-data-analysis</code>, <code>matplotlib</code>.</p><p><strong>Outcome:</strong> <em>stable</em>, <em>threshold-sensitive</em>, <em>sample-driven</em>, or <em>insufficient</em>—with sensitivity table and plot.</p></article>
+<article class="card"><h3>2 · Ranked Pathway Investigation</h3><p><strong>User asks:</strong> “What biology appears across the full ranked signal, beyond the arbitrary hit cutoff?”</p><p><strong>Work:</strong> start from Stage 1’s processed ranking; compare SignalFold module ORA with a seeded preranked enrichment path; inspect leading-edge genes.</p><p><strong>Skills:</strong> <code>pathway-enrichment</code>, <code>gget</code>, <code>scientific-visualization</code>.</p><p><strong>Outcome:</strong> convergent and divergent pathways, with an explicit warning that the new ranked analysis is not the same method as Stage 2 FET.</p></article>
+<article class="card"><h3>3 · Module Hub Investigation</h3><p><strong>User asks:</strong> “Which members actually organize this module, and is the hub story credible?”</p><p><strong>Work:</strong> use Stage 1 module assignments/kME and network edges; compare membership, centrality, effect size, and external protein/pathway evidence.</p><p><strong>Skills:</strong> <code>networkx</code>, <code>bioservices</code>, <code>gget</code>, <code>citation-management</code>.</p><p><strong>Outcome:</strong> hub candidates ranked by separate network and biological dimensions—not a single magical score.</p></article>
+<article class="card"><h3>4 · External Protein Evidence</h3><p><strong>User asks:</strong> “What is known about my top proteins in this disease/tissue/context?”</p><p><strong>Work:</strong> bind UniProt/Reactome/KEGG/PubMed evidence to exact Stage 1 rows; map identifiers; record support, contradiction, or no information.</p><p><strong>Skills:</strong> <code>gget</code>, <code>bioservices</code>, <code>database-lookup</code>, <code>citation-management</code>.</p><p><strong>Outcome:</strong> per-protein evidence cards whose first line is the SignalFold observation, not a generic protein biography.</p></article>
+<article class="card"><h3>5 · Run vs Literature Contradiction Check</h3><p><strong>User asks:</strong> “Where does this run disagree with published expectations?”</p><p><strong>Work:</strong> extract directional run claims; search targeted sources; test claim entailment; distinguish tissue/model/cohort differences from genuine conflict.</p><p><strong>Skills:</strong> <code>citation-management</code>, <code>database-lookup</code>, <code>markitdown</code>/<code>liteparse</code> for user papers.</p><p><strong>Outcome:</strong> a contradiction register with plausible explanations and experiments—not forced consensus.</p></article>
+<article class="card"><h3>6 · Power and Next Experiment</h3><p><strong>User asks:</strong> “What follow-up study would most efficiently resolve this uncertainty?”</p><p><strong>Work:</strong> derive effect/variance assumptions from the processed run, calculate or simulate sample size/MDE, propose balanced/randomized designs, expose assumptions.</p><p><strong>Skills:</strong> <code>statistical-power</code>, <code>experimental-design</code>, <code>statsmodels</code>.</p><p><strong>Outcome:</strong> decision table across feasible sample sizes plus a design file; never presented as a guaranteed validation plan.</p></article>
+</div>
+<div class="callout amber"><strong>Later, not v1:</strong> whole-run publication brief, cross-run investigation graph, autonomous multi-agent fan-out, raw LC-MS reprocessing, and single-cell reanalysis. They are valid extensions, but they dilute the fastest proof of value.</div>
+</section>
+
+<section id="deliverables">
+<h2>7. The eight required deliverables</h2>
+<p>A completed job is invalid until all eight slots exist. “Not applicable” is allowed only with a recorded reason.</p>
+<div class="deliverables">
+<div class="card"><h4><span class="num">1</span>Decision summary</h4><p>Three to seven sentences: answer, strongest evidence, most important caveat, and decision implication.</p></div>
+<div class="card"><h4><span class="num">2</span>Research report</h4><p>Self-contained HTML narrative linking every material claim to its evidence card and artifacts.</p></div>
+<div class="card"><h4><span class="num">3</span>Evidence record</h4><p>Machine-readable claims and edges across pipeline, computation, and external evidence.</p></div>
+<div class="card"><h4><span class="num">4</span>Generated artifacts</h4><p>Tables, figures, code/notebooks, parsed attachments, and intermediate outputs worth inspecting.</p></div>
+<div class="card"><h4><span class="num">5</span>Computation manifest</h4><p>Skill/source commit, script, environment, inputs, params, seeds, outputs, hashes, exit, runtime, and cost.</p></div>
+<div class="card"><h4><span class="num">6</span>Re-run action</h4><p>Repeat exactly, or fork with editable parameters; show which external facts may have changed.</p></div>
+<div class="card"><h4><span class="num">7</span>Open questions</h4><p>Unresolved evidence gaps, contradictions, missing metadata, and questions requiring domain review.</p></div>
+<div class="card"><h4><span class="num">8</span>Recommended next step</h4><p>One prioritized action with expected information gain, effort/cost, and stopping rule.</p></div>
+</div>
+</section>
+
+<section id="cards">
+<h2>8. Research cards: dual grounding is a hard rule</h2>
+<p>Cards are not summaries produced from model memory. They are rendered views of a structured claim object. Every run-specific finding begins from what SignalFold actually processed; external research is attached only to the interpretive portion.</p>
+<div class="evidence-card">
+<header><strong>Example: “Turquoise-module microglia interpretation is supported, but sensitivity remains uncertain”</strong><span class="pill amber">interpretation · medium</span></header>
+<div class="body"><p><strong>Decision implication.</strong> Treat the signal as a prioritized hypothesis, not validation; run leave-one-out stability before selecting APOE as the follow-up target.</p>
+<div class="arms"><div class="arm pipeline"><b>Pipeline evidence</b><br><small>Stage 1 module/kME rows + Stage 3 microglia FDR rows; exact configs; file/row IDs and SHA-256.</small></div><div class="arm compute"><b>New computation</b><br><small>Optional influence/sensitivity skill; parameters, seed, environment, outputs and reproducibility result.</small></div><div class="arm external"><b>External evidence</b><br><small>Targeted sources supporting, challenging, or contextualizing the interpretation; PMID/accession and retrieval date.</small></div></div>
+<p><strong>Limitations.</strong> Module membership reflects co-variation; cell-type FET depends on the chosen marker reference and tested universe; the current run does not establish causality.</p></div>
+</div>
+<h3>Claim types and required evidence</h3>
+<table><thead><tr><th>Claim type</th><th>Example</th><th>Required arm(s)</th><th>Permitted language</th></tr></thead><tbody>
+<tr><td><code>observation</code></td><td>“Feature X has log2FC 1.1 and BH-adjusted p 0.03.”</td><td>Pipeline, exact row + processing config.</td><td>“SignalFold reported…”</td></tr>
+<tr><td><code>computation</code></td><td>“The finding remains significant in 7/8 leave-one-out fits.”</td><td>Pipeline + computation.</td><td>“The approved sensitivity analysis found…”</td></tr>
+<tr><td><code>interpretation</code></td><td>“The module is consistent with a microglial process.”</td><td>Pipeline + external; computation when analysis adds support.</td><td>“Consistent with,” “supports,” “suggests.”</td></tr>
+<tr><td><code>hypothesis</code></td><td>“APOE may organize a disease-relevant response.”</td><td>At least pipeline + external, with explicit gaps.</td><td>“Hypothesis,” “candidate,” “requires validation.”</td></tr>
+</tbody></table>
+<h3>Four evidence dimensions—never one synthetic truth score</h3>
+<div class="grid2"><div class="card"><h4>Pipeline support</h4><p>Directness and completeness of the underlying SignalFold rows/configs.</p></div><div class="card"><h4>Analytical robustness</h4><p>Threshold, sample, method, and assumption sensitivity; <em>not run</em> is different from <em>weak</em>.</p></div><div class="card"><h4>External consistency</h4><p>Support, conflict, mixed, context-dependent, or no information.</p></div><div class="card"><h4>Replication status</h4><p>Single run, internal split, independent cohort, or experimentally validated. Default is single run.</p></div></div>
+<p>Use plain verdict tags such as <em>stable</em>, <em>threshold-sensitive</em>, <em>sample-driven</em>, <em>context-dependent</em>, and <em>insufficient evidence</em>. Avoid medical GRADE labels; they imply an evidence hierarchy the product has not established.</p>
+</section>
+
+<section id="prompt">
+<h2>9. Ready-to-implement card-generation prompt</h2>
+<p>The following belongs in the stable Deep Research synthesis policy, backed by schema validation. It explicitly enforces the user’s requirement that cards reflect good research <em>and</em> SignalFold pipeline processing.</p>
+<pre><code>You are the SignalFold Deep Research synthesis writer.
+
+PRIMARY RULE
+Every run-specific claim must be grounded first in the selected SignalFold run and in
+the exact processing that produced it. Do not write a generic scientific interpretation
+when SignalFold pipeline evidence exists. External research may contextualize, support,
+or challenge a pipeline-derived claim; it must never overwrite or silently replace the
+run result.
+
+FOR EACH FINDING CARD
+1. Reconstruct the SignalFold fact:
+   - cite artifact path and row/cell identifiers;
+   - cite the stage configuration and relevant processing method;
+   - preserve the actual comparison direction, scale, thresholds, background universe,
+     multiple-testing scope, module/reference choice, and missing-data behavior;
+   - include the immutable file hash from ResearchScopeManifest.
+2. If a new computation was run, describe it separately:
+   - skill, implementation kind, source revision, provider, script/operation, environment, inputs and hashes;
+   - parameters, random seed, outputs and hashes, exit status, runtime and cost;
+   - whether an exact re-execution check passed.
+3. For biological interpretation, perform targeted external research:
+   - cite stable identifiers (PMID/DOI/accession), retrieval date, and source snapshot;
+   - classify each source as supports, challenges, contextualizes, or no information;
+   - ensure the cited passage actually entails the written claim;
+   - surface contradictions and context differences rather than forcing agreement.
+4. Label the card observation, computation, interpretation, or hypothesis.
+5. Report pipeline support, analytical robustness, external consistency, and replication
+   status as separate dimensions. Never collapse them into one confidence score.
+6. State limitations and a decision implication.
+
+SIGNALFOLD-SPECIFIC GUARDRAILS
+- Stage 1 values come from SignalFold's normalized data and configured Welch t-test or
+  Wilcoxon path, followed by the configured p-value adjustment and fold-change cutoff.
+  Do not describe these results as limma, DESeq2, causal effects, or validated biomarkers.
+- WGCNA modules describe co-variation and are sensitive to sample count, feature filtering,
+  soft power, correlation/network type, module size, tree cut, merge, and grey assignment.
+- Stage 2 uses module over-representation/Fisher exact testing against its configured
+  universe (measured features by default), global BH FDR, a signed FET-derived z score,
+  and optional kappa redundancy removal. Do not call it GSEA unless a separate approved
+  GSEA computation was actually run and clearly labeled as a new method.
+- Stage 3 uses one-sided Fisher exact tests over module genes and the configured cell-marker
+  reference, with BH adjustment within each module. Cell-type enrichment is not measured
+  cell abundance and may reflect marker/reference or tissue mismatch.
+- Missing values are filtered/ignored according to the run configuration; they are not
+  automatically modeled as biological absence.
+- Association is not causation; discovery is not validation; novelty requires a targeted
+  precedent search and human review.
+
+OUTPUT CONTRACT
+Return schema-valid finding cards only. If any material statement lacks the required arm,
+mark it unsupported and move it to Open Questions. If no new computation, corroboration,
+or contradiction was produced, mark the job Standard-equivalent.</code></pre>
+</section>
+
+<section id="pipeline">
+<h2>10. Pipeline-aware grounding map</h2>
+<table><thead><tr><th>Pipeline evidence</th><th>What cards may say</th><th>Processing details that must travel with it</th><th>Common overclaim to block</th></tr></thead><tbody>
+<tr><td><code>stage1/normalized_matrix.csv</code><br><code>analysis_summary.json</code><br><code>config_stage1.json</code></td><td>Which processed values entered DE/network work; sample/feature counts.</td><td>Filtering, log handling, normalization, group definitions, retained samples/features.</td><td>“Raw abundance” when values are transformed/normalized; absence from missingness.</td></tr>
+<tr><td><code>stage1/volcano_results.tsv</code></td><td>Feature/gene, log2FC, raw/adjusted p, significance and direction.</td><td>Welch vs Wilcoxon, BH/Bonferroni, adjusted-vs-raw decision metric, p and fold cutoff, contrast direction.</td><td>limma/DESeq2; causal effect; biomarker validation.</td></tr>
+<tr><td><code>stage1/module_assignments.csv</code><br><code>module_trait_cor.csv</code><br><code>network_edges.csv</code></td><td>Module, kME, alternative membership, quality, module-trait association and network neighborhood.</td><td>WGCNA feature cap, power, signed/unsigned, bicor/Pearson, min size, split/merge, grey/unassigned behavior.</td><td>Regulation or causal hub from co-expression alone.</td></tr>
+<tr><td><code>stage2/go_enrichment_all.csv</code><br><code>go_summary.json</code></td><td>Module-term overlap, FET p/FDR, signed z score, hit genes, redundancy-pruned view.</td><td>Local GMT/version, ontology categories, measured-vs-GMT universe, global FDR, min hits, kappa mode.</td><td>Calling ORA “GSEA”; treating enrichment as pathway activation.</td></tr>
+<tr><td><code>stage3/celltype_heatmap_data.csv</code><br><code>celltype_summary.json</code></td><td>Module × cell-type enrichment p/FDR and −log10 FDR.</td><td>Marker source/reference/species, duplicate handling, universe, per-module BH scope.</td><td>Measured cell fraction, lineage composition, or cell causality.</td></tr>
+</tbody></table>
+<p>Implementation references: Stage 1 loads configuration and WGCNA controls at <code>backend/r_scripts/stage1_parity.R:314-346</code>, processes/normalizes at <code>:405-434</code>, and performs DE at <code>:436-489</code>. Stage 2 constructs its universe and FET at <code>backend/services/pipeline_stage2.py:302-371</code> and writes the tested/redundancy views at <code>:402-427</code>. Stage 3 constructs marker-set FET and within-module BH results at <code>backend/services/pipeline_stage3.py:248-307</code>.</p>
+<div class="callout"><strong>Grounding improvement after v1.</strong> Keep Standard’s current family selection and bounded retrieval intact. Deep Research can add query-aware row ranking, cross-artifact joins, and step-specific retrieval as additive capabilities, but these should build on one index and one citation model—not a fork.</div>
+</section>
+
+<section id="architecture">
+<h2>11. Target architecture</h2>
+<figure class="diagram">
+<svg viewBox="0 0 1100 560" role="img" aria-label="Deep Research target architecture">
+<defs><marker id="a2" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#52647e"/></marker></defs>
+<g font-family="system-ui" fill="#172033"><rect x="18" y="18" width="1064" height="524" rx="18" fill="#f8fafc" stroke="#cbd5e1"/>
+<g font-size="14" text-anchor="middle"><rect x="48" y="72" width="180" height="80" rx="10" fill="#edf3ff" stroke="#2457d6"/><text x="138" y="104" font-weight="700">Deep Research UI</text><text x="138" y="128">plans · jobs · findings</text>
+<rect x="300" y="54" width="220" height="116" rx="10" fill="#fff" stroke="#64748b"/><text x="410" y="85" font-weight="700">Research job service</text><text x="410" y="111">state · budgets · checkpoints</text><text x="410" y="135">events · artifacts · re-runs</text>
+<rect x="590" y="48" width="235" height="128" rx="10" fill="#edf3ff" stroke="#2457d6"/><text x="708" y="77" font-weight="700">Shared grounding service</text><text x="708" y="102">run card · artifact index</text><text x="708" y="126">routing/BM25 · row citations</text><text x="708" y="150">ResearchScopeManifest</text>
+<rect x="875" y="72" width="170" height="80" rx="10" fill="#fff" stroke="#64748b"/><text x="960" y="104" font-weight="700">Run artifacts</text><text x="960" y="128">Stage 1 · 2 · 3 + config</text>
+<rect x="300" y="238" width="220" height="116" rx="10" fill="#f3efff" stroke="#6d3bd1"/><text x="410" y="269" font-weight="700">Plan executor</text><text x="410" y="295">single grounded writer</text><text x="410" y="319">bounded step orchestration</text><text x="410" y="343">structured outputs</text>
+<rect x="590" y="220" width="235" height="152" rx="10" fill="#fff7e8" stroke="#a15c00"/><text x="708" y="249" font-weight="700">run_skill tool</text><text x="708" y="275">manifest validation</text><text x="708" y="299">explicit I/O + resource limits</text><text x="708" y="323">provider + environment</text><text x="708" y="347">hash + register outputs</text>
+<rect x="875" y="238" width="170" height="116" rx="10" fill="#fff" stroke="#64748b"/><text x="960" y="269" font-weight="700">Skill Platform</text><text x="960" y="295">repo-hosted catalog</text><text x="960" y="319">native + third-party</text><text x="960" y="343">SF wrappers/providers</text>
+<rect x="590" y="426" width="235" height="82" rx="10" fill="#eaf8f1" stroke="#18794e"/><text x="708" y="457" font-weight="700">Curated research adapters</text><text x="708" y="482">cache · quotas · snapshots · IDs</text>
+<rect x="300" y="426" width="220" height="82" rx="10" fill="#fff" stroke="#64748b"/><text x="410" y="457" font-weight="700">Evidence/package builder</text><text x="410" y="482">cards · 8 outputs · RO-Crate-like</text>
+</g>
+<g stroke="#52647e" stroke-width="1.6" marker-end="url(#a2)" fill="none"><line x1="228" y1="112" x2="290" y2="112"/><line x1="520" y1="112" x2="580" y2="112"/><line x1="825" y1="112" x2="865" y2="112"/><line x1="410" y1="170" x2="410" y2="228"/><line x1="520" y1="296" x2="580" y2="296"/><line x1="825" y1="296" x2="865" y2="296"/><line x1="708" y1="372" x2="708" y2="416"/><line x1="590" y1="467" x2="530" y2="467"/><line x1="410" y1="416" x2="410" y2="364"/></g>
+</g></svg>
+<figcaption>One writer, one shared grounding substrate, one constrained skill interface, and two provenance-bearing evidence sources.</figcaption>
+</figure>
+<h3>Component boundaries</h3>
+<table><thead><tr><th>Component</th><th>Owns</th><th>Does not own</th></tr></thead><tbody>
+<tr><td><code>grounding/</code> (extract from <code>standard-grounding.ts</code>)</td><td>Artifact index, run card, intent/BM25 retrieval, row citations, budgets, scope manifests.</td><td>Research job state, LLM prose, scientific computation.</td></tr>
+<tr><td><code>research/jobs</code></td><td>Lifecycle, plans, approvals, checkpoints, spend/time limits, events, stop/resume/retry.</td><td>Arbitrary shell access or evidence interpretation.</td></tr>
+<tr><td><code>research/skill-runner</code></td><td>Manifest validation, provider lifecycle, adapters, execution isolation, environment, hashes and output registration.</td><td>Choosing scientific conclusions or embedding provider-specific behavior in research plans.</td></tr>
+<tr><td><code>ai-sidecar/skills/</code> + <code>ai-sidecar/src/skills/</code></td><td>Repository-owned native and imported third-party skill packages, manifests, wrapper providers, readiness checks and provenance.</td><td>Runtime auto-update, user-turn installation, or a required external skill repository.</td></tr>
+<tr><td><code>research/evidence</code></td><td>Claim schema, evidence edges, source snapshots, entailment status, card validation.</td><td>Invented citations or implicit confidence aggregation.</td></tr>
+<tr><td><code>research/package</code></td><td>Eight deliverables and human-readable HTML; future RO-Crate-compatible export.</td><td>Core pipeline reruns.</td></tr>
+</tbody></table>
+</section>
+
+<section id="skills">
+<h2>12. The repository-owned Skill Platform: 17 initial skills, native growth, third-party providers</h2>
+<p>The selected 17 remain the relevant curated starting set. Their complete reviewed runtime assets live inside this repository, so a SignalFold checkout is independently buildable and runnable without cloning or mounting another project. Inclusion in the catalog does not mean every skill is enabled in v1 or called in every job. Imported third-party Python should remain unchanged where practical, while SignalFold owns the manifest, wrapper, input preparation, execution policy, output collection and provenance contract around it.</p>
+<div class="callout green"><strong>The long-term abstraction is a SignalFold Skill Platform, not a one-time vendoring mechanism.</strong> It must treat pipeline-native skills as first-class capabilities, support repository-hosted third-party implementations today, and allow later execution providers such as containers or remote vendor APIs without changing research plans, evidence cards, or the <code>run_skill</code> tool contract.</div>
+<table><thead><tr><th>Skill</th><th>Deep Research role</th><th>Execution status</th><th>Adaptation / release</th></tr></thead><tbody>
+<tr><td><code>pyopenms</code></td><td>Raw/consensus LC-MS inspection and quantitation lineage.</td><td>Runnable, heavy.</td><td>Catalog now; defer product execution until raw-data workflow. Imported Python unchanged.</td></tr>
+<tr><td><code>pydeseq2</code></td><td>Alternative count-model analysis where input semantics truly fit.</td><td>Runnable; method mismatch for generic intensities.</td><td>Catalog, disabled by default; never relabel Stage 1 results as DESeq2.</td></tr>
+<tr><td><code>pathway-enrichment</code></td><td>ORA and seeded preranked GSEA follow-up.</td><td>Runnable; optional network.</td><td>v1, local GMT first; clearly label as new computation distinct from Stage 2.</td></tr>
+<tr><td><code>scanpy</code></td><td>Single-cell/pseudobulk reference workflows.</td><td>Runnable; largely out-of-domain for bulk proteomics.</td><td>Catalog; defer until actual cell-level input exists. Do not apply to Stage 3 FET output.</td></tr>
+<tr><td><code>statistical-power</code></td><td>Power, sample size, MDE, seeded simulations.</td><td>Runnable.</td><td>v1/1.1 for Power and Next Experiment.</td></tr>
+<tr><td><code>experimental-design</code></td><td>Balanced/block/randomized follow-up schedules.</td><td>Runnable; seed discipline needed.</td><td>v1.1; wrapper requires explicit seed and records unsupported paths.</td></tr>
+<tr><td><code>statsmodels</code></td><td>GLM/mixed-model/FDR reference and approved native wrappers.</td><td>Imported reference-only package.</td><td>v1 contract/profile; any executable analysis is a separate SignalFold-native adapter.</td></tr>
+<tr><td><code>networkx</code></td><td>Module graph centrality/community calculations.</td><td>Imported reference-only package.</td><td>v1 native thin script may use library; retain the in-repository reference package unchanged.</td></tr>
+<tr><td><code>gget</code></td><td>Fast Ensembl/UniProt/OpenTargets/Enrichr lookups.</td><td>Runnable, network/live state.</td><td>v1 through external-lookup controls; snapshot responses.</td></tr>
+<tr><td><code>bioservices</code></td><td>Identifier mapping and UniProt/Reactome/KEGG/QuickGO workflows.</td><td>Runnable, network/live jobs.</td><td>v1 through allow-listed adapters, cache, quota, timeout and circuit breaker.</td></tr>
+<tr><td><code>database-lookup</code></td><td>Database selection and provenance contract.</td><td>Reference-only.</td><td>v1; informs source adapter metadata and prompt policy.</td></tr>
+<tr><td><code>citation-management</code></td><td>PubMed search, metadata, DOI/PMID checking.</td><td>Runnable, network.</td><td>v1 through the NCBI adapter; stable IDs and snapshots required.</td></tr>
+<tr><td><code>scientific-visualization</code></td><td>Publication-oriented styles and export.</td><td>Runnable, deterministic.</td><td>v1 for figures; validate output dimensions and MIME.</td></tr>
+<tr><td><code>matplotlib</code></td><td>General plots for sensitivity and findings.</td><td>Runnable; one interactive script unsuitable.</td><td>v1 allow-list only noninteractive entrypoints; fixed seeds.</td></tr>
+<tr><td><code>exploratory-data-analysis</code></td><td>Missingness and quality characterization.</td><td>Runnable, deterministic.</td><td>v1; adapter maps canonical matrices and stage tables.</td></tr>
+<tr><td><code>markitdown</code></td><td>Convert user-provided papers/docs to text.</td><td>Runnable; some scripts call an LLM.</td><td>v1 only deterministic local converters; exclude AI/OpenRouter scripts.</td></tr>
+<tr><td><code>liteparse</code></td><td>Offline parsing with bounding boxes/page images.</td><td>Runnable, local.</td><td>v1.1 for page-grounded attachment citations.</td></tr>
+</tbody></table>
+<h3>Repository layout, wrapper providers, and manifest contract</h3>
+<pre class="schema"><code>ai-sidecar/
+  skills/
+    native/                       # SignalFold pipeline-aware skills
+      stage1-finding-stability/
+      module-hub-analysis/
+    third_party/                  # reviewed imported implementations, stored in-repo
+      pathway-enrichment/
+      exploratory-data-analysis/
+  src/skills/
+    catalog.ts                    # validates manifests and exposes readiness
+    runner.ts                     # provider-neutral run_skill orchestration
+    providers/
+      python-script.ts            # local imported/native Python
+      signalfold-pipeline.ts       # typed access to run artifacts and pipeline semantics
+      container.ts                # future isolated package provider
+      remote-api.ts               # future traditional third-party service provider
+    adapters/                     # canonical inputs and validated outputs
+    provenance.ts                 # hashes, versions, environment and execution records</code></pre>
+<p>Every provider implements the same lifecycle: <code>preflight → prepareInputs → execute → collectOutputs → recordProvenance</code>. Research plans refer to a stable skill capability and parameters, not to Python, a container, or a vendor endpoint. The provider registry resolves the approved implementation. This keeps native SignalFold skills free to call typed pipeline-specific operations while third-party providers remain behind the same security, artifact and evidence boundaries.</p>
+<pre class="schema"><code>{
+  "id": "pathway-enrichment",
+  "catalogVersion": "1.0.0",
+  "kind": "third-party",
+  "source": {"storage":"repository","revision":"&lt;reviewed-source-revision&gt;","license":"&lt;SPDX&gt;"},
+  "provider": {"type":"python-script","implementation":"third_party/pathway-enrichment"},
+  "entrypoints": [{
+    "id":"run-enrichment", "script":"scripts/run_enrichment.py",
+    "inputs":{"ranking":{"families":["differential-expression"],"required":true},"gmt":{"required":true}},
+    "parameters":{"method":{"enum":["ora","preranked-gsea"]},"seed":{"type":"integer","required":true}},
+    "outputs":[{"glob":"*.csv","kind":"research-table"},{"glob":"*.png","kind":"research-figure"}],
+    "network":{"policy":"none-or-curated"}, "resources":{"cpu":2,"memoryMb":4096,"timeoutSec":600}
+  }]
+}</code></pre>
+<p><code>run_skill</code> receives only <code>jobId</code>, <code>stepId</code>, <code>skillId</code>, <code>entrypoint</code>, manifest-selected inputs, and validated parameters. It resolves the approved provider, creates an isolated work directory where applicable, applies pre-adapters, invokes the repository-hosted implementation or typed provider, captures execution/runtime/environment details, validates postconditions, hashes every input/output, registers artifacts, and emits a computation record. The model should not construct free-form shell commands for product jobs.</p>
+</section>
+
+<section id="jobs">
+<h2>13. Durable research jobs, APIs, and records</h2>
+<div class="state"><span>draft</span><i>→</i><span>scoping</span><i>→</i><span>plan_proposed</span><i>→</i><span>approved</span><i>→</i><span>queued</span><i>→</i><span>running</span><i>→</i><span>completed</span></div>
+<p class="muted">From <code>running</code>: <code>paused → queued</code>, <code>stopped</code>, or <code>failed → queued</code> at a safe checkpoint. Stopped is terminal but forkable; paused preserves an approved job for resumption.</p>
+<h3>Proposed endpoints</h3>
+<table><thead><tr><th>Endpoint</th><th>Purpose</th></tr></thead><tbody>
+<tr><td><code>GET /api/research/workflows</code><br><code>GET /api/research/skills</code></td><td>Versioned launch catalog, readiness, execution/network tier and required artifacts.</td></tr>
+<tr><td><code>POST /api/research/jobs</code></td><td>Create draft from run, question/workflow, model and initial budget.</td></tr>
+<tr><td><code>POST /api/research/jobs/:id/plan</code><br><code>PATCH /api/research/jobs/:id/plan</code></td><td>Generate and edit a schema-valid plan without executing it.</td></tr>
+<tr><td><code>POST /api/research/jobs/:id/approve</code></td><td>Freeze plan, scope manifest, source/skill versions, and limits.</td></tr>
+<tr><td><code>POST /api/research/jobs/:id/run</code></td><td>Queue an approved job; idempotency key prevents double launches.</td></tr>
+<tr><td><code>GET /api/research/jobs/:id</code><br><code>GET /api/research/jobs/:id/events</code></td><td>Durable snapshot and resumable SSE event stream.</td></tr>
+<tr><td><code>POST /api/research/jobs/:id/pause|resume|stop</code></td><td>Cooperative lifecycle control at defined checkpoints.</td></tr>
+<tr><td><code>POST /api/research/jobs/:id/retry-step</code><br><code>POST /api/research/jobs/:id/rerun</code></td><td>Retry a failed idempotent step, repeat exactly, or fork edited parameters.</td></tr>
+</tbody></table>
+<h3>Data model</h3>
+<table><thead><tr><th>Record</th><th>Essential fields</th></tr></thead><tbody>
+<tr><td><code>ai_research_jobs</code></td><td>ID, owner/workspace/run, conversation, workflow/version, objective, state, model, plan JSON/version, scope-manifest hash/path, source policy, skill allow-list, budget/spend, timestamps, checkpoint, error, parent job.</td></tr>
+<tr><td><code>ai_research_steps</code></td><td>Job, ordinal/type, state/attempt, dependency IDs, input/output refs, skill/entrypoint, parameters, checkpointability, timestamps, usage/cost, error.</td></tr>
+<tr><td><code>ai_research_claims</code></td><td>Job, card ID, claim type/text, decision implication, limitations, pipeline/robustness/external/replication dimensions, verdict.</td></tr>
+<tr><td><code>ai_research_evidence</code></td><td>Claim, arm, relation, artifact/row IDs or computation/source snapshot ID, quoted span locator, entailment status, hash.</td></tr>
+<tr><td><code>ai_research_computations</code></td><td>Job/step, skill catalog version, implementation kind, source revision, provider/script/operation, environment digest, params/seed, input/output hashes, exit, duration, resource usage and deterministic rerun result.</td></tr>
+<tr><td>Existing <code>ai_artifacts</code> and operation events</td><td>Reuse for registered output files and detailed OCC trace; add job/step linkage rather than duplicating storage.</td></tr>
+</tbody></table>
+<div class="callout amber"><strong>Runtime change required.</strong> Today the sidecar turn is synchronous SSE with a default 180-second timeout (<code>ai-sidecar/src/config.ts:74</code>; <code>server.ts:370</code>). Research jobs must be owned by a server-side queue/worker and persisted independently of the HTTP connection. The existing Pi session and operation events remain useful inside each step.</div>
+</section>
+
+<section id="security">
+<h2>14. Security, trust, and reproducibility boundaries</h2>
+<ul>
+  <li><strong>Read-only run inputs.</strong> Skills receive copied or mounted immutable artifacts selected by the manifest. They never modify Stage 1–3 outputs.</li>
+  <li><strong>Review-gated, repository-owned catalog.</strong> No cloning, installing, or updating third-party skills during a user turn. Imported implementations enter the repository only after license/security review and fixture tests; native SignalFold skills pass the same manifest and quality gates.</li>
+  <li><strong>Structured capabilities.</strong> Product jobs expose <code>run_skill</code>, curated lookup tools, read-scoped evidence access, and artifact registration—not generic <code>bash/write/edit</code>. Developer mode may retain generic tools outside the supported product path.</li>
+  <li><strong>Network tiers.</strong> Offline skills first. Networked skills use domain allow-lists, cache, quotas, timeout/circuit breaker, response-size limits, source snapshots, and secrets kept outside prompts/logs.</li>
+  <li><strong>Untrusted external content.</strong> Retrieved papers/pages and parsed attachments are evidence, never instructions. Quarantine them from system/skill policies.</li>
+  <li><strong>Content addressing.</strong> Hash inputs, outputs, source snapshots, plan, manifest, and report. Record tool/library versions and environment/image digest.</li>
+  <li><strong>Single-user first.</strong> The present developer-local executor is acceptable for proving value on the owner’s machine. Multi-user release is blocked on process/container isolation, quotas, tenant boundaries, and abuse tests.</li>
+</ul>
+<p>The provenance shape should map naturally to W3C PROV’s Entity–Activity–Agent model, while the exported package can later adopt an RO-Crate profile for data, workflows, scripts, provenance, and a human-readable HTML preview.</p>
+</section>
+
+<section id="implementation">
+<h2>15. Detailed implementation sequence and exit gates</h2>
+<div class="phase"><h3>Phase 0 · Share the latest grounding substrate <span class="pill red">must be first</span></h3><ul><li>Add characterization tests for Standard keyword routes, explicit lookups, BM25 fallback, citation rows, token budgets, and no-evidence definitional questions.</li><li>Extract artifact indexing, run-card construction, classification/ranking, row selection and citations into policy-neutral modules.</li><li>Keep <code>buildStandardGrounding</code> as a compatibility facade.</li><li>Add <code>buildResearchScopeManifest(runId, question, plan)</code> with config discovery, hashes, exclusions, and immutable artifact/row refs.</li><li>Switch Deep Research away from <code>groundingSnapshot</code>; retain broad snapshot only as a deprecated fallback until tests prove parity, then remove it from active policy.</li></ul><p class="exit"><strong>Exit:</strong> all existing Standard grounding tests are unchanged/passing; Deep Research test proves it selects relevant evidence and exact configs instead of the first 180 KB.</p></div>
+<div class="phase"><h3>Phase 1 · Job skeleton and plan approval</h3><ul><li>Add job/step tables, schemas, repository and state-transition tests.</li><li>Implement workflow catalog for Finding Stress Test and Ranked Pathway Investigation first.</li><li>Add preflight and plan JSON schema; plan generation cannot call execution tools.</li><li>Add draft/plan/approve/run/read/events/pause/resume/stop endpoints.</li><li>Introduce worker loop with leases, idempotent steps, heartbeats and checkpoints.</li></ul><p class="exit"><strong>Exit:</strong> a job can be planned, edited, approved, queued, observed, paused, resumed and stopped across a server restart—using a no-op fixture step.</p></div>
+<div class="phase"><h3>Phase 2 · Repository-owned Skill Platform v0 and wrapper layer</h3><ul><li>Create the in-repository <code>native/</code> and <code>third_party/</code> catalog layout plus the provider-neutral wrapper interfaces. Import reviewed implementations for <code>exploratory-data-analysis</code>, <code>pathway-enrichment</code>, and <code>matplotlib</code>/<code>scientific-visualization</code> as the first third-party packages.</li><li>Add the <code>signalfold.skill.json</code> schema, catalog loader, readiness diagnostics, license/source lineage and provider registry.</li><li>Implement <code>python-script</code> and <code>signalfold-pipeline</code> providers first, with common pre/post adapters, resource limits, environment locks, hashes and artifact registration. Keep <code>container</code> and <code>remote-api</code> as explicit extension points rather than premature implementations.</li><li>Add at least one native pipeline-specific fixture skill so the abstraction proves that native capabilities are not second-class wrappers around imported Python.</li><li>Create small frozen run fixtures and golden expected invariants—do not overfit exact floating-point images.</li></ul><p class="exit"><strong>Exit:</strong> the same approved <code>run_skill</code> contract executes one reviewed repository-hosted third-party implementation and one native SignalFold pipeline skill, producing registered artifacts and complete computation manifests; a re-run either matches hashes or explains approved nondeterminism.</p></div>
+<div class="phase"><h3>Phase 3 · Evidence cards and eight-output package</h3><ul><li>Implement claim/evidence JSON schemas and validators for required arms by claim type.</li><li>Implement the synthesis prompt in §9 and reject/repair schema-invalid output.</li><li>Render decision-first cards, evidence expansion, dimension labels, contradictions, limitations and unsupported/open questions.</li><li>Build the HTML report, evidence JSON, manifest, artifact index and re-run spec.</li><li>Add marginal-value classification: differentiated vs Standard-equivalent.</li></ul><p class="exit"><strong>Exit:</strong> golden jobs cannot emit a biological interpretation without pipeline rows/config and external evidence; all eight outputs exist and link consistently.</p></div>
+<div class="phase"><h3>Phase 4 · Curated external research</h3><ul><li>Wire <code>citation-management</code>, <code>gget</code>, <code>bioservices</code> and database-lookup policy through existing or generalized external lookup controls.</li><li>Add stable identifiers, retrieval dates, bounded snapshots, source hashes, entailment relation and contradiction classification.</li><li>Add adversarial tests for prompt injection in abstracts/pages/attachments and fake/mismatched citations.</li></ul><p class="exit"><strong>Exit:</strong> External Protein Evidence and Contradiction Check complete with auditable source snapshots, no direct arbitrary web tool, and deliberate “no information” results.</p></div>
+<div class="phase"><h3>Phase 5 · Full Deep Research surface</h3><ul><li>Add left job rail, central state-specific workspace, right four-tab inspector, workflow launch dialog, inline clarifiers and editable plan.</li><li>Add reconnecting SSE, background status, cost/time progress, artifact preview, stop/resume/retry and re-run/fork.</li><li>Preserve Standard chat as the default fast surface.</li><li>Run keyboard, responsive, dark mode, long-job, reconnect and empty/error state browser tests.</li></ul><p class="exit"><strong>Exit:</strong> a researcher can complete the full sequence in §4 without opening OCC or the filesystem; every number in a card is traceable from the inspector.</p></div>
+<div class="phase"><h3>Phase 6 · Remaining workflows and production gate</h3><ul><li>Add Module Hub, Power/Next Experiment, attachment parsing, and remaining catalog skills according to readiness.</li><li>Benchmark quality, latency, cost, re-execution and user actions on real saved runs.</li><li>Only before multi-user launch: isolate execution, enforce tenant/resource/network boundaries, secure secrets, and load/abuse test.</li></ul><p class="exit"><strong>Exit:</strong> ROI and scientific-quality gates below pass; product documentation states enabled skills and limitations truthfully.</p></div>
+</section>
+
+<section id="tests">
+<h2>16. Test and evaluation plan</h2>
+<table><thead><tr><th>Layer</th><th>Required checks</th></tr></thead><tbody>
+<tr><td>Grounding regression</td><td>Existing Standard routing/BM25/citation snapshots; Deep scope relevance; config inclusion; file/row hashes; deterministic budgets.</td></tr>
+<tr><td>Pipeline semantics</td><td>Contrast direction, transform/normalization, Welch/Wilcoxon and FDR labels, WGCNA configuration, Stage 2 universe/FDR scope, Stage 3 marker/reference/FDR scope.</td></tr>
+<tr><td>Skill contracts</td><td>Manifest schema, path traversal, missing inputs, parameter bounds, timeout/memory, network denial, output validation, exit handling, hashes, seeds.</td></tr>
+<tr><td>Job lifecycle</td><td>Transition matrix, duplicate launch, worker crash/lease expiry, pause/resume, stop, retry, reconnect, restart recovery, cap enforcement.</td></tr>
+<tr><td>Evidence quality</td><td>Claim-to-row citation precision/recall, citation entailment, unsupported-claim rate, contradiction recall, pipeline-method mislabel rate, causal/validation language violations.</td></tr>
+<tr><td>Reproducibility</td><td>Exact rerun for deterministic fixtures; documented nondeterminism for live sources; source snapshot replay; manifest completeness.</td></tr>
+<tr><td>Security</td><td>Untrusted content injection, secret leakage, arbitrary command/path access, disallowed egress, oversized outputs, malicious skill fixture.</td></tr>
+<tr><td>Browser/UX</td><td>Plan edit/approve, progress, background/reconnect, cost cap, errors, artifact preview, evidence expansion, keyboard/mobile/dark mode.</td></tr>
+</tbody></table>
+<h3>Golden evaluation set</h3>
+<p>Freeze a small set of representative completed runs and expert-authored claim graphs: clear DE, no significant DE, fragile small-n result, stable module hub, enrichment driven by background choice, marker-reference caveat, run/literature agreement, and deliberate contradiction. Store expected artifact families/rows, required caveats, forbidden claims, and deterministic skill invariants. The model must not grade itself; automate structural checks and use domain review for interpretation/hypothesis quality.</p>
+</section>
+
+<section id="roi">
+<h2>17. ROI and practicality gates</h2>
+<table><thead><tr><th>Metric</th><th>First useful target</th><th>Why it matters</th></tr></thead><tbody>
+<tr><td>Plan-to-completion rate</td><td>≥80% on enabled fixture/owner jobs</td><td>Proves workflows are operational, not demos.</td></tr>
+<tr><td>Eight-output completeness</td><td>100%</td><td>Makes every job inspectable and reusable.</td></tr>
+<tr><td>Pipeline-method mislabeling</td><td>0 in golden set</td><td>Protects scientific trust.</td></tr>
+<tr><td>Unsupported material claims</td><td>&lt;5%; 0 confident unsupported</td><td>Measures the card contract.</td></tr>
+<tr><td>Deterministic re-execution</td><td>≥95% exact on deterministic skills</td><td>Proves computation provenance is real.</td></tr>
+<tr><td>Differentiated jobs</td><td>≥70% create computation, corroboration, or contradiction beyond Standard</td><td>Prevents an expensive report-writing mode.</td></tr>
+<tr><td>Median owner workflow</td><td>&lt;10 minutes; visible cap before approval</td><td>Keeps interaction practical.</td></tr>
+<tr><td>User action rate</td><td>Track artifact opened, rerun/fork, export, next step accepted</td><td>Measures decision value rather than prose length.</td></tr>
+</tbody></table>
+<div class="callout green"><strong>Cheapest credible proof.</strong> Phase 0–3 with two workflows and three runnable offline skills is enough to demonstrate the moat: a private-run-aware, reproducible follow-up that generic research products cannot produce. Network breadth and all 17 skills can follow only when they improve real decisions.</div>
+</section>
+
+<section id="codemap">
+<h2>18. Implementation code map</h2>
+<table><thead><tr><th>If you want to…</th><th>Start here</th><th>Then inspect/change</th></tr></thead><tbody>
+<tr><td>Share the latest grounding</td><td><code>ai-sidecar/src/standard-grounding.ts:192</code></td><td><code>artifact-index.ts</code>; <code>run-card.ts</code>; <code>runtime.ts:237</code>; grounding tests</td></tr>
+<tr><td>Remove old Deep broad snapshot</td><td><code>ai-sidecar/src/runtime.ts:237-261</code></td><td><code>run-catalog.ts:80-111</code>; operation provenance; prompt composition tests</td></tr>
+<tr><td>Add product-safe skill execution</td><td><code>ai-sidecar/src/runtime.ts:130-150</code></td><td><code>runtime.ts:330-406</code>; new catalog/runner/manifests; existing save-artifact path</td></tr>
+<tr><td>Add durable jobs</td><td><code>ai-sidecar/src/server.ts:339-434</code></td><td>new research routes/service/worker; SQLite schema; reconnecting SSE tests</td></tr>
+<tr><td>Render Deep Research</td><td><code>frontend/modules/chat.js</code> <span class="pill amber">explicitly in scope only when implementation begins</span></td><td><code>frontend/index.html</code>/<code>app.js</code>; new research module/styles; browser tests</td></tr>
+<tr><td>Respect Stage 1 semantics</td><td><code>backend/r_scripts/stage1_parity.R:314-346</code></td><td><code>:405-505</code>; Stage 1 summaries/configs; science doc</td></tr>
+<tr><td>Respect Stage 2 semantics</td><td><code>backend/services/pipeline_stage2.py:302-371</code></td><td><code>:402-427</code>; GO summary/config; local GMT metadata</td></tr>
+<tr><td>Respect Stage 3 semantics</td><td><code>backend/services/pipeline_stage3.py:248-307</code></td><td><code>celltype_summary.json</code>; marker reference metadata</td></tr>
+</tbody></table>
+<p class="muted">Ownership note: this plan crosses the separately maintained AI chat subsystem. The user has requested the hand-off design, not implementation changes yet. A future implementation session should treat the request to begin as explicit authorization and still keep changes incremental and test-gated.</p>
+</section>
+
+<section id="decisions">
+<h2>19. Defaults and decisions still open</h2>
+<table><thead><tr><th>Decision</th><th>Recommended default</th><th>When it must be revisited</th></tr></thead><tbody>
+<tr><td>First workflows</td><td>Finding Stress Test + Ranked Pathway Investigation.</td><td>If owner’s real priority is external protein evidence; swap the second, not the foundation.</td></tr>
+<tr><td>Job concurrency</td><td>One running job per user/run, two queued; no parallel steps in v1.</td><td>Only after cost/worker stability data.</td></tr>
+<tr><td>Clarifiers</td><td>Maximum two, only if the answer changes scope or method.</td><td>Workflow-specific required fields may replace questions.</td></tr>
+<tr><td>Catalog scope</td><td>Host all 17 inside this repository with readiness, license and source metadata; enable only reviewed workflow entrypoints. Add native SignalFold skills through the same catalog.</td><td>At each release gate.</td></tr>
+<tr><td>Imported Python changes</td><td>Keep reviewed third-party Python unchanged where practical. Use SignalFold wrappers and pre/post adapters; track an in-repo overlay patch only as a last resort.</td><td>When a third-party defect blocks a high-value workflow.</td></tr>
+<tr><td>External sources</td><td>Curated source adapters, off until approved in the plan; store bounded snapshots.</td><td>When licensing, API terms, or production privacy changes.</td></tr>
+<tr><td>Report packaging</td><td>HTML + JSON evidence/manifests + files; RO-Crate-inspired now, formal profile later.</td><td>When interop/export is demanded.</td></tr>
+<tr><td>Confidence</td><td>Four separate dimensions and plain verdict tags.</td><td>Only after scientific validation of any composite score.</td></tr>
+</tbody></table>
+<div class="callout"><strong>No blocking product question remains for Phase 0.</strong> The shared-grounding extraction, behavior-freezing tests, and ResearchScopeManifest are safe to begin once the user gives the go-ahead. The workflow ordering can be confirmed before Phase 1 without wasting Phase 0 work.</div>
+</section>
+
+<section id="references">
+<h2>20. Research and design references</h2>
+<ul>
+  <li>Langfelder &amp; Horvath, <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC2631488/">WGCNA: an R package for weighted correlation network analysis</a> (2008)—modules, eigengenes, membership and trait relationships; supports careful co-expression language.</li>
+  <li>Subramanian et al., <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC1239896/">Gene set enrichment analysis</a> (2005)—basis for a distinct ranked-list follow-up, not a relabeling of SignalFold Stage 2 ORA.</li>
+  <li>W3C, <a href="https://www.w3.org/TR/prov-o/">PROV-O</a>—Entity, Activity and Agent model used to shape evidence/computation provenance.</li>
+  <li>RO-Crate community, <a href="https://www.researchobject.org/ro-crate/specification/1.2/index.html">RO-Crate 1.2</a> (2025)—portable metadata for data entities, workflows/scripts, provenance and HTML preview.</li>
+  <li>Wilkinson et al., <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4792175/">FAIR Guiding Principles</a> (2016)—findable, accessible, interoperable and reusable research objects.</li>
+  <li>Repository grounding: <code>docs/explanations/features/ai-insights-deep-research-brainstorm.html</code>, <code>docs/scientific-agents-profiles.html</code>, <code>docs/explanations/the-science-of-signalfold.html</code>, and the live files cited in §10/§18.</li>
+</ul>
+</section>
+
+<section id="acceptance">
+<h2>21. Definition of done for the first useful release</h2>
+<ul class="checklist">
+  <li>Standard grounding behavior is preserved and Deep Research uses the same current index/retrieval substrate.</li>
+  <li>A user can launch, edit and approve two workflows from a completed run.</li>
+  <li>Jobs survive disconnect/restart and support pause, resume, stop and retry from checkpoints.</li>
+  <li>At least three reviewed offline skill entrypoints run unchanged through <code>run_skill</code>.</li>
+  <li>Every finding card references exact pipeline rows/config/hashes; interpretations add traceable external evidence when enabled.</li>
+  <li>All eight deliverables are durable, internally linked, downloadable and re-runnable.</li>
+  <li>Golden tests contain zero pipeline-method mislabels and zero confident unsupported claims.</li>
+  <li>The UI makes limitations, cost, scope, skill/source use and Standard-equivalent results visible.</li>
+</ul>
+<div class="callout green"><strong>Handoff stopping point.</strong> This document is the implementation plan. No application code has been changed. Begin Phase 0 only after the user’s explicit go-ahead.</div>
+</section>
+
+<p class="foot">Prepared for SignalFold on branch <code>ssb1</code>, 2026-06-23. Local code references verified: 10 unique cited path/line anchors checked; 10 resolved. External references are primary papers or authoritative specifications.</p>
+</main>
+
+<nav class="toc"><strong>On this page</strong>
+<a href="#decision">1 · Decision</a><a href="#bootstrap">2 · Bootstrap</a><a href="#product">3 · Product</a><a href="#workflow">4 · User flow</a><a href="#surface">5 · UI/UX</a><a href="#workflows">6 · Workflows</a><a href="#deliverables">7 · Deliverables</a><a href="#cards">8 · Cards</a><a href="#prompt">9 · Prompt</a><a href="#pipeline">10 · Pipeline</a><a href="#architecture">11 · Architecture</a><a href="#skills">12 · 17 skills</a><a href="#jobs">13 · Jobs/APIs</a><a href="#security">14 · Security</a><a href="#implementation">15 · Phases</a><a href="#tests">16 · Tests</a><a href="#roi">17 · ROI</a><a href="#codemap">18 · Code map</a><a href="#decisions">19 · Defaults</a><a href="#references">20 · References</a><a href="#acceptance">21 · Done</a>
+</nav>
+</div>
+<div class="lightbox" id="lightbox"><div class="stage"><button class="close" type="button">Close (Esc)</button></div></div>
+<script>
+(()=>{const root=document.documentElement,stored=localStorage.getItem('sf-dr-theme');if(stored)root.dataset.theme=stored;document.getElementById('theme').addEventListener('click',()=>{const n=root.dataset.theme==='dark'?'light':'dark';root.dataset.theme=n;localStorage.setItem('sf-dr-theme',n)});const lb=document.getElementById('lightbox'),stage=lb.querySelector('.stage');document.querySelectorAll('.diagram').forEach(fig=>fig.addEventListener('click',()=>{const svg=fig.querySelector('svg');if(!svg)return;stage.querySelectorAll('svg,.mock').forEach(x=>x.remove());stage.appendChild(svg.cloneNode(true));lb.classList.add('open')}));const close=()=>lb.classList.remove('open');lb.addEventListener('click',e=>{if(e.target===lb||e.target.classList.contains('close'))close()});document.addEventListener('keydown',e=>{if(e.key==='Escape')close()});const links=[...document.querySelectorAll('.toc a')],sections=links.map(a=>document.querySelector(a.getAttribute('href'))).filter(Boolean);new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){links.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+e.target.id))}})},{rootMargin:'-15% 0px -72% 0px'}).observe?.(sections[0]);sections.slice(1).forEach(s=>new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)links.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+e.target.id))}),{rootMargin:'-15% 0px -72% 0px'}).observe(s));})();
+</script>
+</body>
+</html>

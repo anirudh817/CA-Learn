@@ -1,0 +1,12 @@
+GeneSymbol	SystemCode
+SEMA7A	Sy
+PAPLN	Sy
+C1R	Sy
+A2M	Sy
+C3	Sy
+FN1	Sy
+PDGFA	Sy
+PCMT1	Sy
+CHI3L1	Sy
+LRP1	Sy
+ECM1	Sy

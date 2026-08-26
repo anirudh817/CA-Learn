@@ -1,0 +1,32 @@
+services:
+  backend:
+    build: .
+    volumes:
+      - ./data:/data
+      # Serve the live frontend (no build step) so the SPA on :8000 matches the
+      # nginx mount on :8080; otherwise the image's COPYed frontend goes stale
+      # between rebuilds.
+      - ./frontend:/app/frontend:ro
+    environment:
+      - DATA_DIR=/data
+      - DATABASE_URL=sqlite:////data/proteomics.db
+      - ENABLE_DEMO_BOOTSTRAP=1
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend
+    restart: unless-stopped

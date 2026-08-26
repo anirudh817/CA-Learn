@@ -1,0 +1,30 @@
+{
+  "name": "signalfold-ai-sidecar",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "node --import tsx src/index.ts",
+    "test": "tsx --test tests/*.test.ts",
+    "test:live": "node --import tsx scripts/live-openrouter-smoke.ts",
+    "test:live-skills": "node --import tsx scripts/live-skills-smoke.ts",
+    "skills:verify": "node --import tsx scripts/sync-scientific-skills.ts",
+    "skills:lock": "node --import tsx scripts/sync-scientific-skills.ts --write-lock",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@earendil-works/pi-agent-core": "0.79.9",
+    "@earendil-works/pi-ai": "0.79.9",
+    "@earendil-works/pi-coding-agent": "0.79.9",
+    "fastify": "5.8.5"
+  },
+  "devDependencies": {
+    "@types/node": "22.10.0",
+    "tsx": "4.22.4",
+    "typescript": "5.7.2"
+  }
+}

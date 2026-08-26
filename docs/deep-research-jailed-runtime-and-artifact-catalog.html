@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Deep Research Runtime, Artifact Catalog, and Jail Filesystem</title>
+  <style>
+    :root {
+      --text: #17212b;
+      --muted: #566879;
+      --line: #d8e0e6;
+      --soft: #f6f8f9;
+      --accent: #2e7d5a;
+      --warn: #9a6700;
+      --danger: #b42318;
+    }
+    body {
+      margin: 0;
+      padding: 36px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background: #fff;
+      line-height: 1.58;
+    }
+    main { max-width: 1120px; margin: 0 auto; }
+    h1 { font-size: 32px; line-height: 1.15; margin: 0 0 10px; letter-spacing: 0; }
+    h2 { font-size: 21px; margin: 34px 0 10px; padding-top: 16px; border-top: 1px solid var(--line); }
+    h3 { font-size: 15px; margin: 22px 0 8px; }
+    p, li { font-size: 14px; }
+    .sub { color: var(--muted); font-size: 14px; margin-bottom: 24px; }
+    .callout {
+      border-left: 4px solid var(--accent);
+      background: #eef7f2;
+      padding: 12px 14px;
+      margin: 18px 0;
+      border-radius: 6px;
+    }
+    .warn { border-left-color: var(--warn); background: #fff8e8; }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+      font-size: 0.92em;
+      background: var(--soft);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 1px 5px;
+    }
+    pre {
+      background: #101820;
+      color: #e7eef5;
+      border-radius: 8px;
+      padding: 14px;
+      overflow: auto;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; font-size: 13px; }
+    th {
+      text-align: left;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      font-size: 11px;
+      background: var(--soft);
+    }
+    th, td { border: 1px solid var(--line); padding: 9px 10px; vertical-align: top; }
+    .diagram {
+      background: var(--soft);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+      font-size: 12px;
+      white-space: pre;
+      overflow: auto;
+    }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Deep Research Runtime, Artifact Catalog, and Jail Filesystem</h1>
+  <p class="sub">Technical note for the SignalFold AI sidecar. This documents what the artifact catalog means, where files are stored, and how run data is exposed to the Docker jail.</p>
+
+  <div class="callout">
+    <strong>Short answer about the Usage column:</strong> the Usage column in the Deep Research artifact catalog is per research job. It is recomputed from that job's frozen scope, events, saved code cells, and final citations when the catalog endpoint is opened. It is not a global pipeline-run counter, and it is not a kernel-level file-access audit.
+  </div>
+
+  <h2>What The Catalog Represents</h2>
+  <p>
+    Deep Research freezes a whole-run catalog when a proposed plan is approved. That frozen catalog describes every run-relative file the agent may see or fetch, including canonical stage outputs and legacy client-deliverable copies. The catalog is stored inside the job's <code>scope-manifest.json</code>, not rebuilt from whatever the run folder happens to contain later.
+  </p>
+  <p>
+    The visible <code>Data used</code> dropdown and the <code>Artifact Catalog</code> HTML page are views over that frozen job catalog plus per-job usage signals.
+  </p>
+
+  <table>
+    <thead><tr><th>Column / count</th><th>Meaning</th><th>Source</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>available</code></td>
+        <td>File is in the frozen job catalog, but was not detected as read, cited, fetched, or pre-staged-but-unused for this job.</td>
+        <td><code>scope.catalog</code> in <code>scope-manifest.json</code>.</td>
+      </tr>
+      <tr>
+        <td><code>read</code></td>
+        <td>The file path was detected in saved Python code cells under <code>workspace/code</code>. This is a provenance heuristic over the code text, not an OS syscall trace.</td>
+        <td><code>collectCatalogUsageSignals()</code> scans saved code cells.</td>
+      </tr>
+      <tr>
+        <td><code>fetched</code></td>
+        <td>The agent explicitly called <code>fetch_input(path)</code>, causing that catalog file to be staged into <code>workspace/inputs</code>.</td>
+        <td><code>agent_fetch_input</code> events.</td>
+      </tr>
+      <tr>
+        <td><code>cited</code></td>
+        <td>The file backed final findings or evidence in the job outputs.</td>
+        <td><code>workspace/outputs/findings.json</code>, answer model outputs, and evidence records.</td>
+      </tr>
+      <tr>
+        <td><code>staged but unread</code></td>
+        <td>The file was copied into the jail's read-only <code>inputs/</code> warm set, but no usage signal showed that the agent read, cited, or fetched it.</td>
+        <td>Frozen staged artifact list minus read/cited/fetched signals.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout warn">
+    <strong>Precision boundary:</strong> Usage is accurate for tool-mediated fetches and final citations. The <code>read</code> signal is intentionally best-effort because it is derived from saved code text. If code constructs paths dynamically, reads an entire directory, or a library reads a file indirectly, Usage may under-report or simplify the access pattern.
+  </div>
+
+  <h2>Host Filesystem Layout</h2>
+  <p>
+    The AI sidecar defaults its data root to <code>data/</code> under the repository. Deployments may override this with <code>SIGNALFOLD_DATA_DIR</code>. Completed pipeline runs live under <code>data/runs/{run_id}</code>.
+  </p>
+
+  <div class="diagram">data/
+  proteomics.db
+  ai_insights.sqlite
+  runs/
+    RUN-.../
+      artifact_index.json
+      artifact_index.html
+      run_manifest.json
+      input/
+      stage1/
+      stage2/
+      stage3/
+      03_analysis_.../
+      ai_insights/
+        artifacts/
+        sessions/
+        work/
+        evals/
+        research/
+          jobs/
+            research_.../
+              scope-manifest.json
+              workspace/
+                inputs/
+                outputs/
+                code/
+                tmp/
+              artifacts/
+                step_.../
+              package/
+                research-report.html
+                evidence-record.json
+                artifact-index.json
+                computation-manifest.json</div>
+
+  <h3>Original Run Artifacts</h3>
+  <p>
+    Pipeline outputs are the source of truth and remain in <code>data/runs/{run_id}</code>. Examples include <code>stage1/volcano_results.tsv</code>, <code>stage1/module_assignments.csv</code>, <code>stage2/go_enrichment_all.csv</code>, and legacy deliverable paths such as <code>03_analysis_CBN_median/...</code>.
+  </p>
+
+  <h3>AI Sidecar Job State</h3>
+  <p>
+    Deep Research job files are stored below <code>data/runs/{run_id}/ai_insights/research/jobs/{job_id}</code>. The database row stores <code>scope_manifest_path</code> relative to <code>ai_insights</code>, so the job can re-open its frozen manifest later.
+  </p>
+
+  <table>
+    <thead><tr><th>Path</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td><code>scope-manifest.json</code></td><td>Frozen scope: selected staged artifacts, whole-run catalog, hashes, exclusions, lineage, budget, and approved sources.</td></tr>
+      <tr><td><code>workspace/inputs</code></td><td>Host-side mirror of files mounted into Docker at <code>/work/inputs</code>. Files are copied from the run folder and chmodded <code>0444</code>.</td></tr>
+      <tr><td><code>workspace/code</code></td><td>Saved Python cells, mounted read-only into Docker at <code>/work/code</code>. File names include a code hash prefix.</td></tr>
+      <tr><td><code>workspace/outputs</code></td><td>Writable output area mounted into Docker at <code>/work/outputs</code>. Contains findings, activity trace, generated tables, figures, and other cell outputs.</td></tr>
+      <tr><td><code>artifacts/step_...</code></td><td>Durable per-step copies of generated outputs, registered with the SignalFold artifact sink.</td></tr>
+      <tr><td><code>package</code></td><td>Final report package: research report, evidence record, artifact index, computation manifest, external evidence, rerun descriptor, open questions, and next-step recommendation.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>How Files Enter The Jail</h2>
+  <p>
+    A Deep Research job starts with an approved frozen manifest. Before execution, the executor verifies that the manifest hash still matches and that referenced source files still match their approved SHA-256 hashes. The agent never receives a direct mount of <code>data/runs/{run_id}</code>.
+  </p>
+
+  <ol>
+    <li>The plan is approved and <code>buildResearchScopeManifest(..., withCatalog: true)</code> writes a frozen <code>scope-manifest.json</code>.</li>
+    <li>The executor creates <code>workspace/inputs</code>, <code>workspace/outputs</code>, <code>workspace/code</code>, and <code>workspace/tmp</code> under the job root.</li>
+    <li>Each selected warm input in <code>scope.artifacts</code> is read from <code>data/runs/{run_id}/{artifact.path}</code>, hash-checked, copied into <code>workspace/inputs/{artifact.path}</code>, and chmodded <code>0444</code>.</li>
+    <li>The agent may later call <code>fetch_input(path)</code>. That path must be in the frozen whole-run catalog, must resolve inside the run folder, must still exist, and must match the approved hash before it is copied into <code>workspace/inputs</code>.</li>
+    <li>Python cells and offline skill scripts are executed with CWD <code>/work</code>, reading <code>inputs/...</code> and writing <code>outputs/...</code>.</li>
+  </ol>
+
+  <h2>Docker Jail Boundary</h2>
+  <p>
+    The free-form investigation plane launches a per-job Docker container from <code>signalfold-freeform-jail:1.1</code> by default. The image is built from <code>ai-sidecar/docker/freeform-jail.Dockerfile</code>.
+  </p>
+
+  <pre><code>docker run -d --rm --name sf-ff-...
+  --label signalfold.freeform=1
+  --label signalfold.job={job_id}
+  --network none
+  --memory {FREEFORM_JAIL_MEMORY}
+  --cpus {FREEFORM_JAIL_CPUS}
+  --pids-limit {FREEFORM_JAIL_PIDS}
+  --read-only
+  --tmpfs /tmp:rw,size={FREEFORM_JAIL_TMPFS},mode=1777
+  --security-opt no-new-privileges
+  --init
+  -v {job}/workspace/inputs:/work/inputs:ro
+  -v {job}/workspace/outputs:/work/outputs:rw
+  -v {job}/workspace/code:/work/code:ro
+  -w /work
+  signalfold-freeform-jail:1.1 sleep infinity</code></pre>
+
+  <table>
+    <thead><tr><th>Constraint</th><th>Effect</th></tr></thead>
+    <tbody>
+      <tr><td><code>--network none</code></td><td>No network interface for <code>run_python</code> or offline skill execution.</td></tr>
+      <tr><td><code>--read-only</code></td><td>The image root filesystem cannot be modified.</td></tr>
+      <tr><td><code>--tmpfs /tmp</code></td><td>Temporary writes are allowed only in an ephemeral, size-limited tmpfs.</td></tr>
+      <tr><td><code>/work/inputs:ro</code></td><td>Frozen run inputs are readable but not writable in the container.</td></tr>
+      <tr><td><code>/work/code:ro</code></td><td>Code cells are written by the host sidecar, then mounted read-only into the container.</td></tr>
+      <tr><td><code>/work/outputs:rw</code></td><td>The only persistent writable path visible to jailed code.</td></tr>
+      <tr><td><code>no-new-privileges</code></td><td>Prevents privilege escalation through setuid-style paths.</td></tr>
+      <tr><td>Memory, CPU, PID limits</td><td>Resource use is bounded by config values such as <code>FREEFORM_JAIL_MEMORY</code>, <code>FREEFORM_JAIL_CPUS</code>, and <code>FREEFORM_JAIL_PIDS</code>.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>What The Container Does Not See</h2>
+  <ul>
+    <li>It does not see the repository checkout.</li>
+    <li>It does not see the whole <code>data/runs/{run_id}</code> folder.</li>
+    <li>It does not see other runs.</li>
+    <li>It does not see <code>ai_insights.sqlite</code> or <code>proteomics.db</code>.</li>
+    <li>It does not receive API keys as container environment variables for offline jailed code.</li>
+    <li>It does not have network access in the sealed free-form/offline-skill path.</li>
+  </ul>
+
+  <h2>Offline Skills</h2>
+  <p>
+    Offline scientific skills are baked into the image under <code>/opt/skills/scientific</code>. They run inside the same sealed container as <code>run_python</code>. Their scripts are resolved within the named skill folder, arguments cannot be absolute or traversing paths, and outputs are attributed by diffing <code>outputs/</code> before and after execution.
+  </p>
+  <p>
+    Phone-home <code>*_ai.py</code> scripts are removed at image build time, so they are absent from the sealed jail rather than merely blocked at runtime.
+  </p>
+
+  <h2>Network Skills And External Lookups</h2>
+  <p>
+    The sealed free-form jail is offline. Curated external corroboration through <code>request_external</code> runs in the Node control plane with source allowlists, cost accounting, and audit records. Separately reviewed network skills, when enabled by deployment configuration, use a different egress-proxied container path, not the sealed <code>--network none</code> jail.
+  </p>
+
+  <h2>Why Usage Can Change Between Jobs</h2>
+  <p>
+    The frozen catalog belongs to a specific research job. If you run a new Deep Research job against the same pipeline run, it freezes its own scope and produces its own usage signals. Therefore two jobs on <code>RUN-E2E-VERIFY</code> can show the same available files but different <code>read</code>, <code>fetched</code>, <code>cited</code>, and <code>staged but unread</code> status.
+  </p>
+  <p>
+    Within one completed job, opening the catalog recomputes the view from durable job artifacts and events, but the result should be stable unless the job is still running, has been resumed, or its persisted records are changed by a retry/extension path.
+  </p>
+
+  <h2>Operational Pointers</h2>
+  <ul>
+    <li>Build the sealed jail image with <code>ai-sidecar/run.sh jail-build</code>.</li>
+    <li>If Docker is unavailable or the jail image is missing, free-form research fails closed; it does not fall back to host subprocess execution.</li>
+    <li>Generated code cells are available under <code>workspace/code</code>; final findings and traces are under <code>workspace/outputs</code>; packaged human-readable outputs are under <code>package</code>.</li>
+    <li>The artifact catalog HTML route is <code>/api/research/jobs/{job_id}/catalog.html</code>.</li>
+  </ul>
+</main>
+</body>
+</html>

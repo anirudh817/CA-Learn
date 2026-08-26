@@ -1,0 +1,17 @@
+{
+  "id": "finding-stress-test-synthesis",
+  "catalogVersion": "1.0.0",
+  "label": "Finding Stress Test Synthesis",
+  "kind": "native",
+  "description": "Synthesize the computed stress-test evidence into a cited, decision-oriented answer with explicit limitations. Runs last, after the deterministic compute steps it narrates.",
+  "source": {"storage": "repository", "revision": "signalfold-v1", "license": "Proprietary"},
+  "provider": {"type": "signalfold-pipeline", "implementation": "native/finding-stress-test-synthesis"},
+  "entrypoints": [{
+    "id": "synthesize",
+    "summary": "Narrate the frozen evidence and computed results into the final answer; takes no parameters.",
+    "network": {"policy": "llm"},
+    "resources": {"cpu": 1, "memoryMb": 256, "timeoutSec": 120},
+    "deterministic": false,
+    "params": {"type": "object", "additionalProperties": false, "properties": {}, "examples": [{}]}
+  }]
+}

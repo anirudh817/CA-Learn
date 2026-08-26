@@ -1,0 +1,10 @@
+GeneSymbol	SystemCode
+ALB	Sy
+B3GAT3	Sy
+CFH	Sy
+C3	Sy
+C4A	Sy
+C4B	Sy
+IGHV3-9	Sy
+NID2	Sy
+TF	Sy

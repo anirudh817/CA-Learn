@@ -1,0 +1,26 @@
+{
+  "id": "signalfold-workflow-recipes",
+  "catalogVersion": "1.0.0",
+  "label": "SignalFold Workflow Recipes",
+  "kind": "native",
+  "description": "Reviewed deterministic recipes for the five launch workflows beyond the Finding Stress Test.",
+  "source": {"storage": "repository", "revision": "signalfold-native-v1", "license": "SignalFold repository license"},
+  "provider": {"type": "signalfold-pipeline", "implementation": "native/signalfold-workflow-recipes"},
+  "entrypoints": [{
+    "id": "run",
+    "summary": "Run a reviewed workflow-specific computation over the frozen scope.",
+    "network": {"policy": "none"},
+    "resources": {"cpu": 1, "memoryMb": 512, "timeoutSec": 120},
+    "deterministic": true,
+    "params": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["recipe"],
+      "properties": {
+        "recipe": {"type": "string", "enum": ["ranked-pathway", "module-hub", "external-protein-evidence", "literature-contradiction", "power-next-experiment"]},
+        "seed": {"type": "integer", "minimum": 0, "default": 0}
+      },
+      "examples": [{"recipe": "ranked-pathway", "seed": 0}]
+    }
+  }]
+}

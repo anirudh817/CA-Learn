@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0",
+  "manager": "uv",
+  "policy": "Each environment is isolated, pinned, cached by lock hash, and must pass a bounded smoke test before skills depending on it become executable.",
+  "environments": [
+    {"id":"base-tabular","lock":"host-.venv:pandas-2.2.0,numpy-1.26.3","state":"smoke-tested","diagnostic":"Real upstream exploratory-data-analysis script passed on a frozen CSV through the gateway."},
+    {"id":"visualization","lock":"host-.venv:matplotlib-3.11.0,numpy-1.26.3","state":"dependencies-installed","diagnostic":"Helpers import on this host; live Pi invocation remains to be verified."},
+    {"id":"statistics-design","lock":"host-.venv:statsmodels-0.14.6,numpy-1.26.3,pandas-2.2.0","state":"dependencies-installed","diagnostic":"Core dependencies installed; optional pyDOE3 and per-script smokes remain."},
+    {"id":"statistics-network","lock":"declared:networkx-3.6","state":"unavailable","diagnostic":"networkx is not installed in the pinned environment."},
+    {"id":"omics-pyopenms","lock":"uv:pyopenms==3.5.0","state":"smoke-tested","diagnostic":"mass_calculator.py --formula C6H12O6 passed with pyOpenMS 3.5.0."},
+    {"id":"omics-pydeseq2","lock":"uv:pydeseq2==0.5.4","state":"smoke-tested","diagnostic":"run_deseq2_analysis.py completed a bounded 6-sample, 5-gene contrast."},
+    {"id":"omics-scanpy","lock":"uv:scanpy>=1.12,<1.13 resolved 1.12.1","state":"smoke-tested","diagnostic":"inspect_data.py completed on a bounded 3-cell CSV."},
+    {"id":"external-database","lock":"declared","state":"unavailable","diagnostic":"Direct egress is disabled; no enforceable broker/OS boundary is configured."},
+    {"id":"external-database-gpl","lock":"declared:bioservices GPL-3.0","state":"unavailable","diagnostic":"Direct egress disabled and GPL licensing inventoried separately."},
+    {"id":"document-ingestion","lock":"declared","state":"unavailable","diagnostic":"Offline document runtimes have not passed bounded smoke tests; secondary-LLM scripts are prohibited."}
+  ]
+}

@@ -1,0 +1,331 @@
+{
+  "schemaVersion": "1.0",
+  "generatedAt": "2026-06-23T00:00:00.000Z",
+  "upstream": {
+    "repository": "https://github.com/K-Dense-AI/scientific-agent-skills.git",
+    "commit": "209390194c85b3466259853417eeac81ea4f0976"
+  },
+  "hashAlgorithm": "sha256(sorted-relative-path + NUL + file-sha256 + LF), Finder metadata excluded",
+  "skills": [
+    {
+      "id": "pyopenms",
+      "version": "2.0",
+      "license": "BSD-3-Clause",
+      "executionClass": "python-script",
+      "environmentId": "omics-pyopenms",
+      "networkPolicy": "offline",
+      "determinism": "deterministic",
+      "allowedScripts": [
+        "scripts/mass_calculator.py"
+      ],
+      "restrictedScripts": [
+        "scripts/*.py"
+      ],
+      "prohibitedScripts": [],
+      "readiness": "smoke-tested",
+      "diagnostic": "pyOpenMS 3.5.0 uv environment and unchanged mass_calculator.py passed on macOS arm64.",
+      "folderHash": "b48b37dcd8b3de84f84e4ca9f3f783adc762343357e7d214f38ca376a611fc92",
+      "fileCount": 23
+    },
+    {
+      "id": "pydeseq2",
+      "version": "1.1",
+      "license": "MIT",
+      "executionClass": "python-script",
+      "environmentId": "omics-pydeseq2",
+      "networkPolicy": "offline",
+      "determinism": "deterministic",
+      "allowedScripts": [
+        "scripts/run_deseq2_analysis.py"
+      ],
+      "restrictedScripts": [],
+      "prohibitedScripts": [],
+      "readiness": "smoke-tested",
+      "diagnostic": "PyDESeq2 0.5.4 uv environment and unchanged bounded analysis script passed on macOS arm64.",
+      "folderHash": "361bcf8b9ea81fd198ced8ea6b77f4211e94385209c9496e8385c4e8d4b89adb",
+      "fileCount": 4
+    },
+    {
+      "id": "pathway-enrichment",
+      "version": "1.0",
+      "license": "MIT",
+      "executionClass": "network-client",
+      "environmentId": "external-database",
+      "networkPolicy": "approved-external",
+      "determinism": "live-external-state",
+      "allowedScripts": [],
+      "restrictedScripts": [
+        "scripts/run_enrichment.py"
+      ],
+      "prohibitedScripts": [],
+      "readiness": "unavailable",
+      "diagnostic": "Vendored and locked; disabled until brokered egress prevents direct network bypass.",
+      "folderHash": "40567991658637c7f819358fd9234bc9a6c408c755dab35dc62acea51987c082",
+      "fileCount": 5
+    },
+    {
+      "id": "scanpy",
+      "version": "1.3",
+      "license": "BSD-3-Clause",
+      "executionClass": "python-script",
+      "environmentId": "omics-scanpy",
+      "networkPolicy": "offline",
+      "determinism": "deterministic",
+      "allowedScripts": [
+        "scripts/inspect_data.py"
+      ],
+      "restrictedScripts": [
+        "scripts/*.py"
+      ],
+      "prohibitedScripts": [],
+      "readiness": "smoke-tested",
+      "diagnostic": "Scanpy 1.12.1 uv environment and unchanged inspect_data.py passed on macOS arm64.",
+      "folderHash": "c3d3b73bc06571e7ce907d5e52293d4a7f522a0fe00318f3737c5d7b5fd149e1",
+      "fileCount": 25
+    },
+    {
+      "id": "statistical-power",
+      "version": "1.0",
+      "license": "MIT",
+      "executionClass": "python-library",
+      "environmentId": "statistics-design",
+      "networkPolicy": "offline",
+      "determinism": "seeded",
+      "allowedScripts": [
+        "scripts/power.py",
+        "scripts/simulate_power.py"
+      ],
+      "restrictedScripts": [],
+      "prohibitedScripts": [],
+      "readiness": "dependencies-installed",
+      "diagnostic": "Pinned host-compatible dependencies detected; bounded gateway smoke test required per invocation.",
+      "folderHash": "cd436d5df5b902c992e653d922001ede915889066f1682a8114e046b20daf058",
+      "fileCount": 6
+    },
+    {
+      "id": "experimental-design",
+      "version": "1.0",
+      "license": "MIT",
+      "executionClass": "python-library",
+      "environmentId": "statistics-design",
+      "networkPolicy": "offline",
+      "determinism": "seeded",
+      "allowedScripts": [
+        "scripts/randomization.py"
+      ],
+      "restrictedScripts": [
+        "scripts/doe_designs.py"
+      ],
+      "prohibitedScripts": [],
+      "readiness": "dependencies-installed",
+      "diagnostic": "Randomization path is dependency-light; pyDOE3-backed DOE path remains restricted until its lock is installed.",
+      "folderHash": "6954b77c90f555ae7d714fbd08b21d8f8c65653e6e66b31104c057579cb2d176",
+      "fileCount": 7
+    },
+    {
+      "id": "statsmodels",
+      "version": "1.1",
+      "license": "BSD-3-Clause",
+      "executionClass": "reference",
+      "environmentId": "statistics-design",
+      "networkPolicy": "offline",
+      "determinism": "instruction-only",
+      "allowedScripts": [],
+      "restrictedScripts": [],
+      "prohibitedScripts": [],
+      "readiness": "reference-only",
+      "diagnostic": "Instruction/reference skill; activation does not imply script execution.",
+      "folderHash": "888405315e925415fbe7032d70df7937bb3b931ace609de82f5cc31c3c56a285",
+      "fileCount": 6
+    },
+    {
+      "id": "networkx",
+      "version": "1.1",
+      "license": "BSD-3-Clause",
+      "executionClass": "reference",
+      "environmentId": "statistics-network",
+      "networkPolicy": "offline",
+      "determinism": "instruction-only",
+      "allowedScripts": [],
+      "restrictedScripts": [],
+      "prohibitedScripts": [],
+      "readiness": "reference-only",
+      "diagnostic": "Instruction/reference skill; NetworkX dependency is not installed in the pinned environment.",
+      "folderHash": "1e6a3e770e68bbb310c6718a01cc8ea6d79048fe897010b795f5864bf6618b08",
+      "fileCount": 6
+    },
+    {
+      "id": "gget",
+      "version": "1.1",
+      "license": "BSD-2-Clause",
+      "executionClass": "network-client",
+      "environmentId": "external-database",
+      "networkPolicy": "approved-external",
+      "determinism": "live-external-state",
+      "allowedScripts": [],
+      "restrictedScripts": [
+        "scripts/*.py"
+      ],
+      "prohibitedScripts": [],
+      "readiness": "unavailable",
+      "diagnostic": "Vendored and locked; disabled until brokered egress prevents direct network bypass.",
+      "folderHash": "db1fca51e554db01013b59092ff48f840764cdeec8c811e018c14861603dcb7c",
+      "fileCount": 7
+    },
+    {
+      "id": "bioservices",
+      "version": "1.2",
+      "license": "GPL-3.0",
+      "executionClass": "network-client",
+      "environmentId": "external-database-gpl",
+      "networkPolicy": "approved-external",
+      "determinism": "live-external-state",
+      "allowedScripts": [],
+      "restrictedScripts": [
+        "scripts/*.py"
+      ],
+      "prohibitedScripts": [],
+      "readiness": "unavailable",
+      "diagnostic": "Vendored and locked; disabled until brokered egress prevents direct network bypass. GPL-3.0 package is inventoried separately and must not be represented as MIT.",
+      "folderHash": "0e4b70fc4824ad6e24f198c8e8592dd91110f7a300e3eb50c49963e352e9b6c9",
+      "fileCount": 8
+    },
+    {
+      "id": "database-lookup",
+      "version": "1.1",
+      "license": "MIT",
+      "executionClass": "network-client",
+      "environmentId": "external-database",
+      "networkPolicy": "approved-external",
+      "determinism": "live-external-state",
+      "allowedScripts": [],
+      "restrictedScripts": [
+        "scripts/**"
+      ],
+      "prohibitedScripts": [],
+      "readiness": "unavailable",
+      "diagnostic": "Vendored and locked; disabled until brokered egress prevents direct network bypass.",
+      "folderHash": "df6b218afd7130be7b13f24b14b5f78215d0638e1da63f1db714dcb2e2468903",
+      "fileCount": 80
+    },
+    {
+      "id": "citation-management",
+      "version": "1.2",
+      "license": "MIT",
+      "executionClass": "network-client",
+      "environmentId": "external-database",
+      "networkPolicy": "approved-external",
+      "determinism": "live-external-state",
+      "allowedScripts": [],
+      "restrictedScripts": [
+        "scripts/doi_to_bibtex.py",
+        "scripts/search_pubmed.py",
+        "scripts/format_bibtex.py",
+        "scripts/validate_citations.py"
+      ],
+      "prohibitedScripts": [
+        "scripts/generate_schematic_ai.py"
+      ],
+      "readiness": "unavailable",
+      "diagnostic": "Vendored and locked; disabled until brokered egress prevents direct network bypass. Secondary-LLM helper is structurally prohibited.",
+      "folderHash": "72bb36e85c5dfc79dbaf95ffd4031b2d842ad5e1af4f41d948ae628ebe9f1581",
+      "fileCount": 16
+    },
+    {
+      "id": "scientific-visualization",
+      "version": "1.0",
+      "license": "MIT",
+      "executionClass": "python-library",
+      "environmentId": "visualization",
+      "networkPolicy": "offline",
+      "determinism": "deterministic",
+      "allowedScripts": [
+        "scripts/style_presets.py",
+        "scripts/figure_export.py"
+      ],
+      "restrictedScripts": [],
+      "prohibitedScripts": [],
+      "readiness": "dependencies-installed",
+      "diagnostic": "Matplotlib helpers are available for controlled workspace glue code.",
+      "folderHash": "8f9a29543f9c160e027ad71533459c107e2e2d1f4f0109738ffbf75ac54c86cb",
+      "fileCount": 11
+    },
+    {
+      "id": "matplotlib",
+      "version": "1.1",
+      "license": "Matplotlib-PSF",
+      "executionClass": "python-script",
+      "environmentId": "visualization",
+      "networkPolicy": "offline",
+      "determinism": "deterministic",
+      "allowedScripts": [
+        "scripts/plot_template.py",
+        "scripts/style_configurator.py"
+      ],
+      "restrictedScripts": [],
+      "prohibitedScripts": [],
+      "readiness": "dependencies-installed",
+      "diagnostic": "Pinned host-compatible Matplotlib is installed; bounded gateway smoke test required per invocation.",
+      "folderHash": "bd1d545d592f878505f4eec88b33effe816fab973b309904e25d1feec2b715ae",
+      "fileCount": 7
+    },
+    {
+      "id": "exploratory-data-analysis",
+      "version": "1.0",
+      "license": "MIT",
+      "executionClass": "python-script",
+      "environmentId": "base-tabular",
+      "networkPolicy": "offline",
+      "determinism": "deterministic",
+      "allowedScripts": [
+        "scripts/eda_analyzer.py"
+      ],
+      "restrictedScripts": [],
+      "prohibitedScripts": [],
+      "readiness": "dependencies-installed",
+      "diagnostic": "Real upstream analyzer is enabled through the execution gateway.",
+      "folderHash": "dd14994ecbc1b0a93fe4c1eb438885b19f729f718fbb819d061e8f3e8491b2f6",
+      "fileCount": 9
+    },
+    {
+      "id": "markitdown",
+      "version": "1.1",
+      "license": "MIT",
+      "executionClass": "python-script",
+      "environmentId": "document-ingestion",
+      "networkPolicy": "offline",
+      "determinism": "not-verified",
+      "allowedScripts": [],
+      "restrictedScripts": [
+        "scripts/batch_convert.py",
+        "scripts/convert_literature.py"
+      ],
+      "prohibitedScripts": [
+        "scripts/convert_with_ai.py",
+        "scripts/generate_schematic_ai.py"
+      ],
+      "readiness": "unavailable",
+      "diagnostic": "Offline paths remain restricted until the document lock is installed; OpenRouter helpers are prohibited.",
+      "folderHash": "85475d3ce22493f373376c2e6db980012ccc090ba3dfb1837d9b1f243f031c53",
+      "fileCount": 9
+    },
+    {
+      "id": "liteparse",
+      "version": "1.0",
+      "license": "Apache-2.0",
+      "executionClass": "python-script",
+      "environmentId": "document-ingestion",
+      "networkPolicy": "offline",
+      "determinism": "not-verified",
+      "allowedScripts": [],
+      "restrictedScripts": [
+        "scripts/batch_parse_dir.py"
+      ],
+      "prohibitedScripts": [],
+      "readiness": "unavailable",
+      "diagnostic": "Vendored and locked; LiteParse runtime has not passed a bounded platform smoke test.",
+      "folderHash": "55016933c5cb31183b332abe0ac815ac63ac55bf5c72664539b75b61459545a2",
+      "fileCount": 7
+    }
+  ]
+}

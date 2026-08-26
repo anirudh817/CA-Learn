@@ -1,0 +1,58 @@
+SIGNALFOLD DEEP RESEARCH — REUSABLE CONTEXT
+
+WHAT THIS IS: SignalFold is a proteomics pipeline (FastAPI + vanilla-JS SPA). "AI
+Insights → Deep Research" lives in the Node ai-sidecar (:4317). It lets a scientist
+interrogate ONE completed run's data, compute new evidence on it, corroborate against
+curated biology/literature, and get a reproducible, cited answer.
+
+CORE GOAL — drive the RIGHT research across three nested levels:
+  • DISCOVERY — compute NEW evidence on the run (recompute, sweep thresholds, rank,
+    join modalities); every result traced + checksummed.  [brainstorm §2, DR-2]
+  • INVESTIGATION — interrogate a finding: stress-test it, separate its dimensions,
+    surface agreements/contradictions, bind each claim to run-cell + external source +
+    computation with explicit confidence.  [brainstorm §2, DR-3/DR-4]
+  • KNOWLEDGE MAP — a persistent, cross-run knowledge graph where each run is a "move
+    on the map"; the living investigation workspace.  [brainstorm §2 DR-5, §4 north star]
+North star: "a hypothesis-driven omics workspace that computes new evidence on the
+private run, corroborates it, and returns a dual-provenance evidence graph the scientist
+can audit to the cell, re-run, and extend as a living investigation map."
+
+DIRECTION OF THE NEXT WORK (read first): we build along the FREE-FORM rails, NOT the
+fixed six-card workflow format. Free-form = a prompt → an unconstrained-but-Docker-jailed
+Pi agent (all skills; writes/runs Python over the frozen run) → a generic decider that
+keeps only run-cited claims → the existing narrator/package/conversation. It is BUILT,
+Docker-isolated, and working (ssb1). The six cards are NOT being rebuilt as fixed skill
+pipelines — they are being repurposed as prompt-scaffolds that feed the free-form box.
+Default to free-form; treat fixed-workflow code as legacy/preset.
+
+PIPELINE SCIENCE TO RESPECT (the "biologics" — never violate in any prompt or output):
+  • Stage 1 = differential expression by WELCH t-test on CONTINUOUS protein intensities
+    (NOT limma, NOT DESeq2/negative-binomial) + WGCNA-equivalent EIGENGENE modules.
+  • Stage 2 = GO OVER-REPRESENTATION (Fisher/ORA), NOT GSEA.
+  • Stage 3 = cell-type FISHER ENRICHMENT over marker sets, NOT abundance/deconvolution.
+  • Guards: ORA≠GSEA; stage1/network_edges.csv (eigengene graph)≠protein PPI; kME
+    membership≠network centrality; Stage-3 FET≠cell abundance; continuous intensities≠NB.
+
+DOC MAP (stop re-searching — this is where the knowledge lives):
+  • Six workflows, per-card: docs/explanations/features/ai-insights-deep-research-
+    workflow-roi-implementation-note.html §4 "Six informative launch workflows" (PRIMARY;
+    one subsection per card) + .../ai-insights-deep-research-implementation-plan.html.
+  • Tier-A reviewed-recipes vs Tier-B generated-code + the external broker: same note §5, §6.
+  • 17 scientific skills (grounded scripts, determinism, profile pairing) + how they run in
+    SignalFold: docs/scientific-agents-profiles.html §8 (17 grounded), §10 (profile↔skill),
+    §12 (how skills run).
+  • Pipeline science (biologics): docs/explanations/the-science-of-signalfold.html §6 DE/
+    Welch (+§11.4 vs limma), §7 WGCNA (+§11.5), §8 GO ORA, §9 cell-type FET (+§11.7).
+  • Product framing (Discovery/Investigation/Knowledge-Map): docs/explanations/features/
+    ai-insights-deep-research-brainstorm.html §2 (five DR concepts, "they nest") + §4
+    (north star) + Part V (build-out).
+  • System overview: docs/system-overview.html. Native Pi skills: .../deep-research-
+    native-pi-skills.html.
+
+CURRENT BUILD STATE (branch ssb1): free-form engine live + Docker-jailed —
+FreeformResearchExecutor (ai-sidecar/src/research/freeform-executor.ts), generic synthesis
+(synthesis/generic.ts), FREEFORM_WORKFLOW + findWorkflow() (workflows.ts), plane selection
++ agent_* observability + analytical-scope pinning (service.ts). Full state/decisions:
+read memory file deep-research-roadmap.md. Verify bar: from ai-sidecar/ run `npm run
+typecheck` + `npm test`; live smoke on a completed run over OpenRouter (gemini-2.5-flash-
+lite, cheap). Pipeline-owned files are off-limits (pipeline.py, stage runners, r_scripts/).

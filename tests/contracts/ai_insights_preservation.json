@@ -1,0 +1,204 @@
+{
+  "contract": "SignalFold AI Insights pre-refactor preservation contract",
+  "source_of_truth": "docs/explanations/features/ai-tab.html",
+  "captured_on": "2026-06-21",
+  "target_architecture": {
+    "runtime": "single_pi_sidecar",
+    "mode_semantics": "policy_profiles_on_the_same_pi_runtime",
+    "default_policy": "standard",
+    "implemented_standard_policy": "adaptive_server_side_grounding_with_no_pi_skills_or_coding_tools",
+    "deep_research_policy": "expanded_tools_skills_and_execution",
+    "frontend_delivery": "standalone_first_embeddable_later",
+    "model_selection": "center_rail_per_turn"
+  },
+  "layers": {
+    "foundational_infrastructure": [
+      "AI-PRES-003",
+      "AI-PRES-004",
+      "AI-PRES-007",
+      "AI-PRES-008",
+      "AI-PRES-010",
+      "AI-PRES-011",
+      "AI-PRES-014",
+      "AI-PRES-015",
+      "AI-PRES-016"
+    ],
+    "run_grounding": [
+      "AI-PRES-001",
+      "AI-PRES-005",
+      "AI-PRES-006",
+      "AI-PRES-009",
+      "AI-PRES-012"
+    ],
+    "product_workflows": [
+      "AI-PRES-002",
+      "AI-PRES-013"
+    ]
+  },
+  "capabilities": [
+    {
+      "id": "AI-PRES-001",
+      "capability": "Run-scoped conversations and same-workspace cross-run context",
+      "acceptance": "A conversation remains bound to its selected run, may explicitly reference another run in the same workspace, and rejects cross-workspace run data.",
+      "evidence": [
+        "tests.test_chat_p0.ChatP0CreateAndSendTests.test_create_conversation_send_message_reload",
+        "tests.test_chat_p10_p11.PersistentPinTests.test_cross_run_pin_loads_same_workspace_artifact",
+        "tests.test_chat_p10_p11.PersistentPinTests.test_cross_workspace_run_artifact_is_rejected"
+      ]
+    },
+    {
+      "id": "AI-PRES-002",
+      "capability": "Conversation lifecycle",
+      "acceptance": "Users can create, list, open, rename, clear, export, and delete conversations without leaking or orphaning messages.",
+      "evidence": [
+        "tests.test_chat_p0.ChatP0CreateAndSendTests.test_create_conversation_send_message_reload",
+        "tests.test_chat_p1.ChatP1CascadeDeleteTests.test_delete_conversation_cascades_messages",
+        "tests.test_chat_p5.P5ExportTests.test_export_returns_markdown_with_citations_and_tools"
+      ]
+    },
+    {
+      "id": "AI-PRES-003",
+      "capability": "Streaming, cancellation, and conversation isolation",
+      "acceptance": "Answers stream incrementally, partial cancellation is persisted safely, and concurrent conversations never share stream state or history.",
+      "evidence": [
+        "tests.test_chat_p1.ChatP1StreamingTests.test_stream_emits_deltas_and_finish",
+        "tests.test_chat_p1.ChatP1DisconnectTests.test_disconnect_persists_partial_as_cancelled",
+        "tests.test_chat_isolation.ConversationIsolationTests.test_sequential_streams_to_both_do_not_cross_persist"
+      ]
+    },
+    {
+      "id": "AI-PRES-004",
+      "capability": "Attachments and multimodal input",
+      "acceptance": "Supported files, PDFs, and images reach the model as typed content while extension, size, and per-turn image caps remain enforced.",
+      "evidence": [
+        "tests.test_chat_p2.ChatP2UploadRoundTrip.test_upload_get_delete_csv_attachment",
+        "tests.test_chat_p2.ChatP2PdfExtraction.test_pdf_attachment_extracts_text",
+        "tests.test_chat_p2.ChatP2ImageVision.test_image_attachment_reaches_provider_as_image_part",
+        "tests.test_chat_p2.ChatP2CapsEnforced.test_disallowed_extension_is_400"
+      ]
+    },
+    {
+      "id": "AI-PRES-005",
+      "capability": "Context panel, mentions, and persistent pins",
+      "acceptance": "Run artifacts and conversation files are browsable; per-turn mentions and persistent pins resolve into model context and survive until intentionally removed.",
+      "evidence": [
+        "tests.test_chat_p9.ContextPanelEndpointTests.test_context_panel_groups_run_artifacts",
+        "tests.test_chat_p9.PinnedRefsTests.test_pinned_run_artifact_reaches_provider",
+        "tests.test_chat_p10_p11.PersistentPinTests.test_persistent_pin_survives_across_messages_and_can_be_removed",
+        "tests.test_chat_p10_p11.FrontendRegressionTests.test_per_turn_mentions_preserve_cross_run_id_in_send_payload"
+      ]
+    },
+    {
+      "id": "AI-PRES-006",
+      "capability": "Schema-aware grounding over run artifacts",
+      "acceptance": "Biological questions retrieve the relevant differential-expression, module, enrichment, cell-type, and cross-modal evidence even when output filenames vary.",
+      "evidence": [
+        "tests.test_chat_p4.RetrieverIntegrationTests.test_apoe_lookup_returns_apoe_rows",
+        "tests.test_chat_p4.RetrieverIntegrationTests.test_cross_modal_join_microglia_and_go",
+        "tests.test_chat_p4.RetrieverVariantPipelineTests.test_variant_pipeline_apoe_lookup_still_works"
+      ]
+    },
+    {
+      "id": "AI-PRES-007",
+      "capability": "Bounded run-data tool execution",
+      "acceptance": "The agent can list and read approved run outputs and perform biological lookups while traversal, internal files, unknown runs, and unbounded execution are blocked.",
+      "evidence": [
+        "tests.test_chat_p4_tools.ToolSchemaTests.test_expected_tools_present",
+        "tests.test_chat_p4_tools.StreamingToolLoopTests.test_full_loop_streams_tool_call_then_continues",
+        "tests.test_chat_p4_tools.InternalFileBlockingTests.test_internal_files_are_blocked",
+        "tests.test_chat_p4_tools.TimeoutTests.test_dispatch_enforces_timeout"
+      ]
+    },
+    {
+      "id": "AI-PRES-008",
+      "capability": "Provenance and citations",
+      "acceptance": "Persisted answers retain citations and tool evidence so the UI can distinguish run-grounded, external, and background knowledge.",
+      "evidence": [
+        "tests.test_chat_p5.P5ExportTests.test_export_returns_markdown_with_citations_and_tools",
+        "tests.test_chat_eval.JudgesTests.test_citation_correctness_substring_match"
+      ]
+    },
+    {
+      "id": "AI-PRES-009",
+      "capability": "Opt-in external biological data sources",
+      "acceptance": "Workspace policy controls external access; enabled turns can use UniProt, Reactome, STRING, and PubMed with caching, quotas, graceful failure, and references.",
+      "evidence": [
+        "tests.test_chat_p7.WorkspaceDenyTests.test_workspace_policy_deny_blocks_toggle",
+        "tests.test_chat_p7.DispatcherUnitTests.test_lookup_cached_second_call_skips_http",
+        "tests.test_chat_p7.StreamingExternalLookupTests.test_streaming_dispatches_external_lookup_with_references",
+        "tests.test_chat_p8.AdapterUnitTests.test_pubmed_returns_paper_citations"
+      ]
+    },
+    {
+      "id": "AI-PRES-010",
+      "capability": "Anthropic BYOK and platform fallback",
+      "acceptance": "The Anthropic key interface remains available, keys are encrypted and never returned, and the user/workspace/platform precedence plus platform quota behavior remains intact.",
+      "evidence": [
+        "tests.test_chat_p0.ChatP0SettingsTests.test_settings_put_get_never_leaks_key",
+        "tests.test_chat_p0.ChatP0CryptoTests.test_key_encryption_roundtrip",
+        "tests.test_chat_p0.ChatP0QuotaTests.test_platform_quota_exceeded_returns_429",
+        "tests.test_chat_p6.P6PlatformQuotaInUsageEventTests.test_usage_event_carries_quota_when_platform_key_used"
+      ]
+    },
+    {
+      "id": "AI-PRES-011",
+      "capability": "Model and usage attribution",
+      "acceptance": "Each assistant message records provider, model, input tokens, output tokens, and estimated cost, and the stream reports usage for the session meter.",
+      "evidence": [
+        "tests.test_chat_p0.ChatP0CreateAndSendTests.test_create_conversation_send_message_reload",
+        "tests.test_chat_p6.P6PlatformQuotaInUsageEventTests.test_usage_event_omits_quota_when_byok"
+      ]
+    },
+    {
+      "id": "AI-PRES-012",
+      "capability": "Discovery modes and follow-up exploration",
+      "acceptance": "Auto, on, and off discovery modes keep their documented semantics and do not silently add broad context when disabled.",
+      "evidence": [
+        "tests.test_chat_p10_p11.DiscoveryModeTests.test_auto_discovery_adds_biological_landscape_for_interpretation_questions",
+        "tests.test_chat_p10_p11.DiscoveryModeTests.test_discovery_off_suppresses_landscape_for_interpretation_questions",
+        "tests.test_chat_p10_p11.DiscoveryModeTests.test_discovery_on_adds_landscape_for_simple_lookup"
+      ]
+    },
+    {
+      "id": "AI-PRES-013",
+      "capability": "Regenerate and pin answer workflows",
+      "acceptance": "Users can regenerate assistant answers and pin or unpin a message without mutating the originating user turn.",
+      "evidence": [
+        "tests.test_chat_p5.P5RegenerateTests.test_regenerate_replaces_assistant_message",
+        "tests.test_chat_p5.P5RegenerateTests.test_regenerate_user_message_rejected",
+        "tests.test_chat_p5.P5PinTests.test_pin_then_unpin"
+      ]
+    },
+    {
+      "id": "AI-PRES-014",
+      "capability": "Anti-exfiltration and untrusted-content boundaries",
+      "acceptance": "Prompt extraction attempts are refused before provider execution, attachment text is marked untrusted, internal paths and model identity are scrubbed, and legitimate scientific questions remain allowed.",
+      "evidence": [
+        "tests.test_chat_security.InputBlockerEndToEndTests.test_red_team_prompt_through_chat_returns_refusal_not_provider_call",
+        "tests.test_chat_security.AttachmentInjectionDefenseTests.test_attachment_text_is_wrapped_with_untrusted_markers",
+        "tests.test_chat_security.OutputScrubberTests.test_masks_internal_python_paths",
+        "tests.test_chat_security.InputBlockerTests.test_legitimate_scientific_questions_are_not_blocked"
+      ]
+    },
+    {
+      "id": "AI-PRES-015",
+      "capability": "Redaction, error, and quota terminal states",
+      "acceptance": "Leak redaction and auth, quota, provider, cancellation, and partial-stream failures remain explicit terminal states and never masquerade as grounded success.",
+      "evidence": [
+        "tests.test_chat_security.HeuristicOutputLeakTests.test_flags_methodology_and_stack_prose",
+        "tests.test_chat_p1.ChatP1DisconnectTests.test_disconnect_persists_partial_as_cancelled",
+        "tests.test_chat_p6.P6QuotaExceededShapeTests.test_429_detail_is_structured_for_ui"
+      ]
+    },
+    {
+      "id": "AI-PRES-016",
+      "capability": "Evaluation and regression detection",
+      "acceptance": "Offline evaluation datasets validate, answer/citation/security scorers run deterministically, and score regressions fail the gate beyond tolerance.",
+      "evidence": [
+        "tests.test_chat_eval.EvalDatasetTests.test_bootstrap_dataset_loads_and_validates",
+        "tests.test_chat_eval.RunnerEndToEndTests.test_runner_scores_passing_and_failing_cases",
+        "tests.test_chat_eval.RegressionCheckTests.test_regression_detected_when_score_drops"
+      ]
+    }
+  ]
+}

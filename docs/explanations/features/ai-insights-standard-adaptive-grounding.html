@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SignalFold AI Insights Standard Mode: Adaptive Grounding Design</title>
+<style>:root{--bg:#fbfaf7;--panel:#fff;--text:#24211d;--muted:#696158;--line:#ddd6cc;--accent:#735c3b;--code:#f3eee7}*{box-sizing:border-box}html{font-size:17px;scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);font:1rem/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}main{max-width:960px;margin:0 auto;padding:48px 28px 96px}h1,h2,h3{line-height:1.25;color:#29241f}h1{font-size:2.25rem;border-bottom:1px solid var(--line);padding-bottom:.65rem}h2{font-size:1.55rem;margin-top:2.6rem;border-bottom:1px solid var(--line);padding-bottom:.35rem}h3{font-size:1.15rem;margin-top:2rem}a{color:var(--accent)}p,li{max-width:82ch}table{width:100%;border-collapse:collapse;margin:1.25rem 0;background:var(--panel);font-size:.92rem}th,td{border:1px solid var(--line);padding:.6rem .7rem;text-align:left;vertical-align:top}th{background:var(--code)}code{background:var(--code);border-radius:4px;padding:.12rem .3rem;font:.9rem ui-monospace,SFMono-Regular,Menlo,monospace}pre{overflow:auto;background:#27231f;color:#f7f1e8;border-radius:8px;padding:1rem}pre code{background:transparent;padding:0;color:inherit}blockquote{margin:1.2rem 0;padding:.4rem 1rem;border-left:4px solid var(--accent);background:var(--panel);color:var(--muted)}strong{color:#2e2821}@media(max-width:700px){html{font-size:16px}main{padding:28px 16px 64px}table{display:block;overflow-x:auto}h1{font-size:1.8rem}}@media(prefers-color-scheme:dark){:root{--bg:#161412;--panel:#201d1a;--text:#ece7df;--muted:#b7aea2;--line:#3d3731;--accent:#d1ad79;--code:#29241f}h1,h2,h3,strong{color:#f4efe8}}</style>
+</head>
+<body>
+<main>
+<h1>SignalFold AI Insights Standard mode: adaptive grounding design</h1>
+<p><strong>Status:</strong> implemented on <code>ssb1</code></p>
+<p><strong>Current implementation:</strong> <code>ai-sidecar/src/standard-grounding.ts</code>, <code>ai-sidecar/src/runtime.ts</code>, and <code>ai-sidecar/src/server.ts</code></p>
+<p><strong>Scope:</strong> Standard mode only. Deep Research behavior is not implemented by this change; its policy seam remains available.</p>
+<p><strong>Update (2026-06-22) — what changed:</strong> the deferred relevance-retrieval layer (#3) is now implemented. Full detail in <a href="#relevance-fallback">§4 “Relevance fallback for unmatched data questions”</a>; the one-paragraph version:</p>
+<blockquote>
+<p><strong>Before.</strong> Question routing was keyword-only. A data question worded outside the enumerated keyword/entity lists fell through to the <code>general</code> route and grounded <strong>zero</strong> run files — even though the data to answer it existed in the run. Adding more synonyms never generalised; the next paraphrase failed the same way. Confirmed example: <em>“Which proteins rise and fall in lockstep across samples?”</em> grounded nothing.</p>
+<p><strong>After.</strong> The keyword fast-path is unchanged, but when it would return <code>general</code> on a non-definitional question, a deterministic Okapi&nbsp;BM25 pass ranks the run's own artifacts and grounds the best-matching evidence families through the existing retrieval path. These turns report a new <code>lexical</code> route.</p>
+<p><strong>Unchanged, and the cost.</strong> Same run card, same retrieval/scoring/budget/citation path, and the same <strong>zero</strong> grounding for definitional, product/help, and off-topic questions. Still <strong>zero extra model calls</strong> — no embeddings, no persistent index. The change is one file, <code>ai-sidecar/src/standard-grounding.ts</code> (+203 lines); <code>runtime.ts</code> and <code>server.ts</code> are untouched because the route value passes straight through.</p>
+</blockquote>
+<h2>1. Outcome</h2>
+<p>Standard mode now uses a deterministic, relevance-gated grounding path inside the canonical Node/Pi sidecar. A turn always receives a compact run card, but it receives run-file rows only when the question calls for them. The same Pi runtime still owns sessions, model switching, streaming, persistence, cancellation, output scrubbing, usage, and cost attribution.</p>
+<p>Standard is deliberately not a coding agent. Even when developer execution is enabled, a Standard session receives no Pi skills and no <code>read</code>, Bash, Python, write, edit, or arbitrary filesystem capabilities. Retrieval happens on the server before the model call through path-confined, schema-bounded code.</p>
+<h2>2. Request flow</h2>
+<pre><code class="language-text">POST /api/conversations/:id/turns
+  -&gt; security inspection
+  -&gt; durable user-message write
+  -&gt; attachment resolution and untrusted-data wrapping
+  -&gt; PiRuntime.turn()
+     -&gt; select policy-specific Pi capabilities
+     -&gt; build compact deterministic run card
+     -&gt; classify the question with deterministic heuristics
+     -&gt; index candidate artifacts by schema
+     -&gt; retrieve, score, rerank, and budget evidence
+     -&gt; compact durable history when restoring a cold session
+     -&gt; compose stable-to-dynamic prompt
+     -&gt; stream through the shared Pi session
+     -&gt; record per-call and cumulative usage
+  -&gt; persist answer, citations, provenance, trace, and cost
+</code></pre>
+<p>There is no Python chat fallback and no second Standard backend.</p>
+<h2>3. Compact deterministic run card</h2>
+<p><code>buildRunCard()</code> produces orientation metadata, not an LLM-written summary. It contains:</p>
+<ul>
+<li>run ID and COMPLETE status;</li>
+<li>format family, assay/input level, sample count, and feature count when present;</li>
+<li>available stage names and stage configuration-file availability;</li>
+<li>artifact families, representative relative paths, important columns, bounded row counts, byte availability, and family counts;</li>
+<li>explicit nulls for unavailable quality-control and missing-data fields.</li>
+</ul>
+<p>The card does not select permanent “top findings.” On <code>RUN-E2E-VERIFY</code> it is approximately 2,128 tokens, within the initial 1–3k-token hypothesis.</p>
+<p>The artifact index is cached by completed-run index signature. Complete runs are treated as immutable; a changed <code>artifact_index.json</code> invalidates the cache.</p>
+<h2>4. Deterministic query routing</h2>
+<p><code>classifyStandardQuery()</code> uses explainable keyword and entity rules. It adds no model call.</p>
+<table>
+<thead>
+<tr>
+<th>Route</th>
+<th>Examples</th>
+<th align="right">Run-file body</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>general</code></td>
+<td>“What does FDR mean?”, product/help questions</td>
+<td align="right">0 tokens</td>
+</tr>
+<tr>
+<td><code>lexical</code></td>
+<td>data question phrased outside the keyword lists (“What are the biggest abundance changes between conditions?”) — resolved by the BM25 relevance fallback</td>
+<td align="right">relevance-selected rows</td>
+</tr>
+<tr>
+<td><code>lookup</code></td>
+<td>protein, named module, named GO, cell type, metadata</td>
+<td align="right">targeted rows only</td>
+</tr>
+<tr>
+<td><code>analytical</code></td>
+<td>run summary, interpretation, cross-modal synthesis</td>
+<td align="right">broader bounded evidence</td>
+</tr>
+<tr>
+<td><code>explicit</code></td>
+<td>attachment, pin, or explicit artifact question</td>
+<td align="right">authoritative explicit input plus bounded retrieval</td>
+</tr>
+</tbody></table>
+<p>Protein symbols, module names, and common cell types are extracted deterministically. Common scientific acronyms such as FDR, GO, WGCNA, RNA, and DNA are excluded from protein-symbol routing.</p>
+<p>A missing entity is a valid zero-result outcome. Standard sends the run card and an empty evidence block instead of substituting unrelated rows.</p>
+<h3 id="relevance-fallback">Relevance fallback for unmatched data questions (deferred layer #3)</h3>
+<p>Keyword routing is a fast path, not the whole story. A scientific question phrased outside the enumerated keyword and entity lists used to route to <code>general</code> and ground zero run files even when it was a clear data question. The confirmed example is <em>“Which proteins rise and fall in lockstep across samples?”</em>; another is <em>“What are the biggest abundance changes between conditions?”</em>, which matches no protein symbol, no module/cell/GO keyword, and no run-summary cue, so the keyword router alone returns the run card with no rows. Adding more synonyms did not generalize — the next paraphrase failed the same way — because the synonym list was an all-or-nothing routing <em>gate</em>.</p>
+<p>When, and only when, keyword routing yields <code>general</code> for the reason <code>unmatched</code> (that is, not a definitional or product/help question), the sidecar runs a deterministic <strong>Okapi BM25</strong> lexical relevance pass over the run's own artifacts. Each artifact becomes a document built from its relative path, its column names, a per-family scientific <em>concept profile</em>, and a bounded cell sample; the question is tokenized with the same light stemmer. An artifact is eligible only if it shares at least one <em>discriminative</em> term with the question — a term whose inverse document frequency clears a floor — so ubiquitous words such as “data”, “run”, or “gene” cannot by themselves promote a file. The top-ranked families (at most three) are grounded through the same schema-aware retrieval, scoring, budgeting, and citation path as keyword routes, and the BM25 score is added as a ranking bonus so the lexically matched artifact outranks any incidental same-family candidate. Turns selected this way are reported with route <code>lexical</code> and carry a per-file “why selected” reason naming the matched terms and BM25 score.</p>
+<p>This is purely additive and finishes the relevance layer the original design deferred. The curated keyword fast-path still handles its cases at zero retrieval cost; the BM25 pass runs only on otherwise-zero-grounding data questions. The same per-family concept vocabulary that was a brittle gate now acts as a graded ranking signal — a missing synonym lowers a score instead of dropping the turn to zero files.</p>
+<blockquote>
+<strong>Invariants preserved.</strong> The fallback adds no model call, no embeddings, and no persistent index; BM25 statistics are computed per run and cached by the same artifact-index signature the run card uses. Retrieval stays inside the selected completed run and remains schema-, row-, cell-, and token-bounded. Definitional and product/help questions never reach it, and if no artifact clears the discriminative floor the turn still grounds zero rows — so <em>“What does FDR mean?”</em> and off-topic questions (<em>“book me a flight to Boston”</em>) do not regress into dumping data. Genuinely semantic leaps with no shared vocabulary (true synonymy without lexical overlap) remain beyond BM25 and are the future embedding layer's job; open-ended hypothesis-driven orchestration stays reserved for Deep Research.
+</blockquote>
+<h2>5. Schema-aware retrieval</h2>
+<p>The sidecar scans visible text/tabular run artifacts and classifies them by normalized columns before using filename hints. The implemented families are:</p>
+<ul>
+<li>differential expression;</li>
+<li>module assignments and hub/kME data;</li>
+<li>module-trait correlations;</li>
+<li>GO enrichment;</li>
+<li>cell-type enrichment;</li>
+<li>sample metadata;</li>
+<li>run metadata.</li>
+</ul>
+<p>This makes a file such as <code>odd/names/alpha.csv</code> retrievable as differential-expression evidence when its columns are <code>gene, log2fc, pvalue, adj_pvalue</code>, even though its filename has no biological hint.</p>
+<p>CSV/TSV parsing handles quoted delimiters and embedded newlines. <code>.txt</code> delimiters are inferred from content. Every resolved path must remain below the selected completed-run directory. <code>ai_insights/</code>, R serialized state, scripts, and arbitrary paths are not retrieval inputs.</p>
+<h3>Retrieval behavior</h3>
+<ul>
+<li>Protein lookup filters exact symbol-bearing rows across DE and module-assignment families.</li>
+<li>Module lookup filters module rows and ranks kME/hub scores descending when present.</li>
+<li>GO lookup filters named modules and ranks FDR/adjusted p-value/p-value ascending.</li>
+<li>Cell-type lookup filters named cell types and ranks significance ascending.</li>
+<li>Cross-modal lookup first resolves significant cell-associated modules, then filters GO evidence to those modules.</li>
+<li>Summary questions take statistically ranked slices from multiple evidence families.</li>
+<li>Unmatched data questions enter through the BM25 relevance fallback (§4), which selects the evidence families and adds a relevance bonus to candidate scoring; row selection within those families then uses the same statistical ranking as every other route.</li>
+</ul>
+<p>Canonical <code>stageN/</code> outputs and stronger schema matches receive a deterministic priority bonus. Candidate chunks then receive family alignment, entity overlap, canonical-path, and row-density scores. Sorting occurs before the evidence budget is applied.</p>
+<h3>How rows are picked within a table</h3>
+<p>Row selection performs <strong>no statistics</strong>; it is a named-column numeric sort, and it is identical for keyword and lexical routes. After any entity filter (which is skipped on the lexical route, because that route has no extracted entity), the rows of each selected table are ordered in two steps:</p>
+<ol>
+<li><strong>Find one sort column by name.</strong> The code scans a fixed priority list against the table's normalized column names and takes the first that exists: <code>kME</code> then <code>hub_score</code> for module-assignment tables, otherwise <code>fdr</code>, <code>adj_pvalue</code>, <code>padj</code>, <code>pvalue</code>. If none of those names is present, the column index is <code>-1</code> and sorting is skipped.</li>
+<li><strong>Sort by that cell's numeric value.</strong> Each row's value in that one column is parsed as a number; rows are sorted <em>ascending</em> for a p-value/FDR column (smallest first) or <em>descending</em> for <code>kME</code>/<code>hub_score</code> (largest first). Cells that are not numbers sink to the bottom.</li>
+</ol>
+<p>The first <strong>60</strong> rows of that ordering are emitted (capped further by 16,000 characters per table and 2,000 bytes per cell); each emitted row's original line number becomes its citation.</p>
+<p>Worked example — a differential-expression table:</p>
+<pre><code class="language-text">gene,log2fc,pvalue,adj_pvalue,direction
+CLU,-0.2,0.2,0.3,down
+APOE,1.4,0.0001,0.002,up
+APP,0.8,0.003,0.02,up
+
+sort column -&gt; adj_pvalue   (first match in fdr / adj_pvalue / padj / pvalue)
+values      -&gt; CLU 0.3 | APOE 0.002 | APP 0.02
+ascending   -&gt; APOE (0.002), APP (0.02), CLU (0.3)
+emitted     -&gt; top 60 of that order (here, all three rows)</code></pre>
+<p>So “most significant first” means only “smallest value in the p-value/FDR column first”. The reading of that as <em>significance</em> comes entirely from the pipeline convention of naming the column <code>fdr</code>/<code>adj_pvalue</code>/<code>pvalue</code> and storing a smaller-is-stronger number in it; the sorter itself computes and verifies nothing. Two consequences follow:</p>
+<ul>
+<li><strong>It depends on the column name.</strong> A table that stores its adjusted p-value as, say, <code>q_value</code>, <code>BH</code>, or <code>p.adjust</code> matches none of the recognized names, so no sort runs and the first 60 rows are taken in <em>file order</em>. The recognized-name list is fixed.</li>
+<li><strong>A table with no recognized column is never reordered</strong> (for example sample metadata): its top-60 is simply whatever order the rows already have in the file.</li>
+</ul>
+<p>This is also why a lexical-fallback turn returns a table's most statistically significant rows rather than rows matched to the question's wording: the query decides <em>which table</em>, but within the table the ordering is this fixed numeric sort — it is not, for instance, re-sorted by <code>log2fc</code> magnitude just because a question said “biggest”. Query-aware row ranking is recorded as future work in <a href="#further-improvements">Appendix&nbsp;C</a>.</p>
+<h2>6. Bounds and truncation</h2>
+<p>Current values are evaluation-tuned defaults, not scientific constants:</p>
+<table>
+<thead>
+<tr>
+<th>Bound</th>
+<th align="right">Current value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Lookup evidence budget</td>
+<td align="right">8,000 estimated tokens</td>
+</tr>
+<tr>
+<td>Explicit-context evidence budget</td>
+<td align="right">12,000 estimated tokens</td>
+</tr>
+<tr>
+<td>Lexical-fallback evidence budget</td>
+<td align="right">12,000 estimated tokens</td>
+</tr>
+<tr>
+<td>Analytical evidence budget</td>
+<td align="right">16,000 estimated tokens</td>
+</tr>
+<tr>
+<td>Absolute accepted override ceiling</td>
+<td align="right">24,000 estimated tokens</td>
+</tr>
+<tr>
+<td>Lookup rows per candidate</td>
+<td align="right">30</td>
+</tr>
+<tr>
+<td>Analytical rows per candidate</td>
+<td align="right">60</td>
+</tr>
+<tr>
+<td>Candidate body ceiling</td>
+<td align="right">16,000 characters</td>
+</tr>
+<tr>
+<td>Pre-read candidates per family</td>
+<td align="right">6</td>
+</tr>
+<tr>
+<td>Selected chunks per family</td>
+<td align="right">2 for lookup/cross-modal; 3 for broad synthesis</td>
+</tr>
+</tbody></table>
+<p>Token estimates use four characters per token for routing and budget control. Billing and operational usage use provider-reported values instead.</p>
+<p>The lexical fallback uses Okapi BM25 with <code>k1&nbsp;=&nbsp;1.5</code> and <code>b&nbsp;=&nbsp;0.75</code>, an inverse-document-frequency anchor floor of <code>0.7</code> (a query term must appear in fewer than roughly half the run's artifacts to promote a file), promotes at most three evidence families per turn, reads at most 32&nbsp;KB per artifact into its index, and caps each artifact document at 4,000 tokens. These are deterministic, evaluation-tuned defaults, not scientific constants.</p>
+<p>The grounding manifest records candidate count, selected paths/families, relevance scores, rows returned, included characters, and truncation. File and row IDs become citations.</p>
+<h2>7. Standard policy boundary in Pi</h2>
+<p><code>capabilitiesForPolicy()</code> is applied while the Pi session is constructed, not merely described in a prompt.</p>
+<table>
+<thead>
+<tr>
+<th>Capability</th>
+<th align="right">Standard</th>
+<th align="right">Deep Research seam</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Pi session/runtime</td>
+<td align="right">yes</td>
+<td align="right">yes</td>
+</tr>
+<tr>
+<td>model switching, streaming, persistence, cancellation</td>
+<td align="right">yes</td>
+<td align="right">yes</td>
+</tr>
+<tr>
+<td>run-card and server-side retrieval</td>
+<td align="right">yes</td>
+<td align="right">future policy may broaden</td>
+</tr>
+<tr>
+<td>Pi skills</td>
+<td align="right">no</td>
+<td align="right">developer-gated seam retained</td>
+</tr>
+<tr>
+<td>arbitrary <code>read</code></td>
+<td align="right">no</td>
+<td align="right">developer-gated seam retained</td>
+</tr>
+<tr>
+<td>Bash/Python</td>
+<td align="right">no</td>
+<td align="right">developer-gated seam retained</td>
+</tr>
+<tr>
+<td>write/edit/save-artifact</td>
+<td align="right">no</td>
+<td align="right">developer-gated seam retained</td>
+</tr>
+</tbody></table>
+<p>The Standard resource loader explicitly overrides skills to an empty catalogue. Its Pi <code>tools</code> array is empty. If a conversation changes policy, the existing live session is disposed and rebuilt so capabilities cannot leak across policies.</p>
+<p>No Standard retrieval tool is exposed in this implementation. Initial server-side retrieval was sufficient for the evaluated questions, so the optional one- or two-round escalation mechanism was intentionally not added. This keeps normal Standard answers at zero tool calls.</p>
+<h2>8. Prompt composition and caching posture</h2>
+<p>The composed provider input is ordered as:</p>
+<ol>
+<li>stable SignalFold grounding/security policy;</li>
+<li>policy and allowed external-source declaration;</li>
+<li>stable compact run card;</li>
+<li>dynamic retrieved evidence;</li>
+<li>restored compact history and authoritative pins;</li>
+<li>current question last.</li>
+</ol>
+<p>This ordering gives provider/Pi prompt caching a stable prefix without using caching as a retrieval substitute. Pi/provider usage is recorded as uncached input, cache write, and cache read. Pi 0.79.9 does not expose a reliable standalone count for its generated system/tool-definition block, so that value is not guessed or mislabeled; the composed policy/run-card/evidence/history/question estimates and provider totals are reported separately.</p>
+<p>Full prompt content is emitted only when developer mode is enabled. Normal telemetry carries the SHA-256 hash and grounding manifest. Operations retention remains bounded by the configured newest-turn limit.</p>
+<h2>9. Conversation history</h2>
+<p>History has two layers:</p>
+<ul>
+<li>Pi performs its built-in live-session auto-compaction near the active model’s context threshold. Compaction start/end and token metadata are recorded as history events.</li>
+<li>When a session is cold or restored from durable storage, <code>compactConversationHistory()</code> deterministically condenses old messages, keeps recent turns verbatim, and preserves pinned findings, decisions, hypotheses, citations, unresolved questions, and current research focus.</li>
+</ul>
+<p>Pinned prior answers are also reinjected into warm turns as authoritative context, so a pin made after the original answer is not lost merely because Pi already has a warm session.</p>
+<h2>10. Attachments, citations, provenance, and export</h2>
+<p>Text attachments continue to be resolved by the server, path-confined to the run AI root, size-bounded, and wrapped as untrusted data. Their markers force the explicit route, and their content remains authoritative for the current question.</p>
+<p>Grounding citations contain relative file path, artifact family, and included row IDs. The server persists those citations with the assistant message and persists a provenance entry for every selected artifact, including route, family, score, returned-row count, and truncation. Conversation export now includes citations and provenance instead of dropping them.</p>
+<h2>11. Operational telemetry</h2>
+<p>The implementation separates:</p>
+<ul>
+<li>composed prompt characters and SHA-256;</li>
+<li>stable policy tokens;</li>
+<li>run-card tokens;</li>
+<li>retrieved-evidence tokens;</li>
+<li>history tokens and compaction state;</li>
+<li>question tokens;</li>
+<li>retrieval route and intent;</li>
+<li>candidate and selected artifacts, scores, rows, and truncation;</li>
+<li>per-model-call uncached input, cache write, cache read, output, cost, and tool-result count;</li>
+<li>cumulative uncached input, cache write, cache read, output, model-call count, cost, and total context processed.</li>
+</ul>
+<p><code>inputTokens</code> on the final usage frame now means new/uncached input. Cache-read tokens are not silently added to it. <code>totalContextTokens</code> is the cumulative sum of uncached input, cache writes, and cache reads across Pi loop calls.</p>
+<h2>12. Security and failure behavior</h2>
+<ul>
+<li>Standard has no model-invocable filesystem or execution capability.</li>
+<li>Server-side reads require a relative path confined to the selected completed run.</li>
+<li>Retrieval has file, family, row, cell, candidate, and token bounds.</li>
+<li>User/attachment strings still pass through existing inspection and output scrubbing.</li>
+<li>Missing or malformed optional metadata produces null/empty orientation fields, not a turn failure.</li>
+<li>Missing evidence produces an explicit empty evidence set.</li>
+<li>Provider failure, cancellation, timeout, isolation, BYOK, and cost persistence remain in the shared runtime/server path.</li>
+</ul>
+<h2>13. Verification</h2>
+<p>Implemented regressions cover:</p>
+<ul>
+<li>zero run-body evidence for “What does FDR mean?”;</li>
+<li>protein/module/GO/cell-type/cross-modal retrieval;</li>
+<li>schema-equivalent variant filenames;</li>
+<li>the BM25 lexical relevance fallback grounding paraphrased data questions the keyword router drops, with the discriminative-floor protection keeping definitional and off-topic questions at zero grounding;</li>
+<li>a deterministic selection-only evaluation over 18 gold questions (paraphrase, definitional, product/help, missing-entity, and keyword-covered) that scores the selection process with no provider call;</li>
+<li>rerank-before-budget and hard evidence limits;</li>
+<li>Standard capability lock and Deep Research seam;</li>
+<li>attachment and pin delivery;</li>
+<li>citation/provenance persistence and export;</li>
+<li>history compaction;</li>
+<li>uncached/cache-write/cache-read/cumulative telemetry.</li>
+</ul>
+<p>Verification results at implementation time:</p>
+<ul>
+<li><code>npm run typecheck</code>: pass.</li>
+<li><code>npm test</code>: 37/37 sidecar tests pass.</li>
+<li><code>.venv/bin/python -m unittest discover -s tests -p &#39;test_chat*.py&#39; -v</code>: 164/164 legacy chat/security/eval tests pass.</li>
+<li><code>.venv/bin/python -m unittest tests.test_ai_insights_preservation_contract -v</code>: 5/5 preservation-contract tests pass.</li>
+<li>Full Python suite: 349 passed, 11 skipped, and nine unrelated pre-existing pipeline/reference failures (missing reference asset and pipeline outputs), none in the AI/chat scope.</li>
+</ul>
+<p><strong>Relevance-fallback revision (2026-06-22).</strong> The change is confined to the Node sidecar (<code>standard-grounding.ts</code> plus its tests), so the Python suites above are unaffected and were not re-run. For this revision <code>npm run typecheck</code> passes and <code>npm test</code> reports <strong>41/41</strong> sidecar tests — three added: the fallback regression in <code>standard-grounding.test.ts</code> and a two-part selection-only evaluation in <code>standard-grounding.eval.test.ts</code>.</p>
+<h3>What the selection eval measures</h3>
+<p>The eval scores the <em>file-selection decision in isolation</em>, with <strong>no provider/model call</strong>. It runs a fixed gold set of 18 questions through (a) the keyword router alone — the “before” — and (b) the router&nbsp;+&nbsp;BM25 fallback — the “after” — and checks each turn against a hand-labelled expected outcome. Filenames in the synthetic run are deliberately uninformative (<code>odd/names/alpha.csv</code> … ), so a pass reflects column-schema and lexical relevance, never a filename hint.</p>
+<p>The 18 questions are chosen to expose the keyword-routing failure mode and prove it is fixed without collateral damage. <strong>11 should ground</strong> run rows; <strong>7 should stay general</strong> (zero rows):</p>
+<table>
+<thead>
+<tr><th>Question class</th><th align="right">Count</th><th>Example</th><th>Correct outcome</th></tr>
+</thead>
+<tbody>
+<tr><td>Paraphrased data question, worded outside the keyword lists</td><td align="right">6</td><td><em>“What are the biggest abundance changes between conditions?”</em></td><td>ground the right family</td></tr>
+<tr><td>Definitional</td><td align="right">3</td><td><em>“What does FDR mean?”</em></td><td>stay general — 0 rows</td></tr>
+<tr><td>Product / help</td><td align="right">2</td><td><em>“How do I export this chat?”</em></td><td>stay general — 0 rows</td></tr>
+<tr><td>Off-topic / no data anchor</td><td align="right">2</td><td><em>“Book me a flight to Boston.”</em></td><td>stay general — 0 rows</td></tr>
+<tr><td>Keyword-covered (sanity — must keep working)</td><td align="right">5</td><td><em>“What is APOE's log2FC?”</em></td><td>ground the right family</td></tr>
+<tr><td><strong>Total</strong></td><td align="right"><strong>18</strong></td><td></td><td><strong>11 ground · 7 general</strong></td></tr>
+</tbody>
+</table>
+<h3>Result: before vs after</h3>
+<p>Each metric is <em>count correct / count possible</em>. The only column that moves is <em>recall</em> — the rest are held as guardrails to show nothing regressed.</p>
+<table>
+<thead>
+<tr><th>Metric (what it counts)</th><th align="right">Keyword&nbsp;router only<br>(before)</th><th align="right">Router&nbsp;+&nbsp;BM25 fallback<br>(after)</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Recall</strong> — data questions that grounded ≥1 file, of the 11 that should</td><td align="right">5 / 11 (45%)</td><td align="right"><strong>11 / 11 (100%)</strong></td></tr>
+<tr><td><strong>Specificity</strong> — non-data questions correctly left at zero rows, of 7</td><td align="right">7 / 7 (100%)</td><td align="right">7 / 7 (100%)</td></tr>
+<tr><td><strong>Family precision</strong> — grounded turns whose top family matched the label</td><td align="right">5 / 5 (100%)</td><td align="right">11 / 11 (100%)</td></tr>
+<tr><td>Paraphrased data questions dropped to zero, then recovered by the fallback</td><td align="right">— (6 dropped)</td><td align="right">6 / 6 recovered</td></tr>
+</tbody>
+</table>
+<p><strong>How to read it.</strong> The keyword router grounded only 5 of the 11 data questions and silently dropped the other 6 to zero grounding — that is the reported failure mode. The fallback lifts recall to 11/11. Meanwhile <em>specificity</em> stays 7/7 (definitional, product, and off-topic questions still ground nothing) and <em>family precision</em> stays 100% (every grounded turn still selects the correct evidence family — the family-precision denominator simply grows from 5 grounded turns to 11). Because no provider call is involved, the same harness doubles as a cheap, repeatable regression and can also A/B the original query-blind path (<code>groundingSnapshot</code>).</p>
+<h2>Appendix A. What changed</h2>
+<ol>
+<li>Added <code>standard-grounding.ts</code> for run-card generation, deterministic routing, artifact indexing, schema classification, retrieval, cross-modal joining, scoring, budgeting, citations, and durable-history compaction.</li>
+<li>Changed <code>runtime.ts</code> so Standard uses adaptive grounding and an empty Pi skill/tool surface; Deep Research retains the developer-gated expansion seam.</li>
+<li>Reordered prompt material from stable policy/run card to dynamic evidence/history/question.</li>
+<li>Split usage into uncached input, cache write, cache read, output, per-call totals, model-call count, and cumulative context.</li>
+<li>Changed <code>server.ts</code> so pins are passed to runtime and grounding citations/provenance persist and export.</li>
+<li>Added focused sidecar tests using both schema-variant synthetic runs and server persistence flows.</li>
+<li><strong>(2026-06-22) Finished the deferred relevance-retrieval layer (#3) — a BM25 lexical fallback.</strong> Confined to <code>ai-sidecar/src/standard-grounding.ts</code>:
+<ul>
+<li><strong>New behaviour:</strong> when keyword routing returns <code>general</code> for an <em>unmatched</em> question (not definitional or product/help), score every run artifact with Okapi&nbsp;BM25 over its relative path, column names, a per-family concept profile, and a bounded cell sample; ground the top families through the existing retrieval, scoring, budget, and citation path.</li>
+<li><strong>New route:</strong> turns selected this way report route and intent <code>lexical</code>, carry a BM25 ranking bonus, and record a per-file matched-term “why selected” reason.</li>
+<li><strong>Guards:</strong> a discriminative-anchor IDF floor (so ubiquitous words cannot promote a file), at most three promoted families, and a per-run corpus cache keyed by the artifact-index signature.</li>
+<li><strong>Deliberately unchanged:</strong> the keyword fast-path, the run card, and the zero-grounding behaviour for definitional / product / off-topic questions. No model call, embeddings, or persistent index added; <code>runtime.ts</code> and <code>server.ts</code> untouched.</li>
+<li><strong>Evaluation:</strong> added a deterministic, provider-free selection-only harness, <code>standard-grounding.eval.test.ts</code> (results in §13).</li>
+</ul>
+</li>
+</ol>
+<h2>Appendix B. Measured savings</h2>
+<p>Measurements use the same completed <code>RUN-E2E-VERIFY</code> run and the same four-characters-per-token estimator before and after. The old path is still callable as <code>groundingSnapshot(runId, 100_000)</code>, which permits a direct deterministic comparison without a provider call.</p>
+<h3>Baseline</h3>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th align="right">Old Standard path</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Selected run-body bytes</td>
+<td align="right">100,000</td>
+</tr>
+<tr>
+<td>Grounding characters</td>
+<td align="right">100,671</td>
+</tr>
+<tr>
+<td>Estimated grounding tokens</td>
+<td align="right">25,168</td>
+</tr>
+<tr>
+<td>Selected files</td>
+<td align="right">7</td>
+</tr>
+<tr>
+<td>Selection</td>
+<td align="right">filename regex + alphabetical order</td>
+</tr>
+</tbody></table>
+<h3>After</h3>
+<table>
+<thead>
+<tr>
+<th>Representative question</th>
+<th>Route</th>
+<th align="right">Run card</th>
+<th align="right">Evidence</th>
+<th align="right">Total grounding</th>
+<th align="right">Reduction vs 25,168</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>What does FDR mean?</td>
+<td>general</td>
+<td align="right">2,128</td>
+<td align="right">0</td>
+<td align="right">2,128</td>
+<td align="right">91.5%</td>
+</tr>
+<tr>
+<td>What is APOE’s log2FC and module?</td>
+<td>lookup</td>
+<td align="right">2,128</td>
+<td align="right">3,101</td>
+<td align="right">5,229</td>
+<td align="right">79.2%</td>
+</tr>
+<tr>
+<td>Hubs in turquoise</td>
+<td>lookup</td>
+<td align="right">2,128</td>
+<td align="right">1,859</td>
+<td align="right">3,987</td>
+<td align="right">84.2%</td>
+</tr>
+<tr>
+<td>GO pathways in turquoise</td>
+<td>lookup</td>
+<td align="right">2,128</td>
+<td align="right">7,888</td>
+<td align="right">10,016</td>
+<td align="right">60.2%</td>
+</tr>
+<tr>
+<td>Microglia cell-type results</td>
+<td>lookup</td>
+<td align="right">2,128</td>
+<td align="right">2,913</td>
+<td align="right">5,041</td>
+<td align="right">80.0%</td>
+</tr>
+<tr>
+<td>GO in microglia-associated modules</td>
+<td>analytical</td>
+<td align="right">2,128</td>
+<td align="right">8,101</td>
+<td align="right">10,229</td>
+<td align="right">59.4%</td>
+</tr>
+<tr>
+<td>Summarize and interpret the run</td>
+<td>analytical</td>
+<td align="right">2,128</td>
+<td align="right">15,985</td>
+<td align="right">18,113</td>
+<td align="right">28.0%</td>
+</tr>
+<tr>
+<td>Missing protein</td>
+<td>lookup</td>
+<td align="right">2,128</td>
+<td align="right">0</td>
+<td align="right">2,128</td>
+<td align="right">91.5%</td>
+</tr>
+</tbody></table>
+<p>The most important savings is qualitative as well as numeric: definitions and missing-evidence questions now carry zero raw run rows, while lookup questions spend their budget on matching rows instead of unrelated alphabetically early files.</p>
+<p>The earlier live smoke cited in the implementation request processed 220,601 cumulative input/cache-read tokens over four model calls. This implementation did not repeat a paid live provider run, so it does not claim a measured end-to-end token bill or latency delta against that smoke. If the deterministic grounding reduction were repeated unchanged across four calls, it would reduce the grounding contribution by approximately 28–91.5% depending on route; actual provider totals depend on Pi system text, history, cache behavior, and the number of model calls, all of which are now reported separately for a future live comparison.</p>
+<h2 id="further-improvements">Appendix C. Further improvements identified during this work</h2>
+<p>These surfaced while building the BM25 fallback and tracing how rows are selected. They are <strong>candidates, not commitments</strong> — recorded for planning, not yet scoped or validated. Each notes where it belongs and its rough cost. The heavy agentic / hypothesis-driven orchestration and dual-provenance evidence graph from the origin brainstorm stay <strong>Deep-Research-only</strong> and are deliberately excluded here.</p>
+<table>
+<thead>
+<tr><th>Improvement</th><th>What &amp; why</th><th>Type / cost</th></tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Query-aware row ranking</strong></td>
+<td>Within a selected table, order rows by relevance to the question — detect an implied metric (“biggest” &rarr; sort by <code>log2fc</code> magnitude; “lowest p” &rarr; p ascending) or lexically match row cells to the query terms — instead of the single fixed p/FDR sort. Directly addresses the §5 limitation: today the query picks the table, not the rows.</td>
+<td>Standard, deterministic; no model call.</td>
+</tr>
+<tr>
+<td><strong>Broaden &amp; harden sort-column recognition</strong></td>
+<td>The recognized statistic-column names are a fixed list (<code>fdr/adj_pvalue/padj/pvalue</code>, <code>kME/hub_score</code>). Tables that use <code>q_value</code>, <code>BH</code>, <code>p.adjust</code>, <code>FDR_BH</code>, etc. match nothing and silently fall back to file order. Add synonyms and/or a “numeric, bounded to [0,1]” heuristic, and surface when no sort column was found instead of falling back silently.</td>
+<td>Standard, deterministic; low effort, low risk.</td>
+</tr>
+<tr>
+<td><strong>Per-run semantic (embedding) relevance</strong></td>
+<td>BM25 matches shared vocabulary only; true synonymy with no lexical overlap stays out of reach. A cached per-run embedding index over artifact descriptions, columns, and representative rows would catch those. The origin brainstorm's “embeddings later”.</td>
+<td>Future; needs a local or cheap-provider embedding model plus a small vector store and a build step.</td>
+</tr>
+<tr>
+<td><strong>Pipeline-time run digest (~3–5&nbsp;KB)</strong></td>
+<td>A compact factual summary emitted at pipeline time and always included, so a data question never grounds zero and the model always has substantive orientation beyond the metadata-only run card. Brainstorm item&nbsp;#4.</td>
+<td>Future; pipeline-side change — pipeline-owned files are outside the sidecar's edit scope, so this is a cross-component ask.</td>
+</tr>
+<tr>
+<td><strong>One optional deterministic retrieval call</strong></td>
+<td>When up-front retrieval comes back empty or low-confidence, allow exactly one server-resolved follow-up fetch (still non-agentic, still bounded). Needs a clear trigger and evidence that it beats simply widening up-front retrieval.</td>
+<td>Standard, deterministic; one extra server round trip, still zero model tools.</td>
+</tr>
+<tr>
+<td><strong>Lexical cross-modal joins</strong></td>
+<td>The lexical fallback promotes up to three families but does not perform the cell-type&nbsp;&rarr;&nbsp;module&nbsp;&rarr;&nbsp;GO join the keyword cross-modal route does, so an implicitly cross-modal question routed lexically misses that link.</td>
+<td>Standard, deterministic.</td>
+</tr>
+<tr>
+<td><strong>Lexical-route empty-evidence corner case</strong></td>
+<td>If a promoted family's only artifact has a header but no data rows, a turn can report <code>route: lexical</code> with empty evidence; it should fall back to <code>general</code> (run card only) for cleaner provenance.</td>
+<td>Standard; small robustness fix.</td>
+</tr>
+<tr>
+<td><strong>Grow the selection eval + add row-ranking metrics</strong></td>
+<td>The eval is currently a synthetic 18-question fixture over one synthetic run. Extend it to real runs, more adversarial paraphrases, and multi-family / cross-modal cases; add the row-ranking metrics (MRR / nDCG over labelled rows) the brief asked for; wire it into CI and reconcile with the Python <code>eval/</code> infrastructure.</td>
+<td>Testing / infrastructure.</td>
+</tr>
+<tr>
+<td><strong>BM25 indexing cost on very large runs</strong></td>
+<td>The first unmatched query reads up to 32&nbsp;KB from every artifact to build the corpus. For runs with very many artifacts, bound the total artifacts/bytes indexed, or precompute the corpus at artifact-index time.</td>
+<td>Performance; low priority.</td>
+</tr>
+</tbody>
+</table>
+
+</main>
+</body>
+</html>

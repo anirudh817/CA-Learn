@@ -1,0 +1,13 @@
+GeneSymbol	SystemCode
+GOT2	Sy
+ALB	Sy
+AMY2A	Sy
+CNDP1	Sy
+HP	Sy
+LV657	Sy
+NID1	Sy
+NPTXR	Sy
+RNJ1	Sy
+TMEM132A	Sy
+ABI3BP	Sy
+	Sy

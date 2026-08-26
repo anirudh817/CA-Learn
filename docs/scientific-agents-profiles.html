@@ -1,0 +1,1663 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SignalFold — Scientific-Agents Profiles + Skills/Scripts Reference</title>
+<style>
+:root {
+  --bg: #ffffff; --fg: #1a1d23; --muted: #5b6470; --accent: #2563eb;
+  --accent-soft: #eff6ff; --border: #e5e7eb; --code-bg: #f4f5f7;
+  --ok: #15803d; --warn: #b45309; --danger: #b91c1c; --ai: #7c3aed; --ai-soft: #f3effe;
+  --skill: #0e7490; --skill-soft: #ecfeff;
+  --shadow: 0 1px 2px rgba(0,0,0,.04), 0 4px 12px rgba(0,0,0,.05);
+  --radius: 8px; --content-maxw: 920px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1115; --fg: #e6e8eb; --muted: #9aa3ad; --accent: #60a5fa;
+    --accent-soft: rgba(30,58,138,.25); --border: #2a2f37; --code-bg: #161a20;
+    --ok: #4ade80; --warn: #fbbf24; --danger: #f87171; --ai: #a78bfa; --ai-soft: rgba(91,33,182,.22);
+    --skill: #22d3ee; --skill-soft: rgba(14,116,144,.20);
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.5);
+  }
+}
+* { box-sizing: border-box; }
+html { font-size: 17px; scroll-behavior: smooth; }
+body { margin: 0; background: var(--bg); color: var(--fg);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.6; -webkit-font-smoothing: antialiased; }
+.wrap { max-width: var(--content-maxw); margin: 0 auto; padding: 3rem 1.5rem 5rem; }
+header.doc { border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; margin-bottom: 2rem; }
+h1 { font-size: 1.9rem; line-height: 1.2; margin: 0 0 .4rem; letter-spacing: -.02em; }
+h2 { font-size: 1.35rem; margin: 2.8rem 0 .9rem; letter-spacing: -.01em; padding-top: .4rem; }
+h3 { font-size: 1.08rem; margin: 1.4rem 0 .5rem; }
+h4 { font-size: .9rem; margin: 1.1rem 0 .4rem; }
+h5 { font-size: .85rem; margin: 1.2rem 0 .3rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+p { margin: .7rem 0; }
+.lede { color: var(--muted); font-size: 1.05rem; }
+.meta { color: var(--muted); font-size: .82rem; margin-top: .6rem; }
+a { color: var(--accent); text-decoration: none; } a:hover { text-decoration: underline; }
+code { background: var(--code-bg); padding: .12em .4em; border-radius: 4px; font-size: .86em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: .9rem 1rem; overflow-x: auto; font-size: .85rem; line-height: 1.5; }
+pre code { background: none; padding: 0; }
+.callout { border: 1px solid var(--border); border-left: 3px solid var(--accent);
+  background: var(--accent-soft); border-radius: var(--radius); padding: .9rem 1.1rem; margin: 1.2rem 0; }
+.callout.ai { border-left-color: var(--ai); background: var(--ai-soft); }
+.callout strong { display: block; margin-bottom: .25rem; }
+table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: .88rem; }
+th, td { text-align: left; padding: .55rem .7rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { font-weight: 600; color: var(--muted); font-size: .76rem; text-transform: uppercase; letter-spacing: .04em; }
+.card { border: 1px solid var(--border); border-radius: var(--radius); padding: 1.1rem 1.3rem;
+  margin: 1.3rem 0; box-shadow: var(--shadow); background: var(--bg); }
+.card.aicard { border-left: 3px solid var(--ai); }
+.card h3 { margin-top: 0; display: flex; align-items: baseline; gap: .5rem; flex-wrap: wrap; }
+.slug { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .8rem;
+  color: var(--muted); background: var(--code-bg); padding: .1em .45em; border-radius: 4px; }
+.tag { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
+  padding: .15em .5em; border-radius: 999px; white-space: nowrap; }
+.tag.t1 { color: #fff; background: var(--accent); }
+.tag.t2 { color: var(--fg); background: var(--accent-soft); border: 1px solid var(--border); }
+.tag.t3 { color: var(--muted); background: var(--code-bg); border: 1px solid var(--border); }
+.tag.t4 { color: #fff; background: var(--ai); }
+.tag.viz { color: #fff; background: var(--ok); }
+.tag.new { color: #fff; background: var(--warn); }
+.mode { color: var(--muted); font-size: .8rem; font-style: italic; margin: .15rem 0 .5rem; }
+.summary { font-size: .92rem; }
+.src { color: var(--muted); font-size: .76rem; font-weight: 400; }
+.detail { margin-top: 1rem; border-top: 1px dashed var(--border); padding-top: .5rem; }
+ul { padding-left: 1.25rem; margin: .4rem 0; }
+li { margin: .45rem 0; }
+.enh li strong, .skills li strong { color: var(--accent); }
+.ground { display: block; margin-top: .25rem; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: .72rem; color: var(--muted); word-break: break-word; }
+.ground::before { content: "⌖ grounded in "; color: var(--ok); font-weight: 600; }
+.prompt { background: var(--code-bg); border: 1px solid var(--border); border-left: 3px solid var(--muted);
+  border-radius: var(--radius); padding: .6rem .85rem; margin: .55rem 0; }
+.prompt .plabel { display: block; font-size: .67rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .05em; color: var(--accent); margin-bottom: .3rem; }
+.prompt p { margin: 0; font-size: .89rem; font-style: italic; line-height: 1.55; }
+.gtbl td { font-size: .82rem; }
+.gtbl tr.grp td { background: var(--accent-soft); font-weight: 700; font-size: .82rem; }
+.gtbl tr.grp.ai td { background: var(--ai-soft); }
+.gtbl .path { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .73rem;
+  color: var(--fg); word-break: break-all; }
+.gtbl .hint { color: var(--muted); font-style: italic; }
+.toc { font-size: .9rem; columns: 2; gap: 1.5rem; }
+.toc a { display: block; margin: .2rem 0; }
+.status-ok { color: var(--ok); font-weight: 600; }
+.status-gap { color: var(--warn); font-weight: 600; }
+hr { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
+footer { color: var(--muted); font-size: .8rem; border-top: 1px solid var(--border);
+  margin-top: 3rem; padding-top: 1.2rem; }
+/* --- Part II: skills/scripts layer --- */
+.part { margin: 3.4rem 0 0; padding-top: 1.1rem; border-top: 2px solid var(--skill); }
+.part-label { font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: var(--skill); }
+.tag.skill { color: #fff; background: var(--skill); }
+.tag.exec { color: #fff; background: var(--ok); }
+.tag.refonly { color: var(--muted); background: var(--code-bg); border: 1px solid var(--border); }
+.card.skillcard { border-left: 3px solid var(--skill); }
+.sk { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .8rem;
+  color: var(--skill); background: var(--skill-soft); padding: .1em .45em; border-radius: 4px; }
+.scriptlist { list-style: none; padding-left: 0; margin: .5rem 0; }
+.scriptlist > li { margin: .55rem 0; padding-left: 1.15rem; position: relative; }
+.scriptlist > li::before { content: "\25B6"; position: absolute; left: 0; top: .3em; color: var(--skill); font-size: .68rem; }
+.spath { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .75rem;
+  color: var(--fg); word-break: break-all; }
+.pill { display: inline-block; font-size: .65rem; font-weight: 700; letter-spacing: .01em;
+  padding: .06em .42em; border-radius: 4px; margin: .12rem .18rem 0 0; white-space: nowrap; vertical-align: middle; }
+.pill.det, .pill.seed { color: var(--ok); background: rgba(21,128,61,.10); border: 1px solid var(--ok); }
+.pill.rng, .pill.net { color: var(--warn); background: rgba(180,83,9,.10); border: 1px solid var(--warn); }
+.pill.local, .pill.ref { color: var(--muted); background: var(--code-bg); border: 1px solid var(--border); }
+.pill.ai, .pill.danger { color: var(--ai); background: var(--ai-soft); border: 1px solid var(--ai); }
+.surf { display: inline-block; font-size: .7rem; font-weight: 700; color: var(--accent);
+  background: var(--accent-soft); border: 1px solid var(--border); border-radius: 4px; padding: .03em .4em; }
+.xtbl td { font-size: .82rem; }
+.xtbl tr.grp td { background: var(--skill-soft); font-weight: 700; }
+.xtbl .prof { color: var(--accent); }
+.xtbl .exe { color: var(--skill); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: .73rem; word-break: break-all; }
+.legend { font-size: .78rem; color: var(--muted); }
+.legend .pill { margin-right: .15rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="doc">
+  <h1>Scientific-Agents <span style="color:var(--accent)">Profiles</span> &amp; <span style="color:var(--skill)">Skills / Scripts</span> for SignalFold</h1>
+  <p class="lede">Two complementary K-Dense AI layers, both grounded against SignalFold's surface.
+  <strong style="color:var(--accent)">Part&nbsp;I — Profiles (how to reason):</strong> the <strong>20</strong>
+  <code>scientific-agents</code> <code>AGENTS.md</code> profiles — pure prompt, zero code — each anchored to
+  <span class="ground" style="display:inline">slug/AGENTS.md › section · line</span>.
+  <strong style="color:var(--skill)">Part&nbsp;II — Skills + Scripts (the code that runs):</strong> the
+  <a href="#skills-cards"><strong>17</strong> grounded</a> <code>scientific-agent-skills</code> — real
+  <code>SKILL.md</code> + <code>scripts/*.py</code> that do deterministic work — with a
+  <a href="#intersection">profile&nbsp;↔&nbsp;skill intersection</a> and how those scripts
+  <a href="#run-byok">run today in k-dense-byok</a> vs. <a href="#run-signalfold">could run in SignalFold</a>.
+  Profiles teach reasoning; skills+scripts are the executable code that reasoning drives.</p>
+  <p class="meta">Generated 2026-06-20 · extended with the skills layer · Reference doc only — no code/pipeline changes ·
+  Sources: profiles <a href="https://github.com/K-Dense-AI/scientific-agents">K-Dense-AI/scientific-agents</a> (503) ·
+  skills <a href="https://github.com/K-Dense-AI/scientific-agent-skills">K-Dense-AI/scientific-agent-skills</a>
+  (147&nbsp;<code>SKILL.md</code> · 263&nbsp;<code>scripts/*.py</code> · 70 with a <code>scripts/</code> dir; clone @ <code>2093901</code>) ·
+  every path/line pinned to this clone — a future <code>git&nbsp;pull</code> may move them (paths are stabler than lines)</p>
+</header>
+
+<nav class="callout">
+  <strong>Contents</strong>
+  <div class="toc">
+    <a href="#repo"><strong>I ·</strong> 1. What the scientific-agents repo is</a>
+    <a href="#needs">2. What SignalFold needs (component → profile)</a>
+    <a href="#profiles">3. Recommended profiles — in depth (20)</a>
+    <a href="#table">4. Skill → source → chat-hint table</a>
+    <a href="#use">5. How to use a profile in SignalFold</a>
+    <a href="#appendix">6. Appendix — full profile audit (503)</a>
+    <a href="#skills-intro"><strong>II ·</strong> 7. The scientific-agent-skills layer</a>
+    <a href="#skills-cards">8. Relevant skills — in depth (17)</a>
+    <a href="#skills-table">9. Skill → script → determinism table</a>
+    <a href="#intersection">10. Profile ↔ Skill intersection (per surface)</a>
+    <a href="#run-byok">11. How skills run today in k-dense-byok</a>
+    <a href="#run-signalfold">12. How skills could run in SignalFold</a>
+    <a href="#skills-appendix">13. Appendix — full skills audit (147)</a>
+  </div>
+</nav>
+
+<h2 id="repo">1. What the scientific-agents repo is</h2>
+<p><a href="https://github.com/K-Dense-AI/scientific-agents">scientific-agents</a> is a library of
+<strong>503 "expert-thinking" profiles</strong>, one per profession. Each is an <code>AGENTS.md</code> file
+(mirror <code>CLAUDE.md</code>) that teaches an AI agent to reason like a senior practitioner — the databases
+and instruments it reaches for, how it frames a problem, how it stress-tests a claim, and the failure modes it
+treats as first-class. Not a Python package; you install a profile by dropping it into a project as
+<code>AGENTS.md</code>. Profiles live at <code>scientific-agents/scientific-agents/&lt;slug&gt;/AGENTS.md</code>
+and are indexed in <code>catalog.json</code>. This document maps the 20 relevant to SignalFold and changes
+nothing in either repo.</p>
+
+<h2 id="needs">2. What SignalFold needs from a profile</h2>
+<p>SignalFold is a proteomics analysis platform — a FastAPI monolith running a three-stage pipeline, plus an
+Anthropic AI-chat subsystem. The expertise the codebase exercises maps onto specific profiles:</p>
+<table>
+  <thead><tr><th>SignalFold component</th><th>Domain expertise it exercises</th><th>Best-fit profile(s)</th></tr></thead>
+  <tbody>
+    <tr><td>LC-MS instrument &amp; quantitation (acquisition, calibration, matrix effects)</td><td>Resolution/mass accuracy, calibration, ion suppression</td><td>proteomics-scientist, mass-spectrometrist, analytical-chemist*</td></tr>
+    <tr><td><code>_build_canonical_bundle()</code> — ETL / canonical matrix</td><td>Missing-value mechanism (MNAR), contaminants, batch, idempotent loads</td><td>proteomics-scientist, bioinformatician, data-engineer, metabolomics-scientist</td></tr>
+    <tr><td><code>run_stage1()</code> — normalization + differential expression</td><td>Normalization, DE modeling, multiplicity/FDR, drift correction</td><td>proteomics-scientist, biostatistician, statistician, metabolomics-scientist</td></tr>
+    <tr><td><code>run_stage1()</code> — WGCNA-equivalent co-expression</td><td>Association networks, community detection, null models</td><td>systems-biologist, network-scientist</td></tr>
+    <tr><td><code>run_stage2()</code> — GO / pathway enrichment</td><td>Effect-size + FDR, rank-based GSEA, hit validation</td><td>functional-genomics-scientist, bioinformatician</td></tr>
+    <tr><td><code>run_stage3()</code> — cell-type Fisher's-exact enrichment</td><td>Marker validation, experimental unit, atlas-as-reference</td><td>single-cell-biologist, biostatistician</td></tr>
+    <tr><td>Signaling / phospho interpretation (DE of signaling proteins)</td><td>Kinase networks, crosstalk, marker-vs-flux</td><td>cell-signaling-biologist</td></tr>
+    <tr><td>External lookups (UniProt, Reactome, STRING-db, PubMed, PhosphoSitePlus, HMDB)</td><td>Pathway/interaction interpretation, context dependence</td><td>systems-biologist, bioinformatician, cell-signaling-biologist, metabolomics-scientist</td></tr>
+    <tr><td><code>deliverables.py</code> / <code>artifacts.py</code> — analysis, reporting &amp; figures</td><td>EDA, visualization, uncertainty, run cards, provenance</td><td>data-scientist, research-software-engineer</td></tr>
+    <tr><td>Pipeline engineering, CI, reproducibility</td><td>QC gates, idempotent DAGs, regression fixtures</td><td>bioinformatics-engineer, research-software-engineer, data-engineer, computational-scientist*</td></tr>
+    <tr><td>AI chat — hybrid retrieval / RAG (<code>retrievers.py</code>, <code>artifact_index.py</code>)</td><td>Ranking, BM25/neural, retrieval evaluation</td><td>information-retrieval-scientist</td></tr>
+    <tr><td>AI chat — LLM quality &amp; eval harness (<code>eval/</code>)</td><td>LLM eval, contamination, leakage, baselines</td><td>natural-language-processing-scientist, ai-researcher</td></tr>
+    <tr><td>AI chat — provider, serving, cost/latency (<code>anthropic_provider.py</code>, quotas)</td><td>Serving graph, drift, rollback, train-serve skew</td><td>machine-learning-engineer (mlops-engineer*)</td></tr>
+    <tr><td>AI chat — anti-exfiltration security (<code>security.py</code>, <code>red_team.json</code>)</td><td>Threat models, primitive chaining, coverage≠proof</td><td>computer-security-researcher (cryptography-engineer*)</td></tr>
+  </tbody>
+</table>
+<p class="meta">* = alternate / niche profile detailed in the <a href="#appendix">Appendix</a>.</p>
+
+<h2 id="profiles">3. Recommended profiles — in depth</h2>
+<p>Four tiers, 20 profiles. The requested "<em>Computational Biologist</em>" maps to Tier 1 — no profile carries
+that exact name; the proteomics/DE/network cluster is the coverage. Each card gives <strong>(a)</strong> exact
+skills (tagged with their source location), <strong>(b)</strong> representation / interpretation / discovery
+gains, and <strong>(c)</strong> three prompts (explore, critique, implement). The (c) blocks are prompts only.
+Profiles flagged <span class="tag new">added</span> were surfaced by the exhaustive scan (see <a href="#appendix">Appendix</a>).</p>
+
+<h3>Tier 1 — core science (the "computational biologist" cluster)</h3>
+
+<div class="card">
+  <h3>Proteomics Scientist <span class="slug">proteomics-scientist</span> <span class="tag t1">Tier 1 · primary</span> <span class="src">60 sources · 335 lines</span></h3>
+  <p class="mode">bottom-up LC-MS/MS · DDA/DIA/TMT/SILAC · differential abundance · FDR &amp; batch control</p>
+  <p class="summary">The single most relevant profile — it owns the ETL missing-value handling and the stage-1
+  normalization + differential-abundance logic at the heart of the pipeline.</p>
+  <div class="detail">
+    <h4>(a) Skills to include — grounded</h4>
+    <ul class="skills">
+      <li><strong>Classify the missing-value mechanism, then impute by model</strong> — MCAR/MAR vs MNAR; prefer left-censored imputation (QRILC/MinDet) over zero/mean fill.
+        <span class="ground">proteomics-scientist/AGENTS.md › Rigor And Critical Thinking · L173–176 (also Mindset · L33–34)</span></li>
+      <li><strong>Name the quantification modality &amp; acquisition mode first</strong> — LFQ/SILAC/TMT × DDA/DIA each carry different normalization logic.
+        <span class="ground">proteomics-scientist/AGENTS.md › Mindset And First Principles · L16–20, L40</span></li>
+      <li><strong>Keep peptide- and protein-level inference separate; report picked-protein FDR at 1%</strong> — razor/shared peptides make protein abundance a modeled summary.
+        <span class="ground">proteomics-scientist/AGENTS.md › Rigor And Critical Thinking · L166–167 (also Mindset · L27–28)</span></li>
+      <li><strong>Flag TMT ratio compression from co-isolation interference</strong> — attenuated fold changes are an artifact.
+        <span class="ground">proteomics-scientist/AGENTS.md › How You Frame A Problem · L60 (also Mindset · L32)</span></li>
+      <li><strong>Treat contaminants as first-class (keratin/BSA/albumin)</strong> — contaminant databases are not optional.
+        <span class="ground">proteomics-scientist/AGENTS.md › Troubleshooting Playbook · L199, L215 (also Data · L145)</span></li>
+    </ul>
+    <h4>(b) What it enhances</h4>
+    <ul class="enh">
+      <li><strong>Representation:</strong> make missingness and acquisition mode explicit in the canonical matrix instead of imputing them away.</li>
+      <li><strong>Interpretation:</strong> DE read through the right error model, with fold-change-attenuation and protein-ambiguity caveats.</li>
+      <li><strong>Discovery:</strong> recover low-abundance, left-censored proteins (often the signaling biology) that naive pipelines discard.</li>
+    </ul>
+    <h4>(c) Prompts for the next pass</h4>
+    <div class="prompt"><span class="plabel">c.1 · Explore &amp; investigate</span><p>"Walk <code>_build_canonical_bundle()</code> and classify the missing-value mechanism of a sample run (MNAR vs MAR vs MCAR): quantify left-censoring, plot missingness against intensity, and judge whether the current imputation and normalization fit the declared acquisition mode."</p></div>
+    <div class="prompt"><span class="plabel">c.2 · Critique</span><p>"As a proteomics reviewer, critique stage-1 differential abundance: are FDR, normalization, and missing-value handling appropriate for DDA/DIA/TMT? Where are fold changes biased or compressed, and what would Reviewer 2 reject?"</p></div>
+    <div class="prompt"><span class="plabel">c.3 · Implementation thoughts</span><p>"Propose a minimal, backward-compatible way to add MNAR-aware imputation and acquisition-mode-matched normalization as stage-1 params, preserving the empty-output-on-skip contract and the artifact_index schema."</p></div>
+  </div>
+</div>
+
+<div class="card">
+  <h3>Mass Spectrometrist <span class="slug">mass-spectrometrist</span> <span class="tag t1">Tier 1</span> <span class="tag new">added</span> <span class="src">218 lines</span></h3>
+  <p class="mode">clinical / research mass spectrometry · resolution &amp; mass accuracy · quantitation · system suitability</p>
+  <p class="summary">The instrument-level complement to proteomics-scientist — SignalFold <em>is</em> an MS data platform, so
+  the reasoning about what an m/z, a resolution, and a calibration actually license is foundational.</p>
+  <div class="detail">
+    <h4>(a) Skills to include — grounded</h4>
+    <ul class="skills">
+      <li><strong>Resolution (R = m/Δm) and mass accuracy (ppm) gate identity</strong> — they define ion isolation and formula/peptide assignment; an ID is only as trustworthy as the mass accuracy behind it.
+        <span class="ground">mass-spectrometrist/AGENTS.md › Mindset And First Principles · L15 (also L14)</span></li>
+      <li><strong>Quantitation requires calibration; matrix effects bite</strong> — external/internal/isotope-dilution calibration, and ion suppression/matrix effects distort intensities.
+        <span class="ground">mass-spectrometrist/AGENTS.md › Mindset And First Principles · L25; How You Work · L60</span></li>
+      <li><strong>System suitability before biology</strong> — instrument qualification, maintenance, and suitability checks decide whether a run is even interpretable.
+        <span class="ground">mass-spectrometrist/AGENTS.md › Instrument Qualification, Maintenance, And System Suitability · L161+</span></li>
+    </ul>
+    <h4>(b) What it enhances</h4>
+    <ul class="enh">
+      <li><strong>Representation:</strong> attach mass-accuracy / resolution / suitability metadata to runs so identifications carry their own confidence.</li>
+      <li><strong>Interpretation:</strong> distinguishes a real abundance change from a calibration/matrix artifact before stage-1 ever runs.</li>
+      <li><strong>Discovery:</strong> rescues or rejects borderline identifications on instrument grounds the analyst layers miss.</li>
+    </ul>
+    <h4>(c) Prompts for the next pass</h4>
+    <div class="prompt"><span class="plabel">c.1 · Explore &amp; investigate</span><p>"For a sample run, surface whatever instrument metadata SignalFold ingests (resolution, mass accuracy, calibration, suitability) and assess whether identification and quantitation are defensible on instrument grounds — flag where that metadata is missing entirely."</p></div>
+    <div class="prompt"><span class="plabel">c.2 · Critique</span><p>"As a mass spectrometrist, critique what SignalFold assumes about its input: does it treat intensities as calibrated and matrix-effect-free? Where would ion suppression or a drifting calibration silently corrupt the canonical matrix?"</p></div>
+    <div class="prompt"><span class="plabel">c.3 · Implementation thoughts</span><p>"Propose an optional system-suitability gate at ingest (mass-accuracy / QC-acceptance thresholds) that flags a run as low-confidence in RunStageStatus without blocking the pipeline."</p></div>
+  </div>
+</div>
+
+<div class="card">
+  <h3>Bioinformatician <span class="slug">bioinformatician</span> <span class="tag t1">Tier 1</span> <span class="src">57 sources · 305 lines</span></h3>
+  <p class="mode">dry-lab / computational genomics</p>
+  <p class="summary">The differential-expression and reproducibility backbone for stages 1–2 and the external-lookup
+  interpretation layer.</p>
+  <div class="detail">
+    <h4>(a) Skills to include — grounded</h4>
+    <ul class="skills">
+      <li><strong>Model batch as a design covariate</strong> — don't run DESeq2/edgeR/limma on a corrected matrix without inflating significance.
+        <span class="ground">bioinformatician/AGENTS.md › Mindset And First Principles · L22–24</span></li>
+      <li><strong>Keep identifiers stable across tables; MANE/GENCODE-consistent annotation</strong> — ID drift silently drops features at each join.
+        <span class="ground">bioinformatician/AGENTS.md › How You Frame A Problem · L56; Tools, Instruments, And Software · L120</span></li>
+      <li><strong>Prove reproducibility, don't assert it</strong> — same build, versions, seeds, metadata must reproduce counts/calls.
+        <span class="ground">bioinformatician/AGENTS.md › Mindset And First Principles · L40–41 (also How You Work · L84)</span></li>
+      <li><strong>Report padj (Benjamini–Hochberg FDR), never raw p alone</strong> — with effect sizes attached.
+        <span class="ground">bioinformatician/AGENTS.md › How You Work · L90 (also Rigor · L176)</span></li>
+    </ul>
+    <h4>(b) What it enhances</h4>
+    <ul class="enh">
+      <li><strong>Representation:</strong> a stable, versioned identifier spine making every stage-to-stage join lossless and auditable.</li>
+      <li><strong>Interpretation:</strong> DE read with batch modelled, not confounded.</li>
+      <li><strong>Discovery:</strong> the <code>compare</code> route becomes trustworthy once references/IDs stop drifting between runs.</li>
+    </ul>
+    <h4>(c) Prompts for the next pass</h4>
+    <div class="prompt"><span class="plabel">c.1 · Explore &amp; investigate</span><p>"Trace one protein identifier from the uploaded matrix through stage-1 DE, stage-2 GO mapping, and the external lookups. Find every point where accession↔symbol↔Ensembl mapping could drop or mismap a feature, and quantify the loss on a real run."</p></div>
+    <div class="prompt"><span class="plabel">c.2 · Critique</span><p>"As a bioinformatician, review stage-1 DE: is batch a model covariate or a correct-then-test step? Are references and IDs version-pinned? Flag anything that would fail an nf-core / reproducibility review."</p></div>
+    <div class="prompt"><span class="plabel">c.3 · Implementation thoughts</span><p>"Propose a versioned identifier-mapping layer — and where it should sit relative to <code>_build_canonical_bundle</code> — that makes stage joins lossless, with an unmapped-feature report surfaced to the run."</p></div>
+  </div>
+</div>
+
+<div class="card">
+  <h3>Biostatistician <span class="slug">biostatistician</span> <span class="tag t1">Tier 1</span> <span class="src">68 sources · 252 lines</span></h3>
+  <p class="mode">clinical / computational / trial and omics biostatistics</p>
+  <p class="summary">The statistical-rigor layer across all three stages — what is estimated, how multiplicity is
+  controlled, and whether the design is confounded.</p>
+  <div class="detail">
+    <h4>(a) Skills to include — grounded</h4>
+    <ul class="skills">
+      <li><strong>Start from the estimand, not the estimator</strong> — population, contrast, intercurrent-event handling before fitting.
+        <span class="ground">biostatistician/AGENTS.md › Mindset And First Principles · L14–18 (also Frame · L55)</span></li>
+      <li><strong>Treat Type I error as a portfolio; name the multiplicity family</strong> — FWER vs FDR across endpoints/stages.
+        <span class="ground">biostatistician/AGENTS.md › How You Frame A Problem · L59 (also Mindset · L20)</span></li>
+      <li><strong>Check batch confounding &amp; the experimental unit</strong> — is condition aliased with batch; is the unit the patient/tumor, not the well?
+        <span class="ground">biostatistician/AGENTS.md › intro · L6–7; How You Frame A Problem · L56</span></li>
+      <li><strong>Model correlation honestly with MMRM / mixed models</strong> — repeated/nested designs need random effects.
+        <span class="ground">biostatistician/AGENTS.md › Mindset And First Principles · L28; How You Work · L85</span></li>
+    </ul>
+    <h4>(b) What it enhances</h4>
+    <ul class="enh">
+      <li><strong>Representation:</strong> an explicit design model (conditions, batches, replicates, unit) the stats engine can read.</li>
+      <li><strong>Interpretation:</strong> p-values/FDR at the correct family level, with effect sizes and CIs — not p alone.</li>
+      <li><strong>Discovery:</strong> fewer false leads and more reproducible hits — discovery you can defend.</li>
+    </ul>
+    <h4>(c) Prompts for the next pass</h4>
+    <div class="prompt"><span class="plabel">c.1 · Explore &amp; investigate</span><p>"Audit the full hypothesis-testing surface of a run: enumerate every test across stages 1–3, the multiplicity correction at each, the experimental unit assumed, and whether condition is confounded with batch. Write the estimand for the primary DE contrast."</p></div>
+    <div class="prompt"><span class="plabel">c.2 · Critique</span><p>"As a trial biostatistician, critique SignalFold's statistics: are estimands defined, is multiplicity controlled at the right family level, is the experimental unit correct for stage-3 enrichment? What invalidates the inference?"</p></div>
+    <div class="prompt"><span class="plabel">c.3 · Implementation thoughts</span><p>"Propose recording experimental design (conditions, batches, replicates, unit) as first-class run metadata, and using it to auto-select the DE model and multiplicity scope."</p></div>
+  </div>
+</div>
+
+<div class="card">
+  <h3>Systems Biologist <span class="slug">systems-biologist</span> <span class="tag t1">Tier 1</span> <span class="src">60 sources · 284 lines</span></h3>
+  <p class="mode">computational / research</p>
+  <p class="summary">Covers the stage-1 WGCNA-equivalent co-expression step and the pathway/network reasoning behind
+  the Reactome and STRING-db lookups. (WGCNA mechanics in the prompts are SignalFold-side, not profile text.)</p>
+  <div class="detail">
+    <h4>(a) Skills to include — grounded</h4>
+    <ul class="skills">
+      <li><strong>Match the network type to the claim</strong> — association/co-expression networks answer co-variation/module questions; STRING/BioGRID/co-expression graphs answer different ones.
+        <span class="ground">systems-biologist/AGENTS.md › Mindset And First Principles · L31; How You Frame A Problem · L61–62</span></li>
+      <li><strong>Test structure against null models</strong> — random networks/permuted labels before declaring a module significant.
+        <span class="ground">systems-biologist/AGENTS.md › Rigor And Critical Thinking · L172</span></li>
+      <li><strong>Expect context dependence of topology</strong> — the same topology behaves differently across conditions.
+        <span class="ground">systems-biologist/AGENTS.md › Mindset And First Principles · L33</span></li>
+      <li><strong>Treat a multi-omics integration map as its own deliverable</strong> — with evidence/controls distinct from a single layer.
+        <span class="ground">systems-biologist/AGENTS.md › How You Frame A Problem · L49–50</span></li>
+    </ul>
+    <h4>(b) What it enhances</h4>
+    <ul class="enh">
+      <li><strong>Representation:</strong> modules carried with significance-vs-null and edge-weight provenance — not bare cluster labels.</li>
+      <li><strong>Interpretation:</strong> modules read against pathway context, separating real co-regulation from batch-driven correlation.</li>
+      <li><strong>Discovery:</strong> module–trait associations and hub proteins — the highest-yield output of co-expression analysis.</li>
+    </ul>
+    <h4>(c) Prompts for the next pass</h4>
+    <div class="prompt"><span class="plabel">c.1 · Explore &amp; investigate</span><p>"Examine the stage-1 WGCNA-equivalent: how is the soft-threshold power chosen, how are modules summarized, and are they tested against a null? Map the modules onto STRING-db/Reactome to test whether they reflect biology or batch-driven correlation."</p></div>
+    <div class="prompt"><span class="plabel">c.2 · Critique</span><p>"As a systems biologist, critique the co-expression step: is the network type matched to the claim, are null models used, is the hairball over-interpreted? Where is correlation being read as co-regulation?"</p></div>
+    <div class="prompt"><span class="plabel">c.3 · Implementation thoughts</span><p>"Propose adding module eigengenes, hub ranking, and a permutation/preservation null to stage-1 output, surfaced in the artifact_index for the chat to reason over."</p></div>
+  </div>
+</div>
+
+<h3>Tier 2 — supporting science</h3>
+
+<div class="card">
+  <h3>Functional Genomics Scientist <span class="slug">functional-genomics-scientist</span> <span class="tag t2">Tier 2</span> <span class="src">60 sources · 361 lines</span></h3>
+  <p class="mode">pooled screens / enrichment / effect-size + FDR / hit validation</p>
+  <p class="summary">Sharpens stage-2 enrichment: effect-size + FDR over rank/p, rank-based GSEA, and treating hits as
+  hypotheses to validate. (Screen-centric profile; the grounded skills are the enrichment-statistics principles.)</p>
+  <div class="detail">
+    <h4>(a) Skills to include — grounded</h4>
+    <ul class="skills">
+      <li><strong>Treat hits as ranked hypotheses needing validation</strong> — replicates, control behavior, orthogonal perturbation before belief.
+        <span class="ground">functional-genomics-scientist/AGENTS.md › Mindset And First Principles · L26–28</span></li>
+      <li><strong>Report FDR/q-values <em>and</em> effect sizes (log2FC/beta) — not rank alone</strong>.
+        <span class="ground">functional-genomics-scientist/AGENTS.md › Rigor And Critical Thinking · L161–163</span></li>
+      <li><strong>Use rank-based enrichment (GSEA/fgsea) with explicit software versions</strong>.
+        <span class="ground">functional-genomics-scientist/AGENTS.md › Tools, Instruments, Software, And Formats · L120</span></li>
+      <li><strong>Emit the standard diagnostic figures</strong> — replicate-correlation heatmap, PCA, volcano, ranked plots.
+        <span class="ground">functional-genomics-scientist/AGENTS.md › Communicating Results · L232</span></li>
+    </ul>
+    <h4>(b) What it enhances</h4>
+    <ul class="enh">
+      <li><strong>Representation:</strong> enrichment rows carrying effect size, FDR/q, and set size — plus the diagnostic plots that contextualize them.</li>
+      <li><strong>Interpretation:</strong> hits read as hypotheses with a validation path, not as settled findings.</li>
+      <li><strong>Discovery:</strong> a prioritized, effect-size-aware shortlist — a faster, more honest route to mechanism.</li>
+    </ul>
+    <h4>(c) Prompts for the next pass</h4>
+    <div class="prompt"><span class="plabel">c.1 · Explore &amp; investigate</span><p>"Inspect stage-2 enrichment: are effect sizes reported beside FDR/q-values or only ranks/p? Is it over-representation or rank-based, and would a GSEA-style ranked test change the top hits? Compare."</p></div>
+    <div class="prompt"><span class="plabel">c.2 · Critique</span><p>"Critique stage-2 as a functional-genomics scientist: are hits framed as validated facts or ranked hypotheses, are effect sizes present, are the diagnostic figures there? What makes the list misleading?"</p></div>
+    <div class="prompt"><span class="plabel">c.3 · Implementation thoughts</span><p>"Propose adding effect-size reporting and an optional rank-based GSEA path to stage 2, plus a validation-status field per hit, keeping outputs compatible with artifact routing."</p></div>
+  </div>
+</div>
+
+<div class="card">
+  <h3>Statistician <span class="slug">statistician</span> <span class="tag t2">Tier 2</span> <span class="src">52 sources · 247 lines</span></h3>
+  <p class="mode">applied inference / experimental design / causal &amp; survey methods</p>
+  <p class="summary">A method-general backstop on missing data, multiplicity, and the inference traps a multi-step
+  pipeline invites.</p>
+  <div class="detail">
+    <h4>(a) Skills to include — grounded</h4>
+    <ul class="skills">
+      <li><strong>Handle missing data by mechanism (MCAR/MAR/MNAR)</strong> — complete-case bias assessment; method matched to mechanism.
+        <span class="ground">statistician/AGENTS.md › How You Work · L75 (also L61–64)</span></li>
+      <li><strong>Match the multiplicity adjustment to the stakes</strong> — Bonferroni/Holm for few tests; BH FDR for screens.
+        <span class="ground">statistician/AGENTS.md › Mindset And First Principles · L25; How You Work · L77</span></li>
+      <li><strong>Use valid post-selection inference</strong> — selecting then testing (sample splitting, selective inference after LASSO) or SEs are biased.
+        <span class="ground">statistician/AGENTS.md › Advanced Inference Notes · L222</span></li>
+      <li><strong>Guard against sequential peeking</strong> — prespecified stopping or always-valid p-values.
+        <span class="ground">statistician/AGENTS.md › How You Work · L86; Representative Scenarios · L209</span></li>
+    </ul>
+    <h4>(b) What it enhances</h4>
+    <ul class="enh">
+      <li><strong>Representation:</strong> missingness and selection steps recorded so inference can account for them.</li>
+      <li><strong>Interpretation:</strong> FDR and intervals read with post-selection caveats attached.</li>
+      <li><strong>Discovery:</strong> honest error control — neither inflated by peeking nor crippled by mismatched correction.</li>
+    </ul>
+    <h4>(c) Prompts for the next pass</h4>
+    <div class="prompt"><span class="plabel">c.1 · Explore &amp; investigate</span><p>"Map every imputation and selection step in the pipeline and state the missingness assumption each implicitly makes. Identify any place where features/modules are selected and then tested on the same data (post-selection bias)."</p></div>
+    <div class="prompt"><span class="plabel">c.2 · Critique</span><p>"As a statistician, critique the inference: are missingness assumptions explicit, is the multiplicity correction matched to the stakes, is there select-then-test bias from module→trait analysis?"</p></div>
+    <div class="prompt"><span class="plabel">c.3 · Implementation thoughts</span><p>"Propose a small, configurable per-stage policy layer that makes the missingness assumption and multiplicity method explicit and logs both for reproducibility."</p></div>
+  </div>
+</div>
+
+<div class="card">
+  <h3>Single-Cell Biologist <span class="slug">single-cell-biologist</span> <span class="tag t2">Tier 2</span> <span class="src">56 sources · 288 lines</span></h3>
+  <p class="mode">wet-lab / computational single-cell genomics</p>
+  <p class="summary">Directly relevant to stage-3 cell-type enrichment — marker provenance, the experimental unit, and
+  treating atlas labels as references rather than truth.</p>
+  <div class="detail">
+    <h4>(a) Skills to include — grounded</h4>
+    <ul class="skills">
+      <li><strong>Run the marker-validation chain</strong> — marker evidence → reference/orthogonal annotation → replicate-aware statistics.
+        <span class="ground">single-cell-biologist/AGENTS.md › Mindset And First Principles · L47; How You Frame A Problem · L79</span></li>
+      <li><strong>Keep the experimental unit straight; aggregate to pseudobulk</strong> — cells are subsamples of donors (pseudoreplication).
+        <span class="ground">single-cell-biologist/AGENTS.md › Mindset And First Principles · L19; How You Frame A Problem · L68</span></li>
+      <li><strong>Treat atlases as references, not authorities</strong> — HCA/Tabula Sapiens/CELLxGENE anchor labels but disease/age shift them.
+        <span class="ground">single-cell-biologist/AGENTS.md › Mindset And First Principles · L43–44</span></li>
+      <li><strong>Hold rival explanations for a "cell type"</strong> — doublet, ambient RNA, batch before a novel population.
+        <span class="ground">single-cell-biologist/AGENTS.md › Mindset And First Principles · L30; How You Frame A Problem · L61</span></li>
+    </ul>
+    <h4>(b) What it enhances</h4>
+    <ul class="enh">
+      <li><strong>Representation:</strong> marker sets carried with source, tissue context, and version.</li>
+      <li><strong>Interpretation:</strong> enrichment read with marker-specificity and the cells-vs-samples unit made explicit.</li>
+      <li><strong>Discovery:</strong> defensible cell-type-of-origin / composition signal from bulk proteomics.</li>
+    </ul>
+    <h4>(c) Prompts for the next pass</h4>
+    <div class="prompt"><span class="plabel">c.1 · Explore &amp; investigate</span><p>"Examine stage-3 cell-type enrichment: where do marker sets come from, are they tissue-matched and versioned, and is significance computed at the sample level or the cell level? Test sensitivity to the marker source."</p></div>
+    <div class="prompt"><span class="plabel">c.2 · Critique</span><p>"As a single-cell biologist, critique stage-3: is the marker background appropriate, is the atlas treated as reference or authority, is there pseudoreplication in the significance calculation?"</p></div>
+    <div class="prompt"><span class="plabel">c.3 · Implementation thoughts</span><p>"Propose making the cell-type marker reference explicit, versioned, and tissue-selectable, and reporting the experimental unit used so enrichment calls stay interpretable."</p></div>
+  </div>
+</div>
+
+<div class="card">
+  <h3>Metabolomics Scientist <span class="slug">metabolomics-scientist</span> <span class="tag t2">Tier 2</span> <span class="tag new">added</span> <span class="src">68 sources · 341 lines</span></h3>
+  <p class="mode">wet-lab / LC-MS &amp; GC-MS / computational metabolomics</p>
+  <p class="summary">The closest methodological sibling to proteomics — its LC-MS batch-correction, QC-sample, and
+  missing-value discipline maps almost one-to-one onto SignalFold's ETL and stage-1.</p>
+  <div class="detail">
+    <h4>(a) Skills to include — grounded</h4>
+    <ul class="skills">
+      <li><strong>The instrument session is part of the experiment</strong> — RT drift and sensitivity decay over an injection sequence; correct with pooled QC samples.
+        <span class="ground">metabolomics-scientist/AGENTS.md › Mindset And First Principles · L25 (also intro · L7–8)</span></li>
+      <li><strong>Annotation confidence is hierarchical (MSI / Schymanski levels)</strong> — don't promote a tentative ID to a fact.
+        <span class="ground">metabolomics-scientist/AGENTS.md › Mindset And First Principles · L17</span></li>
+      <li><strong>Batch-aware statistics — but beware over-correction and "over-annotated pathway stories"</strong>.
+        <span class="ground">metabolomics-scientist/AGENTS.md › intro · L6–7</span></li>
+    </ul>
+    <h4>(b) What it enhances</h4>
+    <ul class="enh">
+      <li><strong>Representation:</strong> inject run-order and pooled-QC structure into the canonical matrix so drift is modellable.</li>
+      <li><strong>Interpretation:</strong> separates true abundance shifts from injection-order drift and matrix effects.</li>
+      <li><strong>Discovery:</strong> guards stage-2 against the "over-annotated pathway story" — the metabolomics cautionary tale that applies verbatim to GO lists.</li>
+    </ul>
+    <h4>(c) Prompts for the next pass</h4>
+    <div class="prompt"><span class="plabel">c.1 · Explore &amp; investigate</span><p>"Does SignalFold capture injection/run order and pooled-QC samples? If a run encodes them, test for RT/sensitivity drift across the sequence and whether the current normalization removes it without over-correcting."</p></div>
+    <div class="prompt"><span class="plabel">c.2 · Critique</span><p>"As a metabolomics scientist, critique SignalFold's batch handling and ID confidence: is drift corrected with QC samples, is annotation confidence tracked, and is stage-2 at risk of an over-annotated pathway story?"</p></div>
+    <div class="prompt"><span class="plabel">c.3 · Implementation thoughts</span><p>"Propose a pooled-QC / run-order-aware drift-correction option for the ETL and an annotation-confidence field, both surfaced in the artifact_index, without changing default behavior."</p></div>
+  </div>
+</div>
+
+<div class="card">
+  <h3>Cell Signaling Biologist <span class="slug">cell-signaling-biologist</span> <span class="tag t2">Tier 2</span> <span class="tag new">added</span> <span class="src">58 sources · 264 lines</span></h3>
+  <p class="mode">wet-lab / phospho-signaling / pathway biology</p>
+  <p class="summary">The interpretation lens for signaling biology — essential whenever a run involves phosphoproteomics or
+  when DE/enrichment hits land on kinases and pathway components.</p>
+  <div class="detail">
+    <h4>(a) Skills to include — grounded</h4>
+    <ul class="skills">
+      <li><strong>Reason in phosphorylation networks with crosstalk and feedback</strong> — receptor→second-messenger→kinase cascades, not linear pathways.
+        <span class="ground">cell-signaling-biologist/AGENTS.md › intro · L4–6</span></li>
+      <li><strong>Separate marker level from pathway flux</strong> — high pERK can coexist with blunted flux; a single up/down protein ≠ pathway activation.
+        <span class="ground">cell-signaling-biologist/AGENTS.md › Mindset And First Principles · L18</span></li>
+      <li><strong>Validate with phospho-specific evidence (phospho-Western/flow, PhosphoSitePlus)</strong> — ground site-level claims, don't infer them.
+        <span class="ground">cell-signaling-biologist/AGENTS.md › intro · L5; Tools, Instruments, And Software · L132+</span></li>
+    </ul>
+    <h4>(b) What it enhances</h4>
+    <ul class="enh">
+      <li><strong>Representation:</strong> tag signaling proteins/sites with pathway and PTM context in enrichment outputs.</li>
+      <li><strong>Interpretation:</strong> stops the chat from reading one elevated kinase as "pathway X is on."</li>
+      <li><strong>Discovery:</strong> turns scattered signaling hits into a coherent, crosstalk-aware pathway narrative grounded in PhosphoSitePlus.</li>
+    </ul>
+    <h4>(c) Prompts for the next pass</h4>
+    <div class="prompt"><span class="plabel">c.1 · Explore &amp; investigate</span><p>"For a run whose hits include kinases/signaling proteins, map them onto canonical cascades and ask whether the data support pathway-level activation or just single-node changes — and whether SignalFold's external lookups reach PhosphoSitePlus-grade site evidence."</p></div>
+    <div class="prompt"><span class="plabel">c.2 · Critique</span><p>"As a cell-signaling biologist, critique how SignalFold interprets signaling hits: does it distinguish marker level from pathway flux, and does it account for crosstalk/feedback before claiming a pathway is activated?"</p></div>
+    <div class="prompt"><span class="plabel">c.3 · Implementation thoughts</span><p>"Propose a signaling-aware annotation pass that tags enrichment hits with pathway membership and known feedback edges, and flags single-node 'pathway on' claims for review."</p></div>
+  </div>
+</div>
+
+<div class="card">
+  <h3>Network Scientist <span class="slug">network-scientist</span> <span class="tag t2">Tier 2</span> <span class="tag new">added</span> <span class="src">48 sources · 220 lines</span></h3>
+  <p class="mode">graph theory / community detection / generative models (SBM, ERGM) / null-model inference</p>
+  <p class="summary">The graph-theoretic rigor behind the stage-1 co-expression step — systems-biologist frames the biology,
+  network-scientist supplies the community-detection and null-model discipline.</p>
+  <div class="detail">
+    <h4>(a) Skills to include — grounded</h4>
+    <ul class="skills">
+      <li><strong>Community detection is ill-posed</strong> — algorithms optimize different objectives (modularity, conductance); the module partition isn't unique, and modularity has a resolution bias.
+        <span class="ground">network-scientist/AGENTS.md › Mindset And First Principles · L16</span></li>
+      <li><strong>Validate against null models that preserve chosen features</strong> — degree sequence, weight distribution — before reading structure as real.
+        <span class="ground">network-scientist/AGENTS.md › Mindset And First Principles · L20</span></li>
+      <li><strong>"Scale-free" needs goodness-of-fit (Clauset–Shalizi–Newman) vs log-normal alternatives</strong> — most power-law claims fail it.
+        <span class="ground">network-scientist/AGENTS.md › Mindset And First Principles · L12–13</span></li>
+    </ul>
+    <h4>(b) What it enhances</h4>
+    <ul class="enh">
+      <li><strong>Representation:</strong> modules carried with the detection objective and resolution used, plus a degree/weight-preserving null comparison.</li>
+      <li><strong>Interpretation:</strong> a module is read as one of many possible partitions, not the partition; hub claims survive a GoF test.</li>
+      <li><strong>Discovery:</strong> distinguishes genuinely robust modules/hubs from artifacts of the clustering choice or a correlation threshold.</li>
+    </ul>
+    <h4>(c) Prompts for the next pass</h4>
+    <div class="prompt"><span class="plabel">c.1 · Explore &amp; investigate</span><p>"For the stage-1 co-expression modules, identify the community-detection objective and resolution used, and test partition stability across algorithms/seeds. Do any 'hub' or 'scale-free' claims survive a CSN goodness-of-fit test?"</p></div>
+    <div class="prompt"><span class="plabel">c.2 · Critique</span><p>"As a network scientist, critique the module detection: is the partition treated as unique, is modularity's resolution limit acknowledged, are modules compared to a degree-preserving null?"</p></div>
+    <div class="prompt"><span class="plabel">c.3 · Implementation thoughts</span><p>"Propose reporting the detection objective + resolution and a degree-preserving null comparison alongside each module, and replacing any bare 'scale-free' claim with a GoF result."</p></div>
+  </div>
+</div>
+
+<h3>Tier 3 — engineering, analysis &amp; reporting</h3>
+
+<div class="card">
+  <h3>Data Scientist <span class="slug">data-scientist</span> <span class="tag t3">Tier 3</span> <span class="tag viz">+ Data Analysis &amp; Visualization</span> <span class="src">48 sources · 191 lines</span></h3>
+  <p class="mode">computational / analytics, ML &amp; experimentation</p>
+  <div class="callout">
+    <strong>Carries the "Data Analysis &amp; Visualization" role.</strong>
+    The catalog has no standalone data-analysis or visualization profile (a 503-scan returns only domain
+    specialists). The canonical proteomics plots (volcano/PCA/heatmap) are grounded in the Functional Genomics
+    profile (L232); this profile grounds the general EDA/visualization/communication discipline.
+  </div>
+  <div class="detail">
+    <h4>(a) Skills to include — grounded</h4>
+    <ul class="skills">
+      <li><strong>EDA first</strong> — missingness, prevalence, drift, outliers, leakage checks before any test.
+        <span class="ground">data-scientist/AGENTS.md › How You Work · L51</span></li>
+      <li><strong>Run leakage checks</strong> — feature-vs-time plots, shuffle tests — before trusting a score.
+        <span class="ground">data-scientist/AGENTS.md › How You Work · L52</span></li>
+      <li><strong>Use a real visualization toolchain; stay uncertainty-aware</strong> — matplotlib/seaborn/plotly; read figures with skepticism about uncertainty bands.
+        <span class="ground">data-scientist/AGENTS.md › Tools, Instruments, And Software · L84; Communicating Results · L135, L160</span></li>
+      <li><strong>Define drift monitoring (PSI / calibration drift)</strong> — makes the <code>compare</code> route quantitative.
+        <span class="ground">data-scientist/AGENTS.md › How You Work · L65</span></li>
+      <li><strong>Ship "model cards" for runs</strong> — intended use, out-of-scope uses, caveats.
+        <span class="ground">data-scientist/AGENTS.md › Communicating Results · L139; Production And Collaboration · L180</span></li>
+    </ul>
+    <h4>(b) What it enhances</h4>
+    <ul class="enh">
+      <li><strong>Representation:</strong> results as the right diagnostic plots, each encoding scale and uncertainty rather than a bare table.</li>
+      <li><strong>Interpretation:</strong> figures and a "run card" a scientist (and the artifact-reading chat) can't easily misread.</li>
+      <li><strong>Discovery:</strong> EDA surfaces batch structure, outliers, and hidden grouping before formal tests.</li>
+    </ul>
+    <h4>(c) Prompts for the next pass</h4>
+    <div class="prompt"><span class="plabel">c.1 · Explore &amp; investigate</span><p>"Do a data-scientist EDA pass on a sample run before trusting any test: distributions, missingness, drift, outliers, leakage checks, and a PCA for batch structure. What does the data reveal that the current figures hide?"</p></div>
+    <div class="prompt"><span class="plabel">c.2 · Critique</span><p>"Critique SignalFold's figures and result communication: do plots show scale and uncertainty, is there a per-run summary of intended use and caveats, would a scientist misread the deliverable?"</p></div>
+    <div class="prompt"><span class="plabel">c.3 · Implementation thoughts</span><p>"Propose a diagnostic-plot + 'run card' layer (distributions/PCA/volcano/heatmap plus a plain-language summary with caveats and a PSI-style compare metric) that enriches deliverables and feeds the artifact_index, without altering pipeline math."</p></div>
+  </div>
+</div>
+
+<div class="card">
+  <h3>Research Software Engineer <span class="slug">research-software-engineer</span> <span class="tag t3">Tier 3</span> <span class="src">62 sources · 304 lines</span></h3>
+  <p class="mode">computational / research software engineering / HPC</p>
+  <p class="summary">The reproducibility/provenance discipline for the deliverables layer and the research-platform codebase.</p>
+  <div class="detail">
+    <h4>(a) Skills to include — grounded</h4>
+    <ul class="skills">
+      <li><strong>Full provenance; separate reproducibility from replicability</strong> — same data+code+env → same result is an enforceable target.
+        <span class="ground">research-software-engineer/AGENTS.md › Mindset And First Principles · L14, L16–18</span></li>
+      <li><strong>Citation/version metadata non-optional</strong> — <code>CITATION.cff</code>, SPDX IDs, version DOIs.
+        <span class="ground">research-software-engineer/AGENTS.md › Mindset And First Principles · L36–37</span></li>
+      <li><strong>SemVer + CHANGELOG + deprecation warnings</strong> — pipeline changes legible across runs.
+        <span class="ground">research-software-engineer/AGENTS.md › Mindset And First Principles · L24</span></li>
+      <li><strong>Property-based testing with numerical tolerances</strong> — Hypothesis; compare floats with <code>rtol</code>/<code>atol</code>, not <code>==</code>.
+        <span class="ground">research-software-engineer/AGENTS.md › Tools, Instruments And Software · L122–124</span></li>
+    </ul>
+    <h4>(b) What it enhances</h4>
+    <ul class="enh">
+      <li><strong>Representation:</strong> run artifacts carrying a complete provenance manifest — not just files on disk.</li>
+      <li><strong>Interpretation:</strong> any result traceable to its exact code, data, and parameter state.</li>
+      <li><strong>Discovery:</strong> repeatable findings and far faster diagnosis of pipeline regressions.</li>
+    </ul>
+    <h4>(c) Prompts for the next pass</h4>
+    <div class="prompt"><span class="plabel">c.1 · Explore &amp; investigate</span><p>"Audit SignalFold's reproducibility surface: given a completed run folder, can you reconstruct exactly which code version, inputs, params, and seeds produced each artifact? Identify every gap versus the existing <code>config_stageN.json</code>."</p></div>
+    <div class="prompt"><span class="plabel">c.2 · Critique</span><p>"As an RSE, critique the deliverables/artifacts layer against FAIR4RS: is provenance complete, are runs reproducible, is the test suite catching pipeline invariants or just happy paths?"</p></div>
+    <div class="prompt"><span class="plabel">c.3 · Implementation thoughts</span><p>"Propose a run-level provenance manifest extending <code>config_stageN.json</code>, plus a few Hypothesis property tests (with rtol/atol) for pipeline invariants, without touching pipeline-owned logic."</p></div>
+  </div>
+</div>
+
+<div class="card">
+  <h3>Bioinformatics Engineer <span class="slug">bioinformatics-engineer</span> <span class="tag t3">Tier 3</span> <span class="src">24 sources · 266 lines</span></h3>
+  <p class="mode">dry-lab / pipeline engineering / production genomics</p>
+  <p class="summary">The pipeline-engineering counterpart to the analyst profiles — QC gates, idempotency, and regression
+  fixtures for the staged pipeline.</p>
+  <div class="detail">
+    <h4>(a) Skills to include — grounded</h4>
+    <ul class="skills">
+      <li><strong>QC gates before biology — failed QC stops the DAG</strong> unless overridden with a documented reason. Counters SignalFold's silent empty-output-on-skip.
+        <span class="ground">bioinformatics-engineer/AGENTS.md › Mindset And First Principles · L21–22 (fail/continue · L16)</span></li>
+      <li><strong>Idempotency &amp; restartability</strong> — stages resume from checkpoints (<code>-resume</code>). Path to scaling the background executor.
+        <span class="ground">bioinformatics-engineer/AGENTS.md › Mindset And First Principles · L19 (DAG · L17)</span></li>
+      <li><strong>Version everything</strong> — reference checksums, container image digests, tool versions.
+        <span class="ground">bioinformatics-engineer/AGENTS.md › Mindset And First Principles · L23</span></li>
+      <li><strong>Test with gold fixtures; regression-test against pinned outputs</strong> — catch silent pipeline drift.
+        <span class="ground">bioinformatics-engineer/AGENTS.md › Mindset And First Principles · L29; How You Work · L79</span></li>
+    </ul>
+    <h4>(b) What it enhances</h4>
+    <ul class="enh">
+      <li><strong>Representation:</strong> an explicit stage DAG with QC-gate status recorded in <code>RunStageStatus</code>.</li>
+      <li><strong>Interpretation:</strong> a failed/degraded run is represented as such, not as silently empty output.</li>
+      <li><strong>Discovery:</strong> reliable scale-out to many runs with no silent corruption of results.</li>
+    </ul>
+    <h4>(c) Prompts for the next pass</h4>
+    <div class="prompt"><span class="plabel">c.1 · Explore &amp; investigate</span><p>"Map SignalFold's pipeline as a DAG: stage dependencies, where QC could gate, and what currently happens on partial failure (empty-output-on-skip). Identify where a silent failure could produce a 'green but wrong' run."</p></div>
+    <div class="prompt"><span class="plabel">c.2 · Critique</span><p>"As a bioinformatics engineer, critique the pipeline engineering: are there QC gates, is partial failure visible, are runs idempotent and retryable, is there pinned-output regression testing?"</p></div>
+    <div class="prompt"><span class="plabel">c.3 · Implementation thoughts</span><p>"Propose QC gates with status surfaced via <code>RunStageStatus</code> and a gold-fixture regression test, keeping the empty-output-on-skip contract but making degraded runs explicit."</p></div>
+  </div>
+</div>
+
+<div class="card">
+  <h3>Data Engineer <span class="slug">data-engineer</span> <span class="tag t3">Tier 3</span> <span class="tag new">added</span> <span class="src">52 sources · 298 lines</span></h3>
+  <p class="mode">computational / batch &amp; streaming data platforms</p>
+  <p class="summary">The best-fit profile for the ETL surface itself — <code>_build_canonical_bundle</code>, idempotent re-runs,
+  and the "silent failure" failure mode that the empty-output-on-skip contract risks.</p>
+  <div class="detail">
+    <h4>(a) Skills to include — grounded</h4>
+    <ul class="skills">
+      <li><strong>Idempotency is non-negotiable</strong> — reruns/retries must not double-count; MERGE/upsert on a natural key, not append-only.
+        <span class="ground">data-engineer/AGENTS.md › Mindset And First Principles · L19, L21</span></li>
+      <li><strong>Enforce data contracts &amp; quality gates; hunt silent failures</strong> — the "green DAG, wrong numbers" class of bug.
+        <span class="ground">data-engineer/AGENTS.md › intro · L5, L7</span></li>
+      <li><strong>Treat schema/contract drift as first-class</strong> — validate inputs at the boundary, not after they corrupt the matrix.
+        <span class="ground">data-engineer/AGENTS.md › intro · L7; Rigor And Critical Thinking · L176+</span></li>
+    </ul>
+    <h4>(b) What it enhances</h4>
+    <ul class="enh">
+      <li><strong>Representation:</strong> a validated, contract-checked canonical matrix with explicit dedupe keys and freshness/lineage metadata.</li>
+      <li><strong>Interpretation:</strong> a re-run produces the same matrix (idempotent), so downstream differences mean real change, not ETL nondeterminism.</li>
+      <li><strong>Discovery:</strong> silent join-drops and duplicate amplification — which quietly distort every stage — become visible failures.</li>
+    </ul>
+    <h4>(c) Prompts for the next pass</h4>
+    <div class="prompt"><span class="plabel">c.1 · Explore &amp; investigate</span><p>"Treat <code>_build_canonical_bundle()</code> as an ELT job: is it idempotent under re-run/retry, are there dedupe keys, and where could a silent join-drop or duplicate amplification distort the canonical matrix? Re-run the same input twice and diff."</p></div>
+    <div class="prompt"><span class="plabel">c.2 · Critique</span><p>"As a data engineer, critique the ETL and the empty-output-on-skip contract: where can a 'green but wrong' run occur, are inputs contract-validated at the boundary, is the matrix build reproducible?"</p></div>
+    <div class="prompt"><span class="plabel">c.3 · Implementation thoughts</span><p>"Propose a boundary data-contract check (schema, key uniqueness, row-count expectations) for the ETL plus an idempotency guarantee, emitting a quality-gate status instead of a silent empty output."</p></div>
+  </div>
+</div>
+
+<h3>Tier 4 — AI chat subsystem <span class="tag t4">new tier</span></h3>
+<div class="callout ai">
+  <strong>Lower-priority by policy, complete by request.</strong>
+  The AI chat subsystem (<code>backend/services/ai/</code>) is separately maintained and treated as read-only,
+  so these five are tiered below the science. They are included because you asked the scan to cover the whole
+  repo — each is grounded to a concrete part of the subsystem (retrieval, eval, serving, security).
+</div>
+
+<div class="card aicard">
+  <h3>Information Retrieval Scientist <span class="slug">information-retrieval-scientist</span> <span class="tag t4">Tier 4</span> <span class="tag new">added</span> <span class="src">350 lines</span></h3>
+  <p class="mode">ranking / evaluation (TREC) / BM25 + neural retrieval / search</p>
+  <p class="summary">The direct match for the hybrid-retrieval layer (<code>retrievers.py</code>, <code>artifact_index.py</code>,
+  <code>query_rewriter.py</code>) that decides which table slices the chat ever sees.</p>
+  <div class="detail">
+    <h4>(a) Skills to include — grounded</h4>
+    <ul class="skills">
+      <li><strong>BM25 is a strong sparse baseline, not a relic</strong> — tune <code>k1</code>/<code>b</code>; don't assume neural retrieval beats it.
+        <span class="ground">information-retrieval-scientist/AGENTS.md › Mindset And First Principles · L29, L32</span></li>
+      <li><strong>Don't let one metric (nDCG@10) proxy the real objective</strong> — evaluate retrieval against the actual task.
+        <span class="ground">information-retrieval-scientist/AGENTS.md › How You Frame A Problem · L63</span></li>
+      <li><strong>Hybrid/ANN retrieval can silently miss</strong> — check recall the dense/ANN path never surfaced.
+        <span class="ground">information-retrieval-scientist/AGENTS.md › How You Frame A Problem · L76</span></li>
+    </ul>
+    <h4>(b) What it enhances</h4>
+    <ul class="enh">
+      <li><strong>Representation:</strong> retrieval treated as a measurable component with a labelled relevance notion, not an opaque step.</li>
+      <li><strong>Interpretation:</strong> when the chat "misses" data, you can tell whether retrieval or generation failed.</li>
+      <li><strong>Discovery:</strong> a BM25 baseline + recall check exposes table slices the current retriever silently drops.</li>
+    </ul>
+    <h4>(c) Prompts for the next pass</h4>
+    <div class="prompt"><span class="plabel">c.1 · Explore &amp; investigate</span><p>"Characterize SignalFold's hybrid retrieval: what does it index, what's the relevance notion, and what recall does it achieve against a BM25 baseline on a set of real run questions? Find queries where the right artifact is never retrieved."</p></div>
+    <div class="prompt"><span class="plabel">c.2 · Critique</span><p>"As an IR scientist, critique the retrieval layer: is it evaluated at all, is a single metric standing in for the objective, could the dense/ANN path be missing relevant table slices?"</p></div>
+    <div class="prompt"><span class="plabel">c.3 · Implementation thoughts</span><p>"Propose a small retrieval-eval harness (labelled query→artifact set, BM25 baseline, recall@k) wired into the existing <code>eval/</code> framework, without touching the chat runtime."</p></div>
+  </div>
+</div>
+
+<div class="card aicard">
+  <h3>Natural Language Processing Scientist <span class="slug">natural-language-processing-scientist</span> <span class="tag t4">Tier 4</span> <span class="tag new">added</span> <span class="src">299 lines</span></h3>
+  <p class="mode">computational / language modeling, evaluation &amp; alignment</p>
+  <p class="summary">The LLM-evaluation discipline for the chat eval harness (<code>eval/runner</code>, <code>judges</code>,
+  <code>datasets/</code>) — separating real quality gains from measurement artifacts.</p>
+  <div class="detail">
+    <h4>(a) Skills to include — grounded</h4>
+    <ul class="skills">
+      <li><strong>Separate genuine gains from benchmark contamination, metric gaming, and prompt-template sensitivity</strong>.
+        <span class="ground">natural-language-processing-scientist/AGENTS.md › intro · L6</span></li>
+      <li><strong>Tokenizer + decoding protocol jointly define behavior</strong> — eval results shift with decoding settings.
+        <span class="ground">natural-language-processing-scientist/AGENTS.md › Mindset And First Principles · L15</span></li>
+      <li><strong>Decontaminate eval data; treat alignment/safety as designed experiments</strong>.
+        <span class="ground">natural-language-processing-scientist/AGENTS.md › intro · L8</span></li>
+    </ul>
+    <h4>(b) What it enhances</h4>
+    <ul class="enh">
+      <li><strong>Representation:</strong> eval datasets versioned and decontaminated, with decoding settings recorded alongside scores.</li>
+      <li><strong>Interpretation:</strong> a chat-quality delta is read as real only after contamination/prompt-sensitivity are ruled out.</li>
+      <li><strong>Discovery:</strong> exposes when an apparent improvement is metric gaming or a prompt-template artifact.</li>
+    </ul>
+    <h4>(c) Prompts for the next pass</h4>
+    <div class="prompt"><span class="plabel">c.1 · Explore &amp; investigate</span><p>"Review the chat <code>eval/</code> harness: are datasets decontaminated, are decoding settings fixed and recorded, and is the LLM-judge itself validated? Find where a score could move without real quality change."</p></div>
+    <div class="prompt"><span class="plabel">c.2 · Critique</span><p>"As an NLP scientist, critique the eval methodology: is it vulnerable to benchmark contamination, metric gaming, or prompt-template sensitivity? Are gains reported with variance?"</p></div>
+    <div class="prompt"><span class="plabel">c.3 · Implementation thoughts</span><p>"Propose decontamination checks and fixed decoding + variance reporting for the eval harness, plus a small LLM-judge validation set, without altering chat behavior."</p></div>
+  </div>
+</div>
+
+<div class="card aicard">
+  <h3>Computer Security Researcher <span class="slug">computer-security-researcher</span> <span class="tag t4">Tier 4</span> <span class="tag new">added</span> <span class="src">327 lines</span></h3>
+  <p class="mode">dry-computational / vulnerability, protocol, and empirical security research</p>
+  <p class="summary">The threat-modeling lens for the anti-exfiltration layer (<code>security.py</code>, LLM-judge classifiers,
+  <code>red_team.json</code>) whose whole job is to stop methodology/USP/source leakage.</p>
+  <div class="detail">
+    <h4>(a) Skills to include — grounded</h4>
+    <ul class="skills">
+      <li><strong>"Secure" is meaningless without a threat model</strong> — state adversary goals, capabilities, and the assets to protect (here: methodology, USP, pipeline internals, source).
+        <span class="ground">computer-security-researcher/AGENTS.md › Mindset And First Principles · L14–15</span></li>
+      <li><strong>Reason about primitive chaining under the threat model</strong> — benign-looking requests combine into an extraction.
+        <span class="ground">computer-security-researcher/AGENTS.md › Mindset And First Principles · L28</span></li>
+      <li><strong>Coverage is evidence, not victory</strong> — a passing red-team set is a floor, not proof of security.
+        <span class="ground">computer-security-researcher/AGENTS.md › How You Work · L32</span></li>
+    </ul>
+    <h4>(b) What it enhances</h4>
+    <ul class="enh">
+      <li><strong>Representation:</strong> the chat's security posture written as an explicit threat model (assets, adversary, allowed/denied flows).</li>
+      <li><strong>Interpretation:</strong> a "passed safety eval" read as coverage of known attacks, not a guarantee.</li>
+      <li><strong>Discovery:</strong> surfaces multi-turn / chained extraction paths a single-prompt blocklist misses.</li>
+    </ul>
+    <h4>(c) Prompts for the next pass</h4>
+    <div class="prompt"><span class="plabel">c.1 · Explore &amp; investigate</span><p>"Write the explicit threat model the chat's anti-exfiltration layer is defending: assets, adversary capabilities, allowed vs denied information flows. Then probe for multi-turn chained-extraction paths the current blockers miss."</p></div>
+    <div class="prompt"><span class="plabel">c.2 · Critique</span><p>"As a security researcher, critique <code>security.py</code> and <code>red_team.json</code>: is there a stated threat model, does coverage get mistaken for proof, are chained/multi-turn attacks tested?"</p></div>
+    <div class="prompt"><span class="plabel">c.3 · Implementation thoughts</span><p>"Propose expanding the red-team set with chained multi-turn extraction cases and documenting the threat model + residual-risk assumptions next to the security tests."</p></div>
+  </div>
+</div>
+
+<div class="card aicard">
+  <h3>Machine Learning Engineer <span class="slug">machine-learning-engineer</span> <span class="tag t4">Tier 4</span> <span class="tag new">added</span> <span class="src">281 lines</span></h3>
+  <p class="mode">production ML / MLOps / feature stores &amp; serving</p>
+  <p class="summary">The serving/operations lens for the LLM provider path (<code>anthropic_provider.py</code>, key resolution,
+  quotas, cost/latency) and parity between the eval harness and the live chat.</p>
+  <div class="detail">
+    <h4>(a) Skills to include — grounded</h4>
+    <ul class="skills">
+      <li><strong>See the system as a graph through serving and monitoring</strong> — ingestion→validation→registry→inference→monitoring, under latency and cost constraints.
+        <span class="ground">machine-learning-engineer/AGENTS.md › intro · L7; Mindset And First Principles · L13</span></li>
+      <li><strong>Assume train–serve (here: eval–prod) skew until proven</strong> — different preprocessing/context-building paths diverge.
+        <span class="ground">machine-learning-engineer/AGENTS.md › Mindset And First Principles · L21</span></li>
+      <li><strong>Design for rollback before rollout</strong> — every prompt/model change needs a prior version + guardrail.
+        <span class="ground">machine-learning-engineer/AGENTS.md › Mindset And First Principles · L27</span></li>
+    </ul>
+    <h4>(b) What it enhances</h4>
+    <ul class="enh">
+      <li><strong>Representation:</strong> the chat path modelled with explicit versioning, cost/latency budgets, and monitoring hooks.</li>
+      <li><strong>Interpretation:</strong> a quality regression can be tied to a specific model/prompt version and rolled back.</li>
+      <li><strong>Discovery:</strong> exposes eval–prod skew where the harness and the live context-builder diverge.</li>
+    </ul>
+    <h4>(c) Prompts for the next pass</h4>
+    <div class="prompt"><span class="plabel">c.1 · Explore &amp; investigate</span><p>"Compare the context the <code>eval/</code> harness builds with what the live chat sends to the provider — is there eval–prod skew? Map the serving path's versioning, cost/latency budget, and monitoring."</p></div>
+    <div class="prompt"><span class="plabel">c.2 · Critique</span><p>"As an ML engineer, critique the chat serving path: is model/prompt change versioned with rollback, is there drift/quality monitoring, are cost/latency budgeted and enforced?"</p></div>
+    <div class="prompt"><span class="plabel">c.3 · Implementation thoughts</span><p>"Propose prompt/model version stamping with a rollback path and a thin monitoring hook (latency, cost, refusal/quality rate), keeping the provider abstraction intact."</p></div>
+  </div>
+</div>
+
+<div class="card aicard">
+  <h3>AI Researcher <span class="slug">ai-researcher</span> <span class="tag t4">Tier 4</span> <span class="tag new">added</span> <span class="src">252 lines</span></h3>
+  <p class="mode">empirical ML / experiment design / evaluation methodology / reproducibility</p>
+  <p class="summary">The "is this result real?" lens for the eval harness — falsifiable experiments, leakage control, and
+  fair baselines, complementing the NLP profile's LLM-specific view.</p>
+  <div class="detail">
+    <h4>(a) Skills to include — grounded</h4>
+    <ul class="skills">
+      <li><strong>Design experiments that can falsify the claim; build reproducible pipelines</strong>.
+        <span class="ground">ai-researcher/AGENTS.md › Mindset And First Principles · L7</span></li>
+      <li><strong>Guard against data leakage (Kapoor–Narayanan taxonomy)</strong> — it has invalidated hundreds of studies.
+        <span class="ground">ai-researcher/AGENTS.md › Mindset And First Principles · L16</span></li>
+      <li><strong>Tune baselines fairly; benchmark performance is necessary, not sufficient under distribution shift</strong>.
+        <span class="ground">ai-researcher/AGENTS.md › Mindset And First Principles · L15, L19</span></li>
+    </ul>
+    <h4>(b) What it enhances</h4>
+    <ul class="enh">
+      <li><strong>Representation:</strong> eval framed as falsifiable experiments with leakage-checked datasets and recorded baselines.</li>
+      <li><strong>Interpretation:</strong> a chat-quality claim is believed only against a fair baseline and a leakage check.</li>
+      <li><strong>Discovery:</strong> catches the eval result that looks like progress but is leakage or a weak baseline.</li>
+    </ul>
+    <h4>(c) Prompts for the next pass</h4>
+    <div class="prompt"><span class="plabel">c.1 · Explore &amp; investigate</span><p>"Treat each eval claim about the chat as a hypothesis: is there a fair, tuned baseline, is the eval set free of leakage from the indexed run data, and is the pipeline reproducible? Find the weakest link."</p></div>
+    <div class="prompt"><span class="plabel">c.2 · Critique</span><p>"As an AI researcher, critique the eval design: are baselines fair, is there train/eval leakage from run artifacts, are results reproducible and reported with uncertainty?"</p></div>
+    <div class="prompt"><span class="plabel">c.3 · Implementation thoughts</span><p>"Propose a leakage audit of the eval datasets against indexed run data and a fair-baseline requirement for any reported chat-quality improvement."</p></div>
+  </div>
+</div>
+
+<h2 id="table">4. Skill → source → SignalFold-chat hint</h2>
+<p>Every grounded skill in one place. <strong>Source</strong> is the full path + section · line. <strong>Chat
+hint</strong> is the phrasing a scientist would type in a SignalFold chat session that should pull this expertise
+in — for routing questions, seeding eval prompts, or deciding which profile to load. Paths are under
+<code>/Users/sdev/Dev/projects/scientific-agents/scientific-agents/</code>.</p>
+<table class="gtbl">
+  <thead><tr><th style="width:24%">Skill</th><th style="width:40%">Grounded source (path · section · line)</th><th style="width:36%">SignalFold-chat hint (keywords)</th></tr></thead>
+  <tbody>
+    <tr class="grp"><td colspan="3">Proteomics Scientist · Tier 1 · <code>proteomics-scientist</code></td></tr>
+    <tr><td>Classify missing-value mechanism &amp; impute by model</td><td class="path">…/proteomics-scientist/AGENTS.md · Rigor · L173–176</td><td class="hint">missing values, NaNs, why are proteins dropped, imputation, sparse, zeros</td></tr>
+    <tr><td>Name modality &amp; acquisition mode → normalization</td><td class="path">…/proteomics-scientist/AGENTS.md · Mindset · L16–20, L40</td><td class="hint">normalization, DDA vs DIA vs TMT, which norm, intensities look off</td></tr>
+    <tr><td>Peptide vs protein FDR; picked-protein FDR 1%</td><td class="path">…/proteomics-scientist/AGENTS.md · Rigor · L166–167</td><td class="hint">protein vs peptide count, razor peptides, FDR, how many proteins</td></tr>
+    <tr><td>Flag TMT ratio compression</td><td class="path">…/proteomics-scientist/AGENTS.md · Frame · L60</td><td class="hint">fold changes look small, TMT, compressed, why is my effect tiny</td></tr>
+    <tr><td>Contaminants first-class (keratin/BSA)</td><td class="path">…/proteomics-scientist/AGENTS.md · Troubleshooting · L199, L215</td><td class="hint">keratin, contaminant, BSA, suspicious top hit, is this real</td></tr>
+    <tr class="grp"><td colspan="3">Mass Spectrometrist · Tier 1 · <code>mass-spectrometrist</code></td></tr>
+    <tr><td>Resolution &amp; mass accuracy gate identity</td><td class="path">…/mass-spectrometrist/AGENTS.md · Mindset · L15</td><td class="hint">mass accuracy, ppm, resolution, is this ID trustworthy</td></tr>
+    <tr><td>Quantitation needs calibration; matrix effects</td><td class="path">…/mass-spectrometrist/AGENTS.md · Mindset · L25; How You Work · L60</td><td class="hint">calibration, ion suppression, matrix effect, can I trust intensities</td></tr>
+    <tr><td>System suitability before biology</td><td class="path">…/mass-spectrometrist/AGENTS.md · Instrument Qualification… · L161+</td><td class="hint">system suitability, instrument QC, was the run good</td></tr>
+    <tr class="grp"><td colspan="3">Bioinformatician · Tier 1 · <code>bioinformatician</code></td></tr>
+    <tr><td>Model batch as a design covariate</td><td class="path">…/bioinformatician/AGENTS.md · Mindset · L22–24</td><td class="hint">batch effect, cluster by run/date, confounded, correct for batch</td></tr>
+    <tr><td>Stable identifiers; MANE/GENCODE annotation</td><td class="path">…/bioinformatician/AGENTS.md · Frame · L56; Tools · L120</td><td class="hint">symbol vs accession, unmapped, IDs don't match, missing after merge</td></tr>
+    <tr><td>Prove reproducibility (build/versions/seeds)</td><td class="path">…/bioinformatician/AGENTS.md · Mindset · L40–41</td><td class="hint">reproduce, same result, versions, seed, different every time</td></tr>
+    <tr><td>Report padj (BH FDR), not raw p</td><td class="path">…/bioinformatician/AGENTS.md · How You Work · L90</td><td class="hint">adjusted p-value, padj, FDR, raw p, too many hits</td></tr>
+    <tr class="grp"><td colspan="3">Biostatistician · Tier 1 · <code>biostatistician</code></td></tr>
+    <tr><td>Start from the estimand</td><td class="path">…/biostatistician/AGENTS.md · Mindset · L14–18</td><td class="hint">what am I comparing, what does differential mean, define the question</td></tr>
+    <tr><td>Name the multiplicity family (FWER vs FDR)</td><td class="path">…/biostatistician/AGENTS.md · Frame · L59</td><td class="hint">multiple testing across stages, FDR vs Bonferroni, family-wise</td></tr>
+    <tr><td>Batch confounding &amp; experimental unit</td><td class="path">…/biostatistician/AGENTS.md · intro L6–7; Frame · L56</td><td class="hint">confounded with batch, design problem, what's my n</td></tr>
+    <tr><td>MMRM / mixed models for correlated designs</td><td class="path">…/biostatistician/AGENTS.md · Mindset · L28; How You Work · L85</td><td class="hint">repeated measures, paired samples, replicate structure, random effects</td></tr>
+    <tr class="grp"><td colspan="3">Systems Biologist · Tier 1 · <code>systems-biologist</code></td></tr>
+    <tr><td>Match network type to the claim</td><td class="path">…/systems-biologist/AGENTS.md · Mindset · L31; Frame · L61–62</td><td class="hint">co-expression, what does a module mean, correlation vs causation</td></tr>
+    <tr><td>Test structure against null models</td><td class="path">…/systems-biologist/AGENTS.md · Rigor · L172</td><td class="hint">is this module significant, by chance, permutation</td></tr>
+    <tr><td>Context dependence of topology</td><td class="path">…/systems-biologist/AGENTS.md · Mindset · L33</td><td class="hint">same pathway different result, condition-specific, does it generalize</td></tr>
+    <tr><td>Multi-omics integration as its own deliverable</td><td class="path">…/systems-biologist/AGENTS.md · Frame · L49–50</td><td class="hint">combine with other data, integrate omics layers</td></tr>
+    <tr class="grp"><td colspan="3">Functional Genomics Scientist · Tier 2 · <code>functional-genomics-scientist</code></td></tr>
+    <tr><td>Hits are ranked hypotheses needing validation</td><td class="path">…/functional-genomics-scientist/AGENTS.md · Mindset · L26–28</td><td class="hint">is this hit real, validate, top hit, follow up</td></tr>
+    <tr><td>Effect size + FDR/q, not rank/p alone</td><td class="path">…/functional-genomics-scientist/AGENTS.md · Rigor · L161–163</td><td class="hint">only p-value, effect size, log2FC, rank vs significance</td></tr>
+    <tr><td>Rank-based GSEA/fgsea, versioned</td><td class="path">…/functional-genomics-scientist/AGENTS.md · Tools · L120</td><td class="hint">GSEA, ranked enrichment, gene set, pathway score</td></tr>
+    <tr><td>Standard diagnostic figures</td><td class="path">…/functional-genomics-scientist/AGENTS.md · Communicating · L232</td><td class="hint">volcano, PCA, replicate correlation, QC plot</td></tr>
+    <tr class="grp"><td colspan="3">Statistician · Tier 2 · <code>statistician</code></td></tr>
+    <tr><td>Handle missing data by mechanism</td><td class="path">…/statistician/AGENTS.md · How You Work · L75</td><td class="hint">missing data, handle NAs, complete-case, MAR vs MNAR</td></tr>
+    <tr><td>Match multiplicity correction to stakes</td><td class="path">…/statistician/AGENTS.md · Mindset · L25; How You Work · L77</td><td class="hint">how strict, exploratory vs confirmatory, which correction</td></tr>
+    <tr><td>Valid post-selection inference</td><td class="path">…/statistician/AGENTS.md · Advanced Inference Notes · L222</td><td class="hint">selected then tested, cherry-picked, biased after selection</td></tr>
+    <tr><td>Guard against sequential peeking</td><td class="path">…/statistician/AGENTS.md · How You Work · L86; Scenarios · L209</td><td class="hint">ran it again, tuned until significant, p-hacking</td></tr>
+    <tr class="grp"><td colspan="3">Single-Cell Biologist · Tier 2 · <code>single-cell-biologist</code></td></tr>
+    <tr><td>Marker-validation chain</td><td class="path">…/single-cell-biologist/AGENTS.md · Mindset · L47; Frame · L79</td><td class="hint">cell-type markers, marker source, is this cell type right</td></tr>
+    <tr><td>Experimental unit; pseudobulk</td><td class="path">…/single-cell-biologist/AGENTS.md · Mindset · L19; Frame · L68</td><td class="hint">cells vs samples, what's n, pseudobulk, pseudoreplication</td></tr>
+    <tr><td>Atlases are references, not authorities</td><td class="path">…/single-cell-biologist/AGENTS.md · Mindset · L43–44</td><td class="hint">which reference, atlas, annotation source</td></tr>
+    <tr><td>Hold rival explanations (doublet/ambient)</td><td class="path">…/single-cell-biologist/AGENTS.md · Mindset · L30; Frame · L61</td><td class="hint">doublet, ambient, real cell type or artifact</td></tr>
+    <tr class="grp"><td colspan="3">Metabolomics Scientist · Tier 2 · <code>metabolomics-scientist</code> · added</td></tr>
+    <tr><td>Instrument session is part of the experiment (pooled QC)</td><td class="path">…/metabolomics-scientist/AGENTS.md · Mindset · L25 (intro L7–8)</td><td class="hint">run order, injection sequence, drift, QC samples, batch correction</td></tr>
+    <tr><td>Annotation confidence is hierarchical (MSI levels)</td><td class="path">…/metabolomics-scientist/AGENTS.md · Mindset · L17</td><td class="hint">how confident is this ID, tentative, annotation level</td></tr>
+    <tr><td>Batch-aware stats; beware over-annotated pathway stories</td><td class="path">…/metabolomics-scientist/AGENTS.md · intro · L6–7</td><td class="hint">over-correction, pathway story too clean, batch</td></tr>
+    <tr class="grp"><td colspan="3">Cell Signaling Biologist · Tier 2 · <code>cell-signaling-biologist</code> · added</td></tr>
+    <tr><td>Phosphorylation networks with crosstalk/feedback</td><td class="path">…/cell-signaling-biologist/AGENTS.md · intro · L4–6</td><td class="hint">kinase, signaling, crosstalk, pathway, phospho</td></tr>
+    <tr><td>Marker level ≠ pathway flux</td><td class="path">…/cell-signaling-biologist/AGENTS.md · Mindset · L18</td><td class="hint">is the pathway on, pERK, does high mean active, activation</td></tr>
+    <tr><td>Validate with phospho-specific evidence (PhosphoSitePlus)</td><td class="path">…/cell-signaling-biologist/AGENTS.md · intro · L5; Tools · L132+</td><td class="hint">phospho site, PhosphoSitePlus, is this site real</td></tr>
+    <tr class="grp"><td colspan="3">Network Scientist · Tier 2 · <code>network-scientist</code> · added</td></tr>
+    <tr><td>Community detection is ill-posed (resolution bias)</td><td class="path">…/network-scientist/AGENTS.md · Mindset · L16</td><td class="hint">which clustering, modules not stable, modularity, resolution</td></tr>
+    <tr><td>Validate against feature-preserving null models</td><td class="path">…/network-scientist/AGENTS.md · Mindset · L20</td><td class="hint">is this structure real, null model, degree-preserving, by chance</td></tr>
+    <tr><td>"Scale-free" needs CSN goodness-of-fit</td><td class="path">…/network-scientist/AGENTS.md · Mindset · L12–13</td><td class="hint">scale-free, hub, power law, is this hub real</td></tr>
+    <tr class="grp"><td colspan="3">Data Scientist (+ Data Analysis &amp; Visualization) · Tier 3 · <code>data-scientist</code></td></tr>
+    <tr><td>EDA first</td><td class="path">…/data-scientist/AGENTS.md · How You Work · L51</td><td class="hint">explore my data, distributions, outliers, sanity check first</td></tr>
+    <tr><td>Leakage checks</td><td class="path">…/data-scientist/AGENTS.md · How You Work · L52</td><td class="hint">leakage, too good to be true, train/test, predictive check</td></tr>
+    <tr><td>Visualization toolchain + uncertainty</td><td class="path">…/data-scientist/AGENTS.md · Tools · L84; Communicating · L135, L160</td><td class="hint">make a plot, chart, show uncertainty, error bars, figure</td></tr>
+    <tr><td>Monitoring metrics for drift (PSI)</td><td class="path">…/data-scientist/AGENTS.md · How You Work · L65</td><td class="hint">compare two runs, drift, what changed between runs</td></tr>
+    <tr><td>"Model cards" / run summaries with caveats</td><td class="path">…/data-scientist/AGENTS.md · Communicating · L139; Production · L180</td><td class="hint">summarize this run, caveats, what does this mean</td></tr>
+    <tr class="grp"><td colspan="3">Research Software Engineer · Tier 3 · <code>research-software-engineer</code></td></tr>
+    <tr><td>Full provenance; reproducibility vs replicability</td><td class="path">…/research-software-engineer/AGENTS.md · Mindset · L14, L16–18</td><td class="hint">reproduce, provenance, what produced this, rerun exactly</td></tr>
+    <tr><td>Citation/version metadata (CITATION.cff, SPDX)</td><td class="path">…/research-software-engineer/AGENTS.md · Mindset · L36–37</td><td class="hint">cite this, version, DOI, license</td></tr>
+    <tr><td>SemVer + CHANGELOG + deprecation</td><td class="path">…/research-software-engineer/AGENTS.md · Mindset · L24</td><td class="hint">version bump, changelog, what changed, release</td></tr>
+    <tr><td>Property-based testing (Hypothesis), rtol/atol</td><td class="path">…/research-software-engineer/AGENTS.md · Tools · L122–124</td><td class="hint">test this, edge cases, numerical tolerance, float compare</td></tr>
+    <tr class="grp"><td colspan="3">Bioinformatics Engineer · Tier 3 · <code>bioinformatics-engineer</code></td></tr>
+    <tr><td>QC gates — failed QC stops the DAG</td><td class="path">…/bioinformatics-engineer/AGENTS.md · Mindset · L21–22</td><td class="hint">run failed silently, empty output, no results, QC gate</td></tr>
+    <tr><td>Idempotency / restartability (-resume)</td><td class="path">…/bioinformatics-engineer/AGENTS.md · Mindset · L19</td><td class="hint">resume, restart, rerun incomplete, retry</td></tr>
+    <tr><td>Version everything (container digests)</td><td class="path">…/bioinformatics-engineer/AGENTS.md · Mindset · L23</td><td class="hint">container, image digest, pin versions, checksums</td></tr>
+    <tr><td>Gold-fixture regression testing</td><td class="path">…/bioinformatics-engineer/AGENTS.md · Mindset · L29; How You Work · L79</td><td class="hint">regression test, golden output, did the pipeline change</td></tr>
+    <tr class="grp"><td colspan="3">Data Engineer · Tier 3 · <code>data-engineer</code> · added</td></tr>
+    <tr><td>Idempotency (MERGE/upsert on natural key)</td><td class="path">…/data-engineer/AGENTS.md · Mindset · L19, L21</td><td class="hint">rerun, duplicates, double-counted, idempotent</td></tr>
+    <tr><td>Data contracts + quality gates; hunt silent failures</td><td class="path">…/data-engineer/AGENTS.md · intro · L5, L7</td><td class="hint">silent failure, empty output, green but wrong, data contract</td></tr>
+    <tr><td>Schema/contract drift is first-class</td><td class="path">…/data-engineer/AGENTS.md · intro · L7; Rigor · L176+</td><td class="hint">input format changed, schema drift, bad upload, validation</td></tr>
+    <tr class="grp ai"><td colspan="3">Information Retrieval Scientist · Tier 4 · <code>information-retrieval-scientist</code> · added</td></tr>
+    <tr><td>BM25 strong baseline; tune k1/b</td><td class="path">…/information-retrieval-scientist/AGENTS.md · Mindset · L29, L32</td><td class="hint">retrieval, BM25, why didn't it find, ranking</td></tr>
+    <tr><td>Don't let one metric proxy the objective</td><td class="path">…/information-retrieval-scientist/AGENTS.md · Frame · L63</td><td class="hint">retrieval eval, nDCG, is retrieval good</td></tr>
+    <tr><td>Hybrid/ANN can silently miss (check recall)</td><td class="path">…/information-retrieval-scientist/AGENTS.md · Frame · L76</td><td class="hint">chat missed context, didn't retrieve, recall, missing slice</td></tr>
+    <tr class="grp ai"><td colspan="3">NLP Scientist · Tier 4 · <code>natural-language-processing-scientist</code> · added</td></tr>
+    <tr><td>Separate gains from contamination / metric gaming / prompt sensitivity</td><td class="path">…/natural-language-processing-scientist/AGENTS.md · intro · L6</td><td class="hint">eval, benchmark, is the chat actually better, contamination</td></tr>
+    <tr><td>Tokenizer + decoding jointly define behavior</td><td class="path">…/natural-language-processing-scientist/AGENTS.md · Mindset · L15</td><td class="hint">temperature, decoding, nondeterministic, different answers</td></tr>
+    <tr><td>Decontaminate data; alignment/safety as experiments</td><td class="path">…/natural-language-processing-scientist/AGENTS.md · intro · L8</td><td class="hint">eval leakage, decontaminate, safety eval design</td></tr>
+    <tr class="grp ai"><td colspan="3">Computer Security Researcher · Tier 4 · <code>computer-security-researcher</code> · added</td></tr>
+    <tr><td>No security without a threat model</td><td class="path">…/computer-security-researcher/AGENTS.md · Mindset · L14–15</td><td class="hint">threat model, what are we protecting, leak methodology</td></tr>
+    <tr><td>Primitive chaining under the threat model</td><td class="path">…/computer-security-researcher/AGENTS.md · Mindset · L28</td><td class="hint">jailbreak, prompt injection, multi-turn extraction, chained</td></tr>
+    <tr><td>Coverage is evidence, not victory</td><td class="path">…/computer-security-researcher/AGENTS.md · How You Work · L32</td><td class="hint">red team passed, is it secure, residual risk</td></tr>
+    <tr class="grp ai"><td colspan="3">Machine Learning Engineer · Tier 4 · <code>machine-learning-engineer</code> · added</td></tr>
+    <tr><td>System as serving+monitoring graph (latency/cost)</td><td class="path">…/machine-learning-engineer/AGENTS.md · intro · L7; Mindset · L13</td><td class="hint">latency, cost, quota, monitoring, serving</td></tr>
+    <tr><td>Assume eval–prod skew until proven</td><td class="path">…/machine-learning-engineer/AGENTS.md · Mindset · L21</td><td class="hint">works in eval not prod, skew, parity, different in chat</td></tr>
+    <tr><td>Design for rollback before rollout</td><td class="path">…/machine-learning-engineer/AGENTS.md · Mindset · L27</td><td class="hint">prompt change, model version, rollback, regression after update</td></tr>
+    <tr class="grp ai"><td colspan="3">AI Researcher · Tier 4 · <code>ai-researcher</code> · added</td></tr>
+    <tr><td>Falsifiable experiments; reproducible pipelines</td><td class="path">…/ai-researcher/AGENTS.md · Mindset · L7</td><td class="hint">is this result real, reproduce eval, experiment design</td></tr>
+    <tr><td>Guard against data leakage (Kapoor–Narayanan)</td><td class="path">…/ai-researcher/AGENTS.md · Mindset · L16</td><td class="hint">leakage, eval too good, contaminated</td></tr>
+    <tr><td>Tune baselines fairly</td><td class="path">…/ai-researcher/AGENTS.md · Mindset · L15, L19</td><td class="hint">baseline, is the gain real, compared to what</td></tr>
+  </tbody>
+</table>
+
+<h2 id="use">5. How to use a profile in SignalFold</h2>
+<p>SignalFold ships its own <code>AGENTS.md</code> / <code>CLAUDE.md</code> (the <code>ssb1</code> branch rules,
+pipeline ownership). Those are <em>workflow</em> rules; an expert profile is <em>domain-reasoning</em> guidance —
+complementary. To layer one in without losing the existing rules, append rather than overwrite:</p>
+<pre><code># From the SignalFold repo root, append a profile to AGENTS.md:
+cat /Users/sdev/Dev/projects/scientific-agents/scientific-agents/proteomics-scientist/AGENTS.md >> AGENTS.md
+
+# Claude Code reads CLAUDE.md; to also pull the profile in, add one import line:
+#     @AGENTS.md</code></pre>
+<div class="callout">
+  <strong>Before editing repo files.</strong> This document is reference-only and changes nothing. Wiring a
+  profile into <code>AGENTS.md</code>/<code>CLAUDE.md</code> is a repo change — it belongs on <code>ssb1</code>,
+  and profiles are ~18&nbsp;KB each, so loading all 20 at once would bloat every agent's context badly. Load one
+  primary (Proteomics Scientist) and use the §4 table to route the rest on demand.
+</div>
+
+<h2 id="appendix">6. Appendix — full-catalog audit (for future passes)</h2>
+<p>This appendix records the exhaustive scan of all 503 profiles so a later pass (new pipeline features, deeper
+review) doesn't restart from scratch. Method: every catalog entry was verdicted against SignalFold's surface
+(no keyword pre-filter); every candidate was opened and either grounded to a file+line or rejected.</p>
+
+<h5>6.1 Alternates &amp; niche — grounded, but overlap a primary pick</h5>
+<p>Real coverage, deliberately not promoted to §3 because each overlaps an included profile or is narrow. Load
+only if the overlap profile isn't enough.</p>
+<table class="gtbl">
+  <thead><tr><th style="width:20%">Profile</th><th style="width:14%">Surface</th><th style="width:40%">Grounding</th><th style="width:26%">Why alternate, not primary</th></tr></thead>
+  <tbody>
+    <tr><td><code>analytical-chemist</code></td><td>LC-MS method</td><td class="path">…/analytical-chemist/AGENTS.md · Mindset · L17–18 (calibration, weighted regression near LOQ)</td><td>Overlaps proteomics-scientist + mass-spectrometrist on LC-MS rigor.</td></tr>
+    <tr><td><code>computational-scientist</code></td><td>Pipeline / repro</td><td class="path">…/computational-scientist/AGENTS.md · L4, L19 (code verification, reproducible workflows)</td><td>Overlaps research-software-engineer + bioinformatics-engineer.</td></tr>
+    <tr><td><code>mlops-engineer</code></td><td>AI serving</td><td class="path">…/mlops-engineer/AGENTS.md · L7–8 (train-serve skew, silent degradation)</td><td>Overlaps machine-learning-engineer.</td></tr>
+    <tr><td><code>cryptography-engineer</code></td><td>AI key mgmt</td><td class="path">…/cryptography-engineer/AGENTS.md · L26 (key hierarchy, KDF/HKDF)</td><td>Narrow — only <code>crypto.py</code> Fernet/SESSION_SECRET key derivation.</td></tr>
+    <tr><td><code>bayesian-statistician</code></td><td>Stats</td><td class="path">…/bayesian-statistician/AGENTS.md · L3–4 (hierarchical, posterior inference)</td><td>Alternate to statistician/biostatistician (use if hierarchical modeling is added).</td></tr>
+    <tr><td><code>mathematical-statistician</code></td><td>Stats</td><td class="path">…/mathematical-statistician/AGENTS.md · theory of FDR/estimators</td><td>Theory-heavy alternate to statistician.</td></tr>
+    <tr><td><code>causal-inference-scientist</code></td><td>Stats / design</td><td class="path">…/causal-inference-scientist/AGENTS.md · L4, L7 (DAGs, do-calculus, confounding)</td><td>Overlaps biostatistician's causal-DAG coverage.</td></tr>
+    <tr><td><code>chemical-biologist</code></td><td>Proteomics use-case</td><td class="path">…/chemical-biologist/AGENTS.md · L5 (chemoproteomics, target engagement)</td><td>Niche — only if SignalFold is used for target ID / chemoproteomics.</td></tr>
+    <tr><td><code>glycobiologist</code></td><td>Proteomics use-case</td><td class="path">…/glycobiologist/AGENTS.md · L4 (glycoproteomics, site occupancy)</td><td>Niche — only with glyco-/PTM-specific data.</td></tr>
+  </tbody>
+</table>
+
+<h5>6.2 Considered &amp; rejected — close calls with a reason</h5>
+<ul>
+  <li><strong>Structure-focused</strong> (<code>structural-biologist</code>, <code>protein-engineer</code>, <code>cryo-em-structural-biologist</code>) — SignalFold has no protein-structure surface.</li>
+  <li><strong>Disease-specific</strong> (<code>cancer-biologist</code>, <code>immunologist</code>, <code>oncologist</code>) — the platform is disease-agnostic; load only for a disease-specific deployment.</li>
+  <li><strong>DNA/RNA-centric</strong> (<code>genomicist</code>, <code>geneticist</code>, <code>rna-biologist</code>, <code>molecular-biologist</code>) — proteomics platform; the protein-relevant bits are already in the Tier 1–2 picks.</li>
+  <li><strong>Clinical operations</strong> (<code>health-informatician</code>, <code>clinical-data-manager</code>, <code>clinical-trial-scientist</code>) — not a clinical/regulated system.</li>
+  <li><strong>Model-training research</strong> (<code>deep-learning-scientist</code>, <code>machine-learning-researcher</code>, <code>reinforcement-learning-researcher</code>) — no model training here; the chat uses a hosted LLM. ai-researcher + NLP cover the eval needs.</li>
+  <li><strong>Lower-level/overlapping</strong> (<code>database-systems-researcher</code> — storage internals too deep, data-engineer suffices; <code>signal-processing-engineer</code> / <code>spectroscopist</code> — MS covered; <code>knowledge-representation-researcher</code> — GO enrichment needs no OWL reasoning; <code>enzymologist</code> / <code>biochemist</code> — no kinetics surface).</li>
+</ul>
+
+<h5>6.3 Surface → profile coverage map</h5>
+<table class="gtbl">
+  <thead><tr><th>SignalFold surface</th><th>Covered by</th><th>Status</th></tr></thead>
+  <tbody>
+    <tr><td>1. LC-MS instrument &amp; quantitation</td><td>proteomics-scientist, mass-spectrometrist, analytical-chemist*</td><td class="status-ok">covered</td></tr>
+    <tr><td>2. ETL / missing values / contaminants</td><td>proteomics-scientist, data-engineer, bioinformatician, metabolomics-scientist</td><td class="status-ok">covered</td></tr>
+    <tr><td>3. Stage-1 DE / normalization / multiplicity</td><td>proteomics-scientist, biostatistician, statistician, metabolomics-scientist</td><td class="status-ok">covered</td></tr>
+    <tr><td>3′. Co-expression networks</td><td>systems-biologist, network-scientist</td><td class="status-ok">covered (reinforced)</td></tr>
+    <tr><td>4. GO / pathway enrichment</td><td>functional-genomics-scientist, systems-biologist, bioinformatician</td><td class="status-ok">covered</td></tr>
+    <tr><td>5. Cell-type enrichment</td><td>single-cell-biologist, biostatistician</td><td class="status-ok">covered</td></tr>
+    <tr><td>6. External biology DBs</td><td>systems-biologist, bioinformatician, cell-signaling-biologist, metabolomics-scientist</td><td class="status-ok">covered</td></tr>
+    <tr><td>7. Deliverables / analysis / figures</td><td>data-scientist, research-software-engineer</td><td class="status-gap">covered, but no dedicated viz profile (see gaps)</td></tr>
+    <tr><td>8. Pipeline eng / QC / CI / repro</td><td>bioinformatics-engineer, research-software-engineer, data-engineer, computational-scientist*</td><td class="status-ok">covered</td></tr>
+    <tr><td>9. AI chat — retrieval</td><td>information-retrieval-scientist</td><td class="status-ok">covered</td></tr>
+    <tr><td>9. AI chat — LLM quality / eval</td><td>natural-language-processing-scientist, ai-researcher</td><td class="status-ok">covered</td></tr>
+    <tr><td>9. AI chat — serving / ops</td><td>machine-learning-engineer, mlops-engineer*</td><td class="status-ok">covered</td></tr>
+    <tr><td>9. AI chat — security</td><td>computer-security-researcher, cryptography-engineer*</td><td class="status-ok">covered</td></tr>
+    <tr><td>10. Web / data layer</td><td>data-engineer (data), research-software-engineer (software)</td><td class="status-gap">partial (see gaps)</td></tr>
+  </tbody>
+</table>
+
+<h5>6.4 Gaps — surfaces with no good profile</h5>
+<ul>
+  <li><strong>Generic backend / web / API engineering</strong> (FastAPI, auth, SPA, SQLAlchemy) — every one of the 503 is a scientist or domain-engineer; there is no software/backend-engineer profile. <code>research-software-engineer</code> is the nearest proxy but is research-code-oriented. <em>No profile fully covers surface 10.</em></li>
+  <li><strong>Dedicated scientific visualization / figure design</strong> — confirmed twice; no standalone viz profile exists. <code>data-scientist</code> stands in for surface 7.</li>
+  <li><strong>LLM-application security specifically</strong> — <code>computer-security-researcher</code> is general (vuln/protocol/fuzzing); there is no prompt-injection/exfiltration specialist. Partial gap on surface 9-security.</li>
+</ul>
+
+<h5>6.5 Count reconciliation (503)</h5>
+<table class="gtbl">
+  <tbody>
+    <tr><td>Already included (original)</td><td><strong>10</strong></td></tr>
+    <tr><td>New additions (this scan, §3)</td><td><strong>10</strong></td></tr>
+    <tr><td>Alternates / niche (grounded, §6.1)</td><td><strong>9</strong></td></tr>
+    <tr><td>Considered &amp; rejected — named close calls (§6.2)</td><td><strong>~22</strong></td></tr>
+    <tr><td>Bulk-irrelevant by category*</td><td><strong>~452</strong></td></tr>
+    <tr><td><strong>Total</strong></td><td><strong>503</strong></td></tr>
+  </tbody>
+</table>
+<p class="meta">* Bulk-irrelevant categories: physical sciences (astro/physics/cosmology/quantum), all classical
+engineering (civil/mechanical/aero/electrical/chemical-process/nuclear/materials/etc.), earth &amp; environmental
+&amp; geo sciences, agriculture/food/animal/plant sciences, clinical-medicine specialties, field/organismal
+biology &amp; ecology, pure mathematics, and social/behavioral sciences.</p>
+
+<h5>6.6 Methodology &amp; caveats</h5>
+<ul>
+  <li><strong>Exhaustive, not keyword-gated.</strong> All 503 catalog entries were verdicted against the 10-surface
+  list; candidates were confirmed by opening the actual <code>AGENTS.md</code>, not the one-line summary.</li>
+  <li><strong>Recall over precision, gated by grounding.</strong> A profile was included only if a quoted line + a
+  concrete SignalFold tie-point existed; otherwise rejected. Gaps are named rather than hidden.</li>
+  <li><strong>Catalog-vs-body discrepancies found earlier still hold:</strong> the systems-biologist body has no
+  "WGCNA/eigengene/MOFA", functional-genomics no "REVIGO", statistician no "IHW", biostatistician no
+  "Fisher's exact" — those §3 skills are anchored to the profiles' real wording, not the catalog blurb.</li>
+  <li><strong>Line-number caveat.</strong> Anchors are pinned to the clone as of 2026-06-20. A future
+  <code>git pull</code> of scientific-agents may shift line numbers (sections are more stable than lines);
+  re-verify before relying on an exact <code>L#</code>.</li>
+</ul>
+
+<div class="part">
+<p class="part-label">Part II — Skills + Scripts (the code that runs)</p>
+
+<h2 id="skills-intro">7. The <code>scientific-agent-skills</code> layer</h2>
+<p><a href="https://github.com/K-Dense-AI/scientific-agent-skills">scientific-agent-skills</a> is the
+<em>executable</em> sibling of the profiles repo. Where a profile is pure prompt (how to reason), a skill is a
+folder — <code>&lt;skill&gt;/SKILL.md</code> (frontmatter <code>name</code>+<code>description</code> + a body) plus
+optional <code>references/*.md</code> and <code>scripts/*.py</code> — and the scripts are the part that does real,
+deterministic work. Verified counts on this clone (commit <code>2093901</code>, 2026-06-20):</p>
+<table>
+  <thead><tr><th>Metric</th><th>Count</th><th>Note</th></tr></thead>
+  <tbody>
+    <tr><td><code>SKILL.md</code> files (= skills)</td><td><strong>147</strong></td><td>one per skill dir</td></tr>
+    <tr><td><code>scripts/*.py</code> across all skills</td><td><strong>263</strong></td><td>handoff estimate was ~296; real <code>find</code> count is 263</td></tr>
+    <tr><td>skills bundling a <code>scripts/</code> dir</td><td><strong>70</strong></td><td>the other 77 are reference-only (<code>SKILL.md</code> + <code>references/</code>)</td></tr>
+    <tr><td><code>references/</code> dirs</td><td>135</td><td>most skills ship reference docs even without scripts</td></tr>
+  </tbody>
+</table>
+<p>Every skill below was verdicted against the same 10-surface SignalFold list used for the profiles (no keyword
+pre-filter). For each <strong>relevant or borderline</strong> skill, the actual <code>SKILL.md</code> <em>and</em> its
+<code>scripts/</code> were opened and read before describing them; anything that couldn't be grounded to a concrete
+SignalFold tie-point was rejected with a reason (see the <a href="#skills-appendix">§13 audit</a>). Recall over
+precision, gated by grounding — the same bar as Part I.</p>
+<div class="callout" style="border-left-color:var(--skill);background:var(--skill-soft)">
+  <strong>Determinism legend</strong> — each script below carries badges from reading its code:
+  <span class="legend">
+  <span class="pill det">deterministic</span> no RNG ·
+  <span class="pill seed">seed ✓</span> RNG but seeded/reproducible ·
+  <span class="pill rng">unseeded RNG</span> stochastic, no seed passed ·
+  <span class="pill local">local</span> pure-python / offline ·
+  <span class="pill net">network</span> calls an external API ·
+  <span class="pill ai">calls LLM</span> hits a hosted model ·
+  <span class="pill ref">reference-only</span> skill ships no scripts.
+  </span>
+  <strong style="display:block;margin-top:.4rem">Ecosystem caveat.</strong> Most relevant scripts are pure-Python
+  and <code>uv pip install</code>-able, but deps are almost universally <em>unpinned</em> (version named only in
+  prose), some shell out to R-free native libs (OpenMS C++, LibreOffice, Tesseract), and the external-DB / AI scripts
+  need network. Flags are called out per script.
+</div>
+
+<h2 id="skills-cards">8. Relevant skills — in depth (17 grounded)</h2>
+<p>Four skill-tiers, mirroring Part I. Each card gives the <code>SKILL.md</code> one-liner, the grounded scripts
+(only scripts actually read are described), determinism/network badges, and the <strong>Part&nbsp;I profile it pairs
+with</strong> — reasoning ↔ execution. Tier order tracks how directly a skill touches a pipeline stage.</p>
+
+<h3>Skill Tier 1 — runs a pipeline stage (execution core)</h3>
+
+<div class="card skillcard">
+  <h3>pyOpenMS <span class="sk">pyopenms</span> <span class="tag skill">S-Tier 1 · primary</span> <span class="tag exec">16 scripts</span> <span class="src">surface 1·2·3·6</span></h3>
+  <p class="mode">complete LC-MS/MS platform · feature detection · LFQ/isobaric quant · peptide/protein ID · FDR</p>
+  <p class="summary">The single most relevant skill — the executable counterpart to <em>proteomics-scientist</em> +
+  <em>mass-spectrometrist</em>. Its scripts model the raw-LC-MS layer that sits <em>upstream</em> of SignalFold's
+  read-only <code>canonical_matrix.csv</code>, and one script is almost a literal <code>_build_canonical_bundle()</code>.</p>
+  <div class="detail">
+    <h4>What it runs — grounded scripts</h4>
+    <ul class="scriptlist">
+      <li><span class="spath">pyopenms/scripts/consensus_to_matrix.py</span> — loads a consensusXML, optionally applies
+        <code>ConsensusMapNormalizerAlgorithmMedian/Quantile</code>, and writes a wide features×samples intensity CSV
+        (+ rt/mz/charge metadata). <strong>The direct analog of <code>_build_canonical_bundle()</code> emitting
+        <code>input/canonical_matrix.csv</code></strong>; its <code>--normalize median|quantile</code> overlaps stage-1 normalization.
+        <span class="pill det">deterministic</span><span class="pill local">no network</span><span class="pill local">pure-python</span></li>
+      <li><span class="spath">pyopenms/scripts/align_link_quantify.py</span> — multi-sample RT alignment
+        (<code>MapAlignmentAlgorithmPoseClustering</code>) + feature linking (<code>FeatureGroupingAlgorithmQT</code>) →
+        a <code>*_quant_matrix.csv</code>. The cross-run quantitation step behind a canonical matrix.
+        <span class="pill det">deterministic</span><span class="pill local">no network</span><span class="pill local">pure-python</span></li>
+      <li><span class="spath">pyopenms/scripts/process_identifications.py</span> — idXML post-processing:
+        optional decoy re-indexing, <code>FalseDiscoveryRate().apply()</code> + <code>IDFilter.filterHitsByScore</code>,
+        best-per-spectrum. <strong>Mirrors stage-1 FDR control</strong> (surface 3) at the peptide/protein level.
+        <span class="pill det">deterministic</span><span class="pill local">no network</span><span class="pill local">pure-python</span></li>
+      <li><span class="spath">pyopenms/scripts/inspect_ms_data.py</span> — structured mzML/featureXML/idXML summary
+        (MS-level counts, RT/m-z ranges, TIC, instrument vendor) — the "is this run interpretable" instrument check
+        the mass-spectrometrist profile reasons about. Also: <code>digest_protein.py</code>, <code>detect_features_centroided.py</code>,
+        <code>accurate_mass_search.py</code> (HMDB, surface 6), <code>plot_ms_data.py</code>, <code>mass_calculator.py</code> read.
+        <span class="pill det">deterministic</span><span class="pill local">no network</span></li>
+    </ul>
+    <h4>Pairs with profile</h4>
+    <p><span class="prof">proteomics-scientist</span> + <span class="prof">mass-spectrometrist</span> (reason about
+    acquisition mode, calibration, FDR, contaminants) <strong>↔</strong> <span class="sk">pyopenms</span> scripts run
+    the feature-detection → linking → quantitation → FDR chain that produces what SignalFold treats as its input.</p>
+    <p style="font-size:.8rem;color:var(--warn)"><strong>Deps unpinned</strong> — <code>uv pip install pyopenms</code> is version-free; SKILL.md only names "pyOpenMS 3.5.0" in prose.</p>
+    <p class="ground">scientific-agent-skills/skills/pyopenms/SKILL.md · references/ {data_structures, feature_detection, file_io, identification, metabolomics, signal_processing}.md</p>
+  </div>
+</div>
+
+<div class="card skillcard">
+  <h3>PyDESeq2 <span class="sk">pydeseq2</span> <span class="tag skill">S-Tier 1</span> <span class="tag exec">1 script</span> <span class="src">surface 3</span></h3>
+  <p class="mode">differential expression · formulaic designs · Wald tests · BH-FDR · apeGLM LFC shrinkage</p>
+  <p class="summary">The standalone, native-Python form of <code>run_stage1()</code>'s differential-expression step —
+  the executable counterpart to <em>biostatistician</em> / <em>bioinformatician</em> / <em>proteomics-scientist</em> on DE+FDR.</p>
+  <div class="detail">
+    <h4>What it runs — grounded scripts</h4>
+    <ul class="scriptlist">
+      <li><span class="spath">pydeseq2/scripts/run_deseq2_analysis.py</span> — full CLI: load+transpose counts, gene/sample
+        filter, <code>DeseqDataSet.deseq2()</code> (size factors → dispersions → LFC → Cook's), <code>DeseqStats.summary()</code>
+        (Wald <code>pvalue</code> → <strong>BH <code>padj</code></strong>), optional apeGLM shrink; multi-factor
+        <code>~batch + condition</code> with a "design not full rank" guard = the <strong>batch-confounding</strong> check.
+        <span class="pill det">deterministic</span><span class="pill local">no network</span><span class="pill local">pure-python (not R)</span></li>
+    </ul>
+    <h4>Pairs with profile</h4>
+    <p><span class="prof">biostatistician</span> / <span class="prof">bioinformatician</span> (report <code>padj</code>
+    not raw p; model batch as a covariate) <strong>↔</strong> <span class="sk">pydeseq2</span> runs exactly that.
+    <em>Modeling caveat:</em> DESeq2 is a negative-binomial <em>count</em> model; SignalFold's proteomics intensities
+    are continuous, so this is the <em>method pattern</em> (Wald→BH→shrinkage), not a drop-in for intensity DE.</p>
+    <p class="ground">scientific-agent-skills/skills/pydeseq2/SKILL.md · references/ {api_reference, workflow_guide}.md · dep pinned PyDESeq2 0.5.4</p>
+  </div>
+</div>
+
+<div class="card skillcard">
+  <h3>Pathway Enrichment <span class="sk">pathway-enrichment</span> <span class="tag skill">S-Tier 1</span> <span class="tag exec">1 script</span> <span class="src">surface 4</span></h3>
+  <p class="mode">ORA (Enrichr/Fisher/hypergeometric) · ranked / preranked GSEA · GO / KEGG / Reactome / MSigDB via gseapy</p>
+  <p class="summary">The flagship enrichment skill and the direct, primary match for <code>run_stage2()</code> —
+  the executable counterpart to <em>functional-genomics-scientist</em> + <em>systems-biologist</em> + <em>bioinformatician</em>.</p>
+  <div class="detail">
+    <h4>What it runs — grounded scripts</h4>
+    <ul class="scriptlist">
+      <li><span class="spath">pathway-enrichment/scripts/run_enrichment.py</span> — subcommand CLI.
+        <code>ora</code>: symbol cleanup/dedup/NA-removal (uppercase human / Title-case mouse), optional custom
+        <code>--background</code>, <code>gp.enrichr</code>, per-library BH "Adjusted P-value" filter.
+        <code>gsea</code>: builds a rank from a DESeq2 table (Wald <code>stat</code>, else
+        <code>sign(log2FC)·-log10(p)</code>) or a <code>.rnk</code>, <code>gp.prerank</code> with
+        <code>--permutations 1000</code> and <strong><code>--seed 123</code></strong>; writes results + significant + a dotplot PNG.
+        <span class="pill seed">seed ✓ (GSEA)</span><span class="pill det">ORA deterministic</span><span class="pill net">network (Enrichr / MSigDB)</span><span class="pill local">pure-python</span></li>
+    </ul>
+    <h4>Pairs with profile</h4>
+    <p><span class="prof">functional-genomics-scientist</span> (effect-size + FDR over rank/p; rank-based GSEA, versioned)
+    <strong>↔</strong> <span class="sk">pathway-enrichment</span> runs both ORA and preranked GSEA with per-library FDR
+    and a reproducibility seed. Consumes stage-1/DE hit lists directly — the exact bridge stage 1 → stage 2.</p>
+    <p style="font-size:.8rem;color:var(--warn)"><strong>Network</strong> — ORA + GSEA gene-set downloads hit Enrichr/MSigDB; offline only with a local GMT. gseapy unpinned.</p>
+    <p class="ground">scientific-agent-skills/skills/pathway-enrichment/SKILL.md · references/ {gseapy, databases-and-gene-sets, interpretation}.md</p>
+  </div>
+</div>
+
+<div class="card skillcard">
+  <h3>Scanpy <span class="sk">scanpy</span> <span class="tag skill">S-Tier 1</span> <span class="tag exec">15 scripts</span> <span class="src">surface 5·2·3′</span></h3>
+  <p class="mode">single-cell pipeline · QC · normalize · cluster · markers · pseudobulk · batch correction</p>
+  <p class="summary">The executable counterpart to <em>single-cell-biologist</em> for <code>run_stage3()</code> cell-type
+  enrichment — and it bakes in the exact pseudoreplication discipline the science demands.</p>
+  <div class="detail">
+    <h4>What it runs — grounded scripts</h4>
+    <ul class="scriptlist">
+      <li><span class="spath">scanpy/scripts/pseudobulk.py</span> — aggregates cells → sample×cell-type pseudobulk via
+        <code>sc.get.aggregate</code>; explicitly frames itself as "the statistically correct route, unlike per-cell
+        rank_genes_groups" and routes to pydeseq2. <strong>The cells-vs-samples / experimental-unit pivot</strong> (surface 5).
+        <span class="pill det">deterministic</span><span class="pill local">no network</span></li>
+      <li><span class="spath">scanpy/scripts/find_markers.py</span> — <code>sc.tl.rank_genes_groups</code> (wilcoxon) per cluster;
+        its own docstring warns per-cell tests inflate significance — exploratory only. Marker discovery behind cell-type enrichment.
+        <span class="pill det">deterministic (wilcoxon)</span><span class="pill local">no network</span></li>
+      <li><span class="spath">scanpy/scripts/score_genes.py</span> — <code>sc.tl.score_genes</code> per signature JSON; defines the marker-set scores SignalFold's Fisher test consumes.
+        <span class="pill rng">unseeded RNG (control genes)</span><span class="pill local">no network</span></li>
+      <li><span class="spath">scanpy/scripts/batch_correct.py</span> — harmony / bbknn / combat dispatcher (surface 2 batch correction); also read: <code>qc_analysis.py</code>, <code>annotate.py</code>, <code>preprocess.py</code>, <code>_common.py</code>.
+        <span class="pill rng">unseeded RNG (harmony/UMAP)</span><span class="pill local">no network</span></li>
+    </ul>
+    <h4>Pairs with profile</h4>
+    <p><span class="prof">single-cell-biologist</span> (marker-validation chain; aggregate to pseudobulk; experimental
+    unit) <strong>↔</strong> <span class="sk">scanpy</span> runs markers/scoring/annotation + pseudobulk, encoding the
+    pseudoreplication caution in code. <em>Caveat:</em> scanpy is scRNA-seq; for SignalFold's bulk proteomics it's the
+    marker-and-unit pattern, not the data path. Stochastic steps (<code>score_genes</code>, harmony, scrublet) pass <strong>no <code>random_state</code></strong> — a reproducibility gap to note.</p>
+    <p class="ground">scientific-agent-skills/skills/scanpy/SKILL.md · references/ {api_reference, plotting_guide, r_interop, standard_workflow}.md</p>
+  </div>
+</div>
+
+<h3>Skill Tier 2 — statistics, design &amp; networks</h3>
+
+<div class="card skillcard">
+  <h3>Statistical Power <span class="sk">statistical-power</span> <span class="tag skill">S-Tier 2</span> <span class="tag exec">2 scripts</span> <span class="src">surface 3</span></h3>
+  <p class="mode">a-priori sample size · MDE · power curves · closed-form + Monte-Carlo</p>
+  <div class="detail">
+    <ul class="scriptlist">
+      <li><span class="spath">statistical-power/scripts/power.py</span> — closed-form power/N/MDE over statsmodels for t / ANOVA / proportions / correlation / chi² / regression.
+        <span class="pill det">deterministic (analytic)</span><span class="pill local">no network</span></li>
+      <li><span class="spath">statistical-power/scripts/simulate_power.py</span> — Monte-Carlo power for GLM / mixed / cluster-randomized designs; <code>seed=0</code> → <code>np.random.default_rng</code> threaded into every replicate, returns a <strong>Wilson MC confidence interval</strong>. Handles the multiplicity-corrected-α and clustering/pseudoreplication adjustments stage-1 needs.
+        <span class="pill seed">seed ✓ (reproducible)</span><span class="pill local">no network</span></li>
+    </ul>
+    <h4>Pairs with profile</h4>
+    <p><span class="prof">biostatistician</span> / <span class="prof">statistician</span> (estimand, multiplicity family, experimental unit) <strong>↔</strong> design-time power for the DE comparison, correctly seeded.</p>
+    <p class="ground">scientific-agent-skills/skills/statistical-power/SKILL.md · references/ {closed_form_recipes, simulation_based_power, effect_sizes}.md</p>
+  </div>
+</div>
+
+<div class="card skillcard">
+  <h3>Experimental Design <span class="sk">experimental-design</span> <span class="tag skill">S-Tier 2</span> <span class="tag exec">2 scripts</span> <span class="src">surface 3·2</span></h3>
+  <p class="mode">randomization · blocking · factorial / fractional / RSM DOE · anti-confounding</p>
+  <div class="detail">
+    <ul class="scriptlist">
+      <li><span class="spath">experimental-design/scripts/randomization.py</span> — seeded allocation schedules: simple / block / stratified-block / <strong>cluster</strong> randomization (the experimental-unit safeguard) + factorial run-order; every fn takes <code>seed=0</code> → <code>default_rng</code> (auditable for registration).
+        <span class="pill seed">seed ✓</span><span class="pill local">no network</span></li>
+      <li><span class="spath">experimental-design/scripts/doe_designs.py</span> — pyDOE3 wrappers (full/fractional factorial, Plackett-Burman, central-composite, Box-Behnken, Latin hypercube) decoded to real units.
+        <span class="pill seed">seed ✓</span><span class="pill rng">LHS uses global np.random.seed</span><span class="pill local">no network</span></li>
+    </ul>
+    <h4>Pairs with profile</h4>
+    <p><span class="prof">biostatistician</span> (batch confounding &amp; experimental unit) <strong>↔</strong> its
+    "never let batch align with condition" + pseudoreplication sections <em>are</em> SignalFold's surface-2/3 rigor, in runnable form.</p>
+    <p class="ground">scientific-agent-skills/skills/experimental-design/SKILL.md · references/ {design_types, factorial_and_doe, randomization_and_blocking, sequential_and_adaptive}.md</p>
+  </div>
+</div>
+
+<div class="card skillcard">
+  <h3>Statsmodels <span class="sk">statsmodels</span> <span class="tag skill">S-Tier 2</span> <span class="tag refonly">reference-only</span> <span class="src">surface 3</span></h3>
+  <div class="detail">
+    <p class="summary">No <code>scripts/</code> — five reference docs (linear models, GLM, discrete/count choice, time
+    series, diagnostics). It is the <strong>engine</strong> beneath the others: NB/Poisson GLM (the count-DE model),
+    <strong>mixed effects + cluster-robust SEs</strong> (the experimental-unit/batch tools the biostatistician profile
+    calls for), and FDR/Tukey/Bonferroni multiple-comparison correction. <code>power.py</code> and
+    <code>simulate_power.py</code> both call it.
+    <span class="pill ref">reference-only</span></p>
+    <h4>Pairs with profile</h4>
+    <p><span class="prof">biostatistician</span> (MMRM / mixed models) <strong>↔</strong> statsmodels' <code>MixedLM</code> /
+    GLM machinery — the library the DE and power code is built on. <em>Caveat:</em> describes the library; ships no runnable script.</p>
+    <p class="ground">scientific-agent-skills/skills/statsmodels/SKILL.md · references/ {linear_models, glm, discrete_choice, time_series, stats_diagnostics}.md</p>
+  </div>
+</div>
+
+<div class="card skillcard">
+  <h3>NetworkX <span class="sk">networkx</span> <span class="tag skill">S-Tier 2</span> <span class="tag refonly">reference-only</span> <span class="src">surface 3′·4</span></h3>
+  <div class="detail">
+    <p class="summary">No <code>scripts/</code> — five reference docs. The post-processing layer for the stage-1
+    co-expression network: <code>greedy_modularity_communities</code> (community/module detection),
+    degree/betweenness/closeness/PageRank centrality (hub ID), and synthetic generators (ER / Barabási-Albert /
+    Watts-Strogatz). SKILL.md enforces <code>seed=</code> on generators and layouts for reproducibility.
+    <em>Gap noted:</em> the body names only greedy-modularity (no Louvain/Leiden) and frames generators as synthetic
+    networks, <strong>not</strong> as degree-preserving rewiring null models.
+    <span class="pill ref">reference-only</span></p>
+    <h4>Pairs with profile</h4>
+    <p><span class="prof">network-scientist</span> (community detection is ill-posed; validate against null models)
+    <strong>↔</strong> NetworkX supplies the community/centrality/topology primitives; the null-model rigor the profile
+    demands is the analyst's to add on top. <em>Borderline sibling:</em> <span class="sk">arboreto</span> (GRNBoost2/GENIE3,
+    <code>--seed</code>) infers a <em>directed</em> TF→target network — complementary to WGCNA-style co-expression, not a drop-in.</p>
+    <p class="ground">scientific-agent-skills/skills/networkx/SKILL.md · references/ {algorithms, generators, graph-basics, io, visualization}.md</p>
+  </div>
+</div>
+
+<h3>Skill Tier 3 — external biology DBs &amp; provenance</h3>
+
+<div class="card skillcard">
+  <h3>gget <span class="sk">gget</span> <span class="tag skill">S-Tier 3</span> <span class="tag exec">3 scripts</span> <span class="src">surface 6·4</span></h3>
+  <p class="mode">fast front-end to 20+ bio DBs · Ensembl / UniProt / NCBI / Enrichr / OpenTargets / ARCHS4</p>
+  <div class="detail">
+    <ul class="scriptlist">
+      <li><span class="spath">gget/scripts/gene_analysis.py</span> — single-gene pipeline: <code>search → info → seq →
+        archs4 → opentargets</code>; writes CSV/FASTA per step. Hits UniProt/Ensembl/NCBI (surface 6).
+        <span class="pill net">network (Ensembl/UniProt/NCBI/OpenTargets)</span><span class="pill local">pure-python</span></li>
+      <li><span class="spath">gget/scripts/enrichment_pipeline.py</span> — <code>gget.enrichr</code> across five library shortcuts + ARCHS4 tissue expression (a lighter ORA path than pathway-enrichment).
+        <span class="pill net">network (Enrichr/ARCHS4)</span></li>
+      <li><span class="spath">gget/scripts/batch_sequence_analysis.py</span> — per-sequence <code>gget.blast</code> + optional MUSCLE MSA (AlphaFold path disabled by default).
+        <span class="pill net">network (NCBI BLAST)</span></li>
+    </ul>
+    <h4>Pairs with profile</h4>
+    <p><span class="prof">bioinformatician</span> / <span class="prof">systems-biologist</span> (external-lookup interpretation)
+    <strong>↔</strong> gget is the quick-lookup execution for surface 6, with a secondary ORA path on surface 4. No
+    STRING/Reactome-graph adapter of its own (KEGG only via an Enrichr library).</p>
+    <p class="ground">scientific-agent-skills/skills/gget/SKILL.md · references/ {module_reference, database_info, workflows}.md · dep unpinned</p>
+  </div>
+</div>
+
+<div class="card skillcard">
+  <h3>BioServices <span class="sk">bioservices</span> <span class="tag skill">S-Tier 3</span> <span class="tag exec">4 scripts</span> <span class="src">surface 6·9</span></h3>
+  <p class="mode">unified interface to ~40 services · UniProt / KEGG / Reactome / STRING / ChEMBL / QuickGO</p>
+  <div class="detail">
+    <ul class="scriptlist">
+      <li><span class="spath">bioservices/scripts/batch_id_converter.py</span> — bulk ID mapping via <code>UniProt().mapping</code>
+        with a <code>DATABASE_CODES</code> table including <strong>reactome / string / kegg / ensembl / pdb</strong>; chunked + rate-limited.
+        <span class="pill net">network (UniProt REST)</span><span class="pill local">pure-python</span></li>
+      <li><span class="spath">bioservices/scripts/protein_analysis_workflow.py</span> — 6-step UniProt → BLAST → KEGG pathway → PSICQUIC interactions → QuickGO chain.
+        <span class="pill net">network (UniProt/EBI/KEGG)</span></li>
+      <li>Also read: <code>pathway_analysis.py</code> (KEGG KGML → relation graph), <code>compound_cross_reference.py</code> (KEGG/ChEBI/ChEMBL).
+        <span class="pill net">network (KEGG)</span></li>
+    </ul>
+    <h4>Pairs with profile</h4>
+    <p><span class="prof">systems-biologist</span> / <span class="prof">cell-signaling-biologist</span> (pathway/interaction
+    context) <strong>↔</strong> bioservices is the closest <strong>library mirror of SignalFold's <code>external_lookups/</code>
+    UniProt + Reactome + STRING adapters</strong> — minus the cache→quota→circuit-breaker safety chain (dep pinned 1.16.0).</p>
+    <p class="ground">scientific-agent-skills/skills/bioservices/SKILL.md · references/ {identifier_mapping, services_reference, workflow_patterns}.md</p>
+  </div>
+</div>
+
+<div class="card skillcard">
+  <h3>Database Lookup <span class="sk">database-lookup</span> <span class="tag skill">S-Tier 3</span> <span class="tag refonly">reference-only</span> <span class="src">surface 6·7·9</span></h3>
+  <div class="detail">
+    <p class="summary">No <code>scripts/</code> — instead <strong>79 per-database reference files</strong> (incl.
+    <code>uniprot.md</code>, <code>reactome.md</code>, <code>string.md</code>, <code>pride.md</code>, <code>ensembl.md</code>)
+    + a shared <code>retrieval-contract.md</code>. It achieves "deterministic" querying <em>by prompt contract, not code</em>:
+    prefer deterministic APIs + explicit IDs + exhaustive pagination + <strong>count reconciliation</strong> (expected vs
+    retrieved vs filtered — "fail visible, not plausible") + a mandated provenance template.
+    <span class="pill ref">reference-only</span><span class="pill net">network at runtime (WebFetch/curl)</span></p>
+    <h4>Pairs with profile</h4>
+    <p><span class="prof">research-software-engineer</span> (full provenance) + <span class="prof">bioinformatician</span>
+    <strong>↔</strong> this is the <strong>documentation/provenance backbone</strong> for all four SignalFold adapters at
+    once (UniProt/Reactome/STRING + NCBI E-utilities); SignalFold's runtime safety chain is the code counterpart to its audit rules.</p>
+    <p class="ground">scientific-agent-skills/skills/database-lookup/SKILL.md · references/ (79 db files + retrieval-contract.md)</p>
+  </div>
+</div>
+
+<div class="card skillcard">
+  <h3>Citation Management <span class="sk">citation-management</span> <span class="tag skill">S-Tier 3</span> <span class="tag exec">8 scripts</span> <span class="src">surface 6·9</span></h3>
+  <div class="detail">
+    <ul class="scriptlist">
+      <li><span class="spath">citation-management/scripts/search_pubmed.py</span> — <code>PubMedSearcher</code>:
+        <code>esearch.fcgi</code> → <code>efetch.fcgi</code> (batched XML parse → metadata/BibTeX), rate-limited by
+        <code>NCBI_API_KEY</code>. <strong>A near-exact functional twin of SignalFold's PubMed adapter</strong> — same
+        NCBI E-utilities flow — but unguarded (no cache/quota/circuit-breaker).
+        <span class="pill net">network (NCBI E-utilities)</span><span class="pill local">pure-python</span></li>
+    </ul>
+    <h4>Pairs with profile</h4>
+    <p>(AI-chat, surface 6/9) <strong>↔</strong> <code>search_pubmed.py</code> is the reference implementation of the
+    <code>external_lookups/pubmed</code> adapter. The other 7 scripts (CrossRef/Scholar/BibTeX + two schematic generators)
+    are out of scope. <span class="sk">biopython</span> (<code>Bio.Entrez</code>) hits the same endpoints — a borderline alternate.</p>
+    <p class="ground">scientific-agent-skills/skills/citation-management/SKILL.md · references/ {pubmed_search, metadata_extraction, …}.md</p>
+  </div>
+</div>
+
+<h3>Skill Tier 4 — deliverables: figures, EDA &amp; chat ingestion</h3>
+
+<div class="card skillcard">
+  <h3>Scientific Visualization <span class="sk">scientific-visualization</span> <span class="tag skill">S-Tier 4</span> <span class="tag exec">2 scripts</span> <span class="src">surface 7</span></h3>
+  <p class="mode">journal-submission figures · multi-panel · colorblind-safe · Nature/Science/Cell styles</p>
+  <div class="detail">
+    <ul class="scriptlist">
+      <li><span class="spath">scientific-visualization/scripts/figure_export.py</span> — <code>save_for_journal</code>
+        maps journal+figure-type → {formats, DPI}; <code>check_figure_size</code> validates against per-journal column
+        specs. The DPI/format policy for the volcano/PCA/heatmap deliverables.
+        <span class="pill det">deterministic</span><span class="pill local">no network</span></li>
+      <li><span class="spath">scientific-visualization/scripts/style_presets.py</span> — builds rcParams; default
+        <code>axes.prop_cycle</code> = <strong>Okabe-Ito</strong>; <code>jet</code>/<code>rainbow</code> banned. Ships
+        <code>nature.mplstyle</code>, <code>presentation.mplstyle</code>, <code>publication.mplstyle</code> + a
+        <code>color_palettes.py</code> asset.
+        <span class="pill det">deterministic</span><span class="pill local">no network</span></li>
+    </ul>
+    <h4>Pairs with profile</h4>
+    <p><span class="prof">data-scientist</span> (visualization toolchain; uncertainty-aware figures) <strong>↔</strong>
+    this is the <strong>figure-standardization layer Part I flagged as a gap</strong> (no dedicated viz profile exists) —
+    one house style across <code>deliverables.py</code>/<code>artifacts.py</code> output.</p>
+    <p class="ground">scientific-agent-skills/skills/scientific-visualization/SKILL.md · assets/ *.mplstyle + color_palettes.py</p>
+  </div>
+</div>
+
+<div class="card skillcard">
+  <h3>Matplotlib <span class="sk">matplotlib</span> <span class="tag skill">S-Tier 4</span> <span class="tag exec">2 scripts</span> <span class="src">surface 7</span></h3>
+  <div class="detail">
+    <ul class="scriptlist">
+      <li><span class="spath">matplotlib/scripts/plot_template.py</span> — CLI generating any plot type or a 7-panel figure
+        (heatmap via <code>imshow</code>+colorbar, scatter for PCA) — the literal building blocks of the proteomics plots;
+        <code>np.random.seed(42)</code> makes sample data reproducible.
+        <span class="pill seed">seed ✓ (sample data)</span><span class="pill local">no network</span></li>
+      <li><span class="spath">matplotlib/scripts/style_configurator.py</span> — interactive (<code>input()</code>) preset picker → <code>.mplstyle</code> writer.
+        <span class="pill local">interactive / no network</span></li>
+    </ul>
+    <h4>Pairs with profile</h4>
+    <p><span class="prof">data-scientist</span> <strong>↔</strong> the lower-level engine beneath scientific-visualization
+    — the toolkit the volcano/PCA/heatmap are actually drawn with.</p>
+    <p class="ground">scientific-agent-skills/skills/matplotlib/SKILL.md · references/ {plot_types, styling_guide, api_reference, common_issues}.md</p>
+  </div>
+</div>
+
+<div class="card skillcard">
+  <h3>Exploratory Data Analysis <span class="sk">exploratory-data-analysis</span> <span class="tag skill">S-Tier 4</span> <span class="tag exec">1 script</span> <span class="src">surface 7·2</span></h3>
+  <div class="detail">
+    <ul class="scriptlist">
+      <li><span class="spath">exploratory-data-analysis/scripts/eda_analyzer.py</span> — auto-detects file type, loads a
+        format-specific reference, runs quality/structure analysis, emits a markdown report. Tabular path (csv/tsv) computes
+        <code>isnull().sum()</code> missingness + <code>describe()</code>. <strong>Caveat:</strong> proteomics formats
+        (mzML/pepXML/mzTab) get reference text only — <em>not</em> parsed; its <code>proteomics_metabolomics_formats.md</code>
+        reference nonetheless prescribes the right missingness/CV/PCA-QC diagnostics.
+        <span class="pill det">deterministic (head-sampling)</span><span class="pill local">no network</span></li>
+    </ul>
+    <h4>Pairs with profile</h4>
+    <p><span class="prof">data-scientist</span> (EDA first; missingness/leakage before any test) <strong>↔</strong>
+    the upstream EDA pass whose outputs become SignalFold's deliverable figures. Works on the csv/tsv intensity tables
+    SignalFold actually emits.</p>
+    <p class="ground">scientific-agent-skills/skills/exploratory-data-analysis/SKILL.md · references/ (6 domain files incl. proteomics_metabolomics_formats.md)</p>
+  </div>
+</div>
+
+<div class="card skillcard">
+  <h3>MarkItDown <span class="sk">markitdown</span> <span class="tag skill">S-Tier 4</span> <span class="tag exec">5 scripts</span> <span class="src">surface 9</span></h3>
+  <div class="detail">
+    <ul class="scriptlist">
+      <li><span class="spath">markitdown/scripts/batch_convert.py</span> + <span class="spath">convert_literature.py</span> —
+        local PDF/DOCX/PPTX/<strong>XLSX</strong> → Markdown for LLM ingestion. <strong>Direct parallel to
+        <code>attachments.py</code></strong> (same PDF+xlsx → text job), offline.
+        <span class="pill det">deterministic</span><span class="pill local">no network</span></li>
+      <li><span class="spath">markitdown/scripts/convert_with_ai.py</span> + <span class="spath">generate_schematic_ai.py</span> —
+        <strong>FLAG:</strong> these build an OpenAI client against <code>openrouter.ai</code> and call Claude/Gemini for
+        image captioning and diagram generation; need <code>OPENROUTER_API_KEY</code>.
+        <span class="pill ai">calls LLM (OpenRouter)</span><span class="pill net">network</span></li>
+    </ul>
+    <h4>Pairs with profile</h4>
+    <p>(AI-chat ingestion, surface 9) <strong>↔</strong> the two offline converters mirror <code>attachments.py</code>.
+    <span class="sk">liteparse</span> is the offline-bbox alternative (Rust core + bundled Tesseract, no network, pinned 2.0.0)
+    when citation grounding or no-network is required. <em>The two AI scripts conflict with SignalFold's Anthropic-only +
+    anti-exfiltration posture and must be excluded/gated.</em></p>
+    <p class="ground">scientific-agent-skills/skills/markitdown/SKILL.md · references/ {api_reference, file_formats}.md</p>
+  </div>
+</div>
+
+<div class="card skillcard">
+  <h3>LiteParse <span class="sk">liteparse</span> <span class="tag skill">S-Tier 4</span> <span class="tag exec">1 script</span> <span class="src">surface 9</span></h3>
+  <p class="mode">local layout-aware PDF/document parser · Rust core · bbox JSON · bundled Tesseract OCR · no cloud</p>
+  <div class="detail">
+    <ul class="scriptlist">
+      <li><span class="spath">liteparse/scripts/batch_parse_dir.py</span> — batch-parses a directory (PDF/Office/images)
+        to layout-preserved <code>.txt</code> or bounding-box <code>.json</code> (x/y/width/height/font/confidence) via
+        <code>liteparse.LiteParse</code>; everything local, Tesseract bundled. The offline, citation-groundable
+        alternative to markitdown for <code>attachments.py</code>-style ingestion.
+        <span class="pill det">deterministic</span><span class="pill local">no network</span><span class="pill local">bundled Tesseract</span></li>
+    </ul>
+    <h4>Pairs with profile</h4>
+    <p>(AI-chat ingestion, surface 9) <strong>↔</strong> where <span class="sk">markitdown</span> yields Markdown,
+    liteparse yields bounding-box JSON for citation grounding + PNG page renders, fully offline (dep pinned 2.0.0) — the
+    better fit for SignalFold's read-only / no-network posture.</p>
+    <p class="ground">scientific-agent-skills/skills/liteparse/SKILL.md · references/ {choosing_a_parser, api_reference, cli_reference, ocr_and_formats, output_formats}.md</p>
+  </div>
+</div>
+
+<h2 id="skills-table">9. Skill → script → determinism table</h2>
+<p>Every grounded script in one searchable place — the execution analog of the Part&nbsp;I §4 chat-hint table.
+Paths are under <code>/Users/sdev/Dev/projects/scientific-agent-skills/skills/</code>. "Det." = determinism;
+"Net." = needs network.</p>
+<table class="xtbl">
+  <thead><tr><th style="width:13%">Skill</th><th style="width:30%">Script · what it does</th><th style="width:9%">Surface</th><th style="width:24%">Det.</th><th style="width:12%">Net.</th></tr></thead>
+  <tbody>
+    <tr class="grp"><td colspan="5">Pipeline-stage execution</td></tr>
+    <tr><td><code>pyopenms</code></td><td class="exe">scripts/consensus_to_matrix.py</td><td>1·2·3</td><td><span class="pill det">deterministic</span></td><td><span class="pill local">no</span></td></tr>
+    <tr><td><code>pyopenms</code></td><td class="exe">scripts/align_link_quantify.py — RT-align + link → quant matrix</td><td>1·2</td><td><span class="pill det">deterministic</span></td><td><span class="pill local">no</span></td></tr>
+    <tr><td><code>pyopenms</code></td><td class="exe">scripts/process_identifications.py — FDR filter</td><td>3</td><td><span class="pill det">deterministic</span></td><td><span class="pill local">no</span></td></tr>
+    <tr><td><code>pydeseq2</code></td><td class="exe">scripts/run_deseq2_analysis.py — Wald → BH padj → apeGLM</td><td>3</td><td><span class="pill det">deterministic (IRLS)</span></td><td><span class="pill local">no</span></td></tr>
+    <tr><td><code>pathway-enrichment</code></td><td class="exe">scripts/run_enrichment.py — ORA + preranked GSEA</td><td>4</td><td><span class="pill seed">GSEA seed=123</span> <span class="pill det">ORA det.</span></td><td><span class="pill net">Enrichr</span></td></tr>
+    <tr><td><code>scanpy</code></td><td class="exe">scripts/pseudobulk.py — cells → sample×type</td><td>5</td><td><span class="pill det">deterministic</span></td><td><span class="pill local">no</span></td></tr>
+    <tr><td><code>scanpy</code></td><td class="exe">scripts/find_markers.py / score_genes.py / annotate.py</td><td>5</td><td><span class="pill rng">score_genes unseeded</span></td><td><span class="pill local">no</span></td></tr>
+    <tr><td><code>scanpy</code></td><td class="exe">scripts/batch_correct.py — harmony/bbknn/combat</td><td>2</td><td><span class="pill rng">unseeded RNG</span></td><td><span class="pill local">no</span></td></tr>
+    <tr class="grp"><td colspan="5">Statistics, design &amp; networks</td></tr>
+    <tr><td><code>statistical-power</code></td><td class="exe">scripts/power.py — closed-form power/N/MDE</td><td>3</td><td><span class="pill det">deterministic</span></td><td><span class="pill local">no</span></td></tr>
+    <tr><td><code>statistical-power</code></td><td class="exe">scripts/simulate_power.py — Monte-Carlo + Wilson CI</td><td>3</td><td><span class="pill seed">seed=0 ✓</span></td><td><span class="pill local">no</span></td></tr>
+    <tr><td><code>experimental-design</code></td><td class="exe">scripts/randomization.py — block/cluster schedules</td><td>3·2</td><td><span class="pill seed">seed=0 ✓</span></td><td><span class="pill local">no</span></td></tr>
+    <tr><td><code>experimental-design</code></td><td class="exe">scripts/doe_designs.py — pyDOE3 factorial/RSM/LHS</td><td>3</td><td><span class="pill seed">seed ✓</span> <span class="pill rng">LHS global RNG</span></td><td><span class="pill local">no</span></td></tr>
+    <tr><td><code>statistical-analysis</code></td><td class="exe">scripts/assumption_checks.py — Shapiro/Levene/IQR</td><td>3</td><td><span class="pill det">deterministic</span></td><td><span class="pill local">no</span></td></tr>
+    <tr><td><code>pymc</code></td><td class="exe">scripts/model_diagnostics.py / model_comparison.py — R-hat/ESS, LOO/WAIC</td><td>3</td><td><span class="pill det">deterministic post-proc</span></td><td><span class="pill local">no</span></td></tr>
+    <tr><td><code>statsmodels</code></td><td class="exe">(reference-only) GLM / MixedLM / FDR engine</td><td>3</td><td><span class="pill ref">reference-only</span></td><td><span class="pill local">no</span></td></tr>
+    <tr><td><code>networkx</code></td><td class="exe">(reference-only) community detection / centrality</td><td>3′·4</td><td><span class="pill ref">reference-only</span></td><td><span class="pill local">no</span></td></tr>
+    <tr><td><code>arboreto</code></td><td class="exe">scripts/basic_grn_inference.py — GRNBoost2 TF→target</td><td>3′</td><td><span class="pill seed">--seed 777</span></td><td><span class="pill local">no</span></td></tr>
+    <tr class="grp"><td colspan="5">External biology DBs &amp; provenance</td></tr>
+    <tr><td><code>gget</code></td><td class="exe">scripts/gene_analysis.py — UniProt/Ensembl/NCBI/OpenTargets</td><td>6</td><td><span class="pill det">server-side</span></td><td><span class="pill net">yes</span></td></tr>
+    <tr><td><code>gget</code></td><td class="exe">scripts/enrichment_pipeline.py — Enrichr + ARCHS4</td><td>6·4</td><td><span class="pill det">server-side</span></td><td><span class="pill net">yes</span></td></tr>
+    <tr><td><code>bioservices</code></td><td class="exe">scripts/batch_id_converter.py — UniProt→Reactome/STRING/KEGG</td><td>6</td><td><span class="pill rng">live DB state</span></td><td><span class="pill net">yes</span></td></tr>
+    <tr><td><code>bioservices</code></td><td class="exe">scripts/protein_analysis_workflow.py — UniProt/BLAST/KEGG/PSICQUIC</td><td>6</td><td><span class="pill rng">live jobs</span></td><td><span class="pill net">yes</span></td></tr>
+    <tr><td><code>database-lookup</code></td><td class="exe">(reference-only) 79-DB provenance contract</td><td>6·7</td><td><span class="pill ref">prompt-contract</span></td><td><span class="pill net">runtime</span></td></tr>
+    <tr><td><code>citation-management</code></td><td class="exe">scripts/search_pubmed.py — NCBI esearch/efetch</td><td>6·9</td><td><span class="pill rng">live PubMed</span></td><td><span class="pill net">E-utilities</span></td></tr>
+    <tr class="grp"><td colspan="5">Deliverables: figures, EDA &amp; chat ingestion</td></tr>
+    <tr><td><code>scientific-visualization</code></td><td class="exe">scripts/figure_export.py + style_presets.py</td><td>7</td><td><span class="pill det">deterministic</span></td><td><span class="pill local">no</span></td></tr>
+    <tr><td><code>matplotlib</code></td><td class="exe">scripts/plot_template.py — heatmap/PCA/volcano panels</td><td>7</td><td><span class="pill seed">seed=42</span></td><td><span class="pill local">no</span></td></tr>
+    <tr><td><code>exploratory-data-analysis</code></td><td class="exe">scripts/eda_analyzer.py — missingness/quality report</td><td>7·2</td><td><span class="pill det">deterministic</span></td><td><span class="pill local">no</span></td></tr>
+    <tr><td><code>markitdown</code></td><td class="exe">scripts/batch_convert.py — PDF/xlsx → Markdown</td><td>9</td><td><span class="pill det">deterministic</span></td><td><span class="pill local">no</span></td></tr>
+    <tr><td><code>markitdown</code></td><td class="exe">scripts/convert_with_ai.py / generate_schematic_ai.py</td><td>9</td><td><span class="pill ai">calls LLM</span></td><td><span class="pill net">OpenRouter</span></td></tr>
+    <tr><td><code>liteparse</code></td><td class="exe">scripts/batch_parse_dir.py — offline bbox/text/PNG</td><td>9</td><td><span class="pill det">deterministic</span></td><td><span class="pill local">no</span></td></tr>
+    <tr><td><code>pdf</code> / <code>xlsx</code></td><td class="exe">extract/recalc — read-side overlaps attachments.py</td><td>9</td><td><span class="pill det">deterministic</span></td><td><span class="pill local">LibreOffice subproc</span></td></tr>
+  </tbody>
+</table>
+
+<h2 id="intersection">10. Profile ↔ Skill intersection (per SignalFold surface)</h2>
+<p>The key deliverable: for each surface, the Part&nbsp;I <span class="prof">profile</span> that supplies the
+<em>reasoning</em> paired with the Part&nbsp;II <span class="sk">skill</span>/<span class="exe">script</span> that
+supplies the <em>execution</em>. Read a row as: "<em>think like this</em> ↔ <em>run this</em>." Gaps are named, not hidden.</p>
+<table class="xtbl">
+  <thead><tr><th style="width:15%">SignalFold surface</th><th style="width:28%">Profile — reasoning (Part I)</th><th style="width:42%">Skill + script — execution (Part II)</th><th style="width:15%">Notes</th></tr></thead>
+  <tbody>
+    <tr><td><strong>1 · LC-MS instrument &amp; quantitation</strong></td><td class="prof">proteomics-scientist, mass-spectrometrist</td><td><code>pyopenms</code> <span class="exe">inspect_ms_data · align_link_quantify · process_identifications</span></td><td><span class="pill det">deterministic</span> <span class="pill local">offline</span></td></tr>
+    <tr><td><strong>2 · ETL / missing-values / batch</strong></td><td class="prof">proteomics-scientist, data-engineer, bioinformatician, metabolomics-scientist</td><td><code>pyopenms</code> <span class="exe">consensus_to_matrix</span> (≈ <code>_build_canonical_bundle</code>); <code>bulk-rnaseq</code> <span class="exe">build_counts_matrix · validate_samplesheet</span>; <code>scanpy</code> <span class="exe">batch_correct</span></td><td>matrix build deterministic; batch_correct <span class="pill rng">unseeded</span></td></tr>
+    <tr><td><strong>3 · stage-1 norm + DE + FDR</strong></td><td class="prof">proteomics-scientist, biostatistician, statistician</td><td><code>pydeseq2</code> <span class="exe">run_deseq2_analysis</span> (Wald→BH); <code>statsmodels</code> (GLM/mixed, ref); <code>statistical-power</code> <span class="exe">simulate_power</span>; <code>experimental-design</code> <span class="exe">randomization</span>; <code>statistical-analysis</code> <span class="exe">assumption_checks</span></td><td>DE deterministic; power/design <span class="pill seed">seeded</span></td></tr>
+    <tr><td><strong>3′ · co-expression networks</strong></td><td class="prof">systems-biologist, network-scientist</td><td><code>networkx</code> (community/centrality, ref); <code>arboreto</code> <span class="exe">basic_grn_inference</span> (directed GRN, alt)</td><td>arboreto <span class="pill seed">--seed 777</span>; networkx <span class="pill ref">ref-only</span></td></tr>
+    <tr><td><strong>4 · GO / pathway enrichment</strong></td><td class="prof">functional-genomics-scientist, systems-biologist, bioinformatician</td><td><code>pathway-enrichment</code> <span class="exe">run_enrichment</span> (ORA + preranked GSEA); <code>gget</code> <span class="exe">enrichment_pipeline</span></td><td>GSEA <span class="pill seed">seed</span> <span class="pill net">Enrichr</span></td></tr>
+    <tr><td><strong>5 · cell-type enrichment</strong></td><td class="prof">single-cell-biologist, biostatistician</td><td><code>scanpy</code> <span class="exe">pseudobulk · find_markers · score_genes · annotate</span></td><td>marker sets; <span class="pill rng">score_genes unseeded</span></td></tr>
+    <tr><td><strong>6 · external biology DBs</strong></td><td class="prof">systems-biologist, bioinformatician, cell-signaling-biologist, metabolomics-scientist</td><td><code>bioservices</code> <span class="exe">batch_id_converter · protein_analysis_workflow</span> (UniProt/Reactome/STRING/KEGG); <code>gget</code> <span class="exe">gene_analysis</span>; <code>database-lookup</code> (provenance contract); <code>citation-management</code> <span class="exe">search_pubmed</span></td><td>all <span class="pill net">network</span> → behind <code>external_lookups</code> safety chain</td></tr>
+    <tr><td><strong>7 · deliverables / figures / provenance</strong></td><td class="prof">data-scientist, research-software-engineer</td><td><code>scientific-visualization</code> <span class="exe">figure_export · style_presets</span>; <code>matplotlib</code> <span class="exe">plot_template</span>; <code>exploratory-data-analysis</code> <span class="exe">eda_analyzer</span>; <code>database-lookup</code> (provenance template)</td><td><span class="pill det">deterministic</span> — fills Part I's "no viz profile" gap</td></tr>
+    <tr><td><strong>8 · pipeline eng (QC / idempotency / repro)</strong></td><td class="prof">bioinformatics-engineer, research-software-engineer, data-engineer</td><td><code>bulk-rnaseq</code> <span class="exe">validate_samplesheet</span> (QC gate + confounding check); <code>nextflow</code> (DAG/-resume, ref alt); <code>get-available-resources</code> (alt)</td><td>QC-gate pattern; no proteomics-native pipeline skill</td></tr>
+    <tr><td><strong>9 · AI chat (retrieval / eval / serving / security)</strong></td><td class="prof">information-retrieval-scientist, NLP-scientist, ai-researcher, ML-engineer, computer-security-researcher</td><td><code>markitdown</code> + <code>liteparse</code> (ingestion ≈ <code>attachments.py</code>); <code>open-notebook</code> / <code>exa-search</code> (RAG/web, alt). <strong>Gap:</strong> no skill for LLM-eval, serving, or anti-exfiltration — those stay profile-only.</td><td>ingestion <span class="pill local">offline</span>; eval/security <span class="pill ref">no skill</span></td></tr>
+    <tr><td><strong>10 · web / data layer (FastAPI / SQLAlchemy)</strong></td><td class="prof">data-engineer, research-software-engineer (partial)</td><td><strong>No grounded skill</strong> — <code>polars</code> (dataframes, alt) is the nearest; the 147 are all scientists/domain tools, none is a web/backend engineer.</td><td><span class="pill ref">gap (matches Part I)</span></td></tr>
+  </tbody>
+</table>
+<div class="callout">
+  <strong>What the intersection reveals.</strong> Surfaces 1–7 have a clean profile↔script pairing — reasoning and
+  executable code both exist and are mostly deterministic &amp; offline (ideal for vendoring). The external-DB scripts
+  (surface 6) are all network and map onto SignalFold's existing <code>external_lookups/</code> safety chain. The
+  honest gaps are the same ones Part I found: <strong>surface 9-eval/security</strong> (the skills repo has no
+  LLM-evaluation or anti-exfiltration skill) and <strong>surface 10</strong> (no backend/web-engineering skill at all).
+</div>
+
+<h2 id="run-byok">11. How skills run today in k-dense-byok</h2>
+<p>Grounded in the engine source at <code>/Users/sdev/Dev/projects/k-dense-byok</code>. The engine ("Kady", built on
+the Pi coding agent) runs <em>one</em> agent per project inside a per-project uv sandbox, and a skill's Python script is
+ultimately just a <code>bash</code> command that calls <code>uv run</code>.</p>
+<ul>
+  <li><strong>Builtin tools.</strong> The Pi agent's tool set is <code>["read","bash","edit","write","grep","find","ls"]</code>
+  (<code>server/src/agent/tools.ts:9</code>). The <code>bash</code> implementation lives in the external
+  <code>@earendil-works/pi-coding-agent</code> package (not vendored here), but every session is pinned to
+  <code>cwd: paths.sandbox</code> (<code>server/src/agent/session-registry.ts:103</code>) — so all skill scripts run with the project sandbox as CWD.</li>
+  <li><strong>Skill seeding.</strong> Skills are copied from <code>K-Dense-AI/scientific-agent-skills</code> (subpath
+  <code>skills</code>, branch <code>main</code>; <code>server/src/agent/skills.ts:20-22</code>) into
+  <code>sandbox/.pi/skills/</code> (<code>server/src/projects.ts:122</code>) via a shallow <code>git clone --depth 1</code>
+  or a sibling-project copy (<code>skills.ts:45-74</code>); each dir with a <code>SKILL.md</code> is copied recursively, so <code>scripts/</code> comes along. Pi auto-discovers and activates them natively.</li>
+  <li><strong>The uv sandbox.</strong> Each project gets a uv-managed Python project — <code>seedSandboxFiles()</code> writes
+  a <code>pyproject.toml</code> (numpy/pandas/matplotlib/scipy, <code>requires-python &gt;=3.11</code>) and the venv lives at
+  <code>sandbox/.venv/</code>, pre-warmed by <code>uv sync</code> (<code>server/src/sandbox-seed.ts:18-101</code>). The
+  injected <code>AGENTS.md</code> <strong>mandates <code>uv run python script.py</code> and <code>uv add &lt;pkg&gt;</code>,
+  never bare <code>python</code>/<code>pip</code></strong> (<code>sandbox-seed.ts:41-47</code>) — the same uv-only discipline this machine enforces.</li>
+  <li><strong>Web + MCP + subagents.</strong> Web tools (<code>web_search/code_search/fetch_content/get_search_content</code>
+  over Exa/Perplexity/Gemini) come from <code>pi-web-access</code> (<code>web-access-bridge.ts:36-41</code>); MCP servers are
+  dialed and each tool wrapped as <code>mcp__&lt;server&gt;__&lt;tool&gt;</code> (<code>mcp.ts:90-151</code>); heavy work fans
+  out to 23 scientific subagent personas running as child <code>pi</code> CLI processes (<code>subagents.ts:34-263</code>).</li>
+  <li><strong>The registries.</strong> <code>web/src/data/databases.json</code> is a registry of <strong>229</strong> real
+  APIs (e.g. <code>api.nasa.gov</code>, arXiv, ADS); <code>web/src/data/workflows.json</code> holds <strong>326</strong>
+  fill-in-the-blank prompt templates (e.g. <em>write-paper</em> with a <code>{topic}</code> placeholder + suggested skills).</li>
+  <li><strong>Provenance.</strong> <code>session-export.ts:104-146</code> replays every <code>bash</code> tool call from the
+  session JSONL into a <code>set -euo pipefail</code> <strong>re-runnable <code>session-&lt;id&gt;.sh</code></strong> (served at
+  <code>GET /sessions/:id/export?format=sh</code>) — non-bash steps become comments, so the script is a faithful audit trail.</li>
+  <li><strong>Model calls.</strong> Routed to <strong>OpenRouter</strong> (<code>openrouter.ai/api/v1</code>) or local
+  <strong>Ollama</strong> only (<code>server/src/agent/models.ts:128-144</code>).</li>
+</ul>
+<div class="callout" style="border-left-color:var(--skill)">
+  <strong>Mechanism in one breath.</strong> A (often workflow-templated) prompt hits a Pi <code>AgentSession</code>
+  pinned to the uv sandbox → the agent activates a seeded skill from <code>sandbox/.pi/skills/</code> → invokes its script
+  through the <code>bash</code> tool → which runs <code>uv run</code> inside <code>sandbox/.venv</code> (deps added with
+  <code>uv add</code>) → results return to the agent; web/MCP tools reach the 229-API registry, subagents fan out, and
+  <code>session-export</code> turns the whole run into a re-runnable bash script for reproducibility.
+</div>
+
+<h2 id="run-signalfold">12. How skills could run in SignalFold</h2>
+<p>Reasoned options, all respecting the hard constraints: <strong>uv-only Python</strong> (use <code>uv venv</code>/
+<code>uv run</code>, never bare <code>python</code>/<code>pip</code>); the <strong>read-only pipeline</strong>
+(<code>pipeline.py</code>, stage runners, <code>r_scripts/</code> are off-limits — wire skills as <em>new additive</em>
+services/hooks, never edits); and the <strong><code>ssb1</code></strong> branch rule. None of this is built here — it's a design menu.</p>
+<table>
+  <thead><tr><th style="width:16%">Option</th><th style="width:46%">What it is</th><th style="width:38%">Fit &amp; cost against SignalFold's constraints</th></tr></thead>
+  <tbody>
+    <tr><td><strong>A · Vendor select scripts</strong></td><td>Copy a few deterministic, network-free scripts into a new SignalFold-side <code>backend/services/scientific_skills/</code> dir and call them as post-stage helpers (e.g. <code>scientific-visualization/figure_export</code> for deliverable figures; <code>exploratory-data-analysis/eda_analyzer</code> for a run EDA report; <code>pathway-enrichment/run_enrichment</code> with a <em>local GMT</em> to enrich a hit list).</td><td><span class="status-ok">Lowest cost, highest fit.</span> Additive — touches no pipeline-owned code. Must <strong>pin the (unpinned) deps</strong> in <code>backend/requirements.txt</code> and pick only <span class="pill det">deterministic</span><span class="pill local">offline</span> scripts. Start here.</td></tr>
+    <tr><td><strong>B · MCP server → chat tool-use loop</strong></td><td>Expose chosen scripts as tools via a small MCP server (mirroring byok's <code>mcp.ts</code> <code>mcp__server__tool</code> pattern) and register them in the existing 4-iteration agentic <code>tools.py</code> loop, so the chat can run <em>enrich these genes</em> / <em>plot this</em> on demand.</td><td><span class="status-ok">Good for chat.</span> Tools run server-side; outputs still pass through <code>security.py</code>'s scrubber, preserving anti-exfiltration. Respect the 4-iteration cap and keep network scripts behind <code>external_lookups</code>' cache→quota→circuit-breaker.</td></tr>
+    <tr><td><strong>C · Sandboxed uv runner</strong></td><td>A thin service that, like byok's <code>sandbox-seed.ts</code>, creates a per-run uv venv, seeds selected <code>SKILL.md</code>+<code>scripts/</code>, and runs them via <code>uv run</code> with the run's <code>data/runs/{id}/</code> as CWD — pairing naturally with a session-export-style provenance log.</td><td><span class="status-gap">Most faithful, heaviest.</span> Best reproducibility and isolation, but a real subsystem to build/maintain. Defer until A/B prove the value.</td></tr>
+  </tbody>
+</table>
+<p><strong>Recommendation.</strong> Start with <strong>A</strong> — vendor 2–3 deterministic, offline scripts
+(<code>figure_export</code>, <code>eda_analyzer</code>, <code>run_enrichment</code> with a local GMT) behind a tiny
+uv-runner helper, deps pinned, as additive post-stage services on <code>ssb1</code>. Layer a lightweight <strong>B</strong>
+to surface them in chat once stable. Two hard rules from the audit: (1) <strong>route every network script</strong>
+(gget, bioservices, enrichr, pubmed) through the existing <code>external_lookups/</code> safety chain rather than calling
+out directly; (2) <strong>exclude the AI scripts</strong> (<code>markitdown/convert_with_ai</code>, the <code>*_ai</code>
+schematic generators) — they call OpenRouter (Claude/Gemini), conflicting with SignalFold's Anthropic-only design and the
+anti-exfiltration boundary.</p>
+
+<h2 id="skills-appendix">13. Appendix — full skills audit (147)</h2>
+<p>The exhaustive verdict of all 147 skills against SignalFold's 10 surfaces (no keyword pre-filter), so a later pass
+doesn't restart cold. Relevant/borderline skills were confirmed by opening their <code>SKILL.md</code> + <code>scripts/</code>; the rest are categorized.</p>
+
+<h5>13.1 Borderline — grounded, secondary (8)</h5>
+<table class="xtbl">
+  <thead><tr><th style="width:16%">Skill</th><th style="width:10%">Surface</th><th>Why borderline, not promoted</th></tr></thead>
+  <tbody>
+    <tr><td><code>arboreto</code></td><td>3′</td><td>GRNBoost2/GENIE3 infer a <em>directed</em> TF→target network (<code>--seed</code>), complementary to WGCNA-style undirected co-expression — alternative method, not a drop-in.</td></tr>
+    <tr><td><code>bulk-rnaseq</code></td><td>2·3·8</td><td><code>validate_samplesheet</code>'s batch-confounding check + <code>build_counts_matrix</code> are a strong QC/design <em>pattern</em>, but RNA-seq (counts/DESeq2), not proteomics LC-MS.</td></tr>
+    <tr><td><code>statistical-analysis</code></td><td>3</td><td>Good DE-assumption/effect-size discipline (<code>assumption_checks</code>), but the count-DE itself is pydeseq2's — supporting, not core.</td></tr>
+    <tr><td><code>pymc</code></td><td>3</td><td>The right tool for a Bayesian/hierarchical reframing of stage-1 mixed-model DE, but not the pipeline's current method; scripts are diagnostics only.</td></tr>
+    <tr><td><code>pdf</code></td><td>9</td><td>Only the text/table-extraction subset maps to <code>attachments.py</code>; the bulk is form-filling/merge/split.</td></tr>
+    <tr><td><code>xlsx</code></td><td>9</td><td>Spreadsheet-<em>reading</em> path overlaps <code>attachments.py</code>; the skill's core is write-side deliverable workbooks (vs. SignalFold's read-only ingest).</td></tr>
+    <tr><td><code>scvi-tools</code></td><td>2</td><td>Principled probabilistic batch correction, but heavier deep-learning tooling outside the Fisher's-exact marker core.</td></tr>
+    <tr><td><code>biopython</code></td><td>6</td><td><code>Bio.Entrez</code> hits the same NCBI E-utilities as the PubMed adapter, but it's a general sequence toolkit (reference-only) — citation-management is the tighter parallel.</td></tr>
+  </tbody>
+</table>
+
+<h5>13.2 Alternates &amp; niche — relevant by description, not card-grounded (26)</h5>
+<p>Real surface relevance but overlapping a primary pick, or not deep-read this pass (scripts not opened — described from <code>SKILL.md</code> only). Grouped by surface:</p>
+<ul>
+  <li><strong>Single-cell data/atlas (5):</strong> <code>anndata</code> (.h5ad plumbing for scanpy), <code>cellxgene-census</code> (reference atlas, surface 5), <code>scikit-bio</code> (ordination/PERMANOVA, 3′), <code>umap-learn</code> (dim-reduction, 3′/7), <code>scikit-learn</code> (clustering/PCA, 3′/7).</li>
+  <li><strong>External lookups / lit / web (8):</strong> <code>paper-lookup</code>, <code>bgpt-paper-search</code> (MCP), <code>literature-review</code>, <code>primekg</code> (biology KG), <code>research-lookup</code>, <code>parallel-web</code>, <code>exa-search</code>, <code>open-notebook</code> (RAG) — surface 6/9, all network.</li>
+  <li><strong>Reporting / publishing (8):</strong> <code>scientific-writing</code>, <code>scientific-slides</code>, <code>docx</code>, <code>pptx</code>, <code>venue-templates</code>, <code>seaborn</code> (viz), <code>polars</code> (dataframes, 2/10), <code>matchms</code> (spectral similarity, surface 1 metabolomics).</li>
+  <li><strong>Pipeline / infra / provenance (5):</strong> <code>nextflow</code> (DAG/-resume, surface 8), <code>lamindb</code> (lineage/provenance, 7/8), <code>get-available-resources</code> (compute env, 8), <code>hugging-science</code> (model discovery, 9), <code>glycoengineering</code> (glycoproteomics niche, 1).</li>
+</ul>
+
+<h5>13.3 Considered &amp; rejected — named close calls (22)</h5>
+<ul>
+  <li><strong>Prompt-only / no grounded script</strong> — <code>hypothesis-generation</code>, <code>scientific-critical-thinking</code>, <code>peer-review</code>, <code>scholar-evaluation</code> (scripts are just schematic generators; the profiles already cover critique).</li>
+  <li><strong>AI image / diagram generators</strong> — <code>scientific-schematics</code>, <code>infographics</code>, <code>generate-image</code> (call Gemini/FLUX — not data-driven figures).</li>
+  <li><strong>Reporting that doesn't fit a SignalFold deliverable</strong> — <code>latex-posters</code>, <code>pptx-posters</code>, <code>markdown-mermaid-writing</code>.</li>
+  <li><strong>Infra / scaling without a tie</strong> — <code>dask</code>, <code>optimize-for-gpu</code>, <code>vaex</code> (SignalFold data is single-node / small).</li>
+  <li><strong>Adjacent genomics, wrong omics</strong> — <code>deeptools</code> (ChIP/ATAC tracks), <code>cobrapy</code> (metabolic FBA).</li>
+  <li><strong>ML where SignalFold has no model</strong> — <code>shap</code> (explainability), <code>transformers</code> (the chat uses a hosted LLM), <code>hypogenic</code> (LLM hypothesis on tabular).</li>
+  <li><strong>Meta / engine / reference-mgmt</strong> — <code>arbor</code> (HTR optimizer), <code>autoskill</code> (screenpipe), <code>pi-agent</code> (the Pi harness itself — cited in §11, not a SignalFold skill), <code>pyzotero</code> (citation-management covers it).</li>
+</ul>
+
+<h5>13.4 Bulk-irrelevant by category (74)</h5>
+<p>Verdicted and excluded wholesale — no SignalFold surface: <strong>quantum</strong> (cirq, pennylane, qiskit, qutip);
+<strong>physical / earth / geo sciences</strong> (astropy, fluidsim, geomaster, geopandas, sympy, matlab, pymatgen);
+<strong>cheminformatics &amp; drug discovery</strong> (datamol, deepchem, diffdock, medchem, molfeat, rdkit, torchdrug,
+pytdc, rowan, esm, molecular-dynamics, adaptyv, ginkgo-cloud-lab); <strong>RL / DL-training / time-series infra</strong>
+(pufferlib, stable-baselines3, pytorch-lightning, modal, aeon, timesfm-forecasting, scvelo, torch-geometric, simpy);
+<strong>clinical / medical imaging</strong> (clinical-decision-support, clinical-reports, treatment-plans, pyhealth,
+pydicom, pacsomatic, imaging-data-commons, iso-13485-certification, scikit-survival, histolab, pathml, neurokit2,
+neuropixels-analysis, flowio, depmap); <strong>DNA/RNA-track / variant / interval genomics</strong> (geniml, gtars,
+polars-bio, pysam, tiledbvcf, dnanexus-integration, bids, phylogenetics, etetoolkit); <strong>lab automation / ELN /
+SaaS integrations</strong> (benchling-integration, labarchive-integration, opentrons-integration, pylabrobot,
+protocolsio-integration, omero-integration, latchbio-integration, paperzilla); <strong>writing / ideation / misc</strong>
+(research-grants, scientific-brainstorming, market-research-reports, consciousness-council, what-if-oracle,
+dhdna-profiler, usfiscaldata, zarr-python).</p>
+
+<h5>13.5 Count reconciliation (147)</h5>
+<table class="xtbl">
+  <tbody>
+    <tr><td>Relevant — grounded cards (§8)</td><td><strong>17</strong></td></tr>
+    <tr><td>Borderline — grounded, secondary (§13.1)</td><td><strong>8</strong></td></tr>
+    <tr><td>Alternates &amp; niche (§13.2)</td><td><strong>26</strong></td></tr>
+    <tr><td>Considered &amp; rejected — named close calls (§13.3)</td><td><strong>22</strong></td></tr>
+    <tr><td>Bulk-irrelevant by category (§13.4)</td><td><strong>74</strong></td></tr>
+    <tr><td><strong>Total</strong></td><td><strong>147</strong></td></tr>
+  </tbody>
+</table>
+<p class="meta">Of the 147, <strong>70</strong> bundle a <code>scripts/</code> dir (263 scripts total); the relevant
+set draws from those plus three reference-only skills (<code>statsmodels</code>, <code>networkx</code>,
+<code>database-lookup</code>) whose value is the documented contract, not a runnable script.</p>
+
+<h5>13.6 Methodology &amp; caveats</h5>
+<ul>
+  <li><strong>Exhaustive, not keyword-gated.</strong> All 147 <code>SKILL.md</code> descriptions were verdicted against
+  the 10-surface list; every relevant/borderline candidate had its <code>SKILL.md</code> <em>and</em> <code>scripts/</code> opened and read before being described.</li>
+  <li><strong>Only read scripts are described.</strong> Cards and the §9 table describe only scripts actually opened;
+  alternates (§13.2) are flagged as <code>SKILL.md</code>-only where their scripts weren't read this pass.</li>
+  <li><strong>Determinism verified from code.</strong> Seed flags, <code>random_state</code>, <code>np.random.seed</code>,
+  and network hosts were read out of the scripts — e.g. <code>simulate_power</code>/<code>randomization</code> are correctly
+  seeded; <code>scanpy</code>'s <code>score_genes</code>/<code>batch_correct</code> and <code>doe_designs</code>' LHS path are <em>not</em>.</li>
+  <li><strong>Count nuance.</strong> The handoff estimated ~296 scripts; the real <code>find</code> count is <strong>263</strong>.
+  pyopenms has <strong>16</strong> scripts (a grounding agent's "22" was a miscount, corrected against <code>ls</code>).</li>
+  <li><strong>Path/line caveat.</strong> All skill paths, script names, and the k-dense-byok <code>file:line</code> cites are
+  pinned to the clones as of 2026-06-20 (skills @ <code>2093901</code>). A future <code>git pull</code> may move them — paths are
+  stabler than line numbers; re-verify a <code>:line</code> before relying on it.</li>
+</ul>
+</div>
+
+<footer>
+  Reference document · generated for SignalFold · 2026-06-20 · <strong>Part I</strong> — 20 of 503
+  <code>scientific-agents</code> profiles (reasoning), anchored to <code>&lt;slug&gt;/AGENTS.md</code> · section + line.
+  <strong>Part II</strong> — 17 of 147 <code>scientific-agent-skills</code> (execution), each grounded to
+  <code>&lt;skill&gt;/SKILL.md</code> + the <code>scripts/*.py</code> actually read, with determinism/network notes;
+  run-mode sections grounded to <code>k-dense-byok</code> source <code>file:line</code>. Skill paths/lines pinned to clone
+  <code>2093901</code> (2026-06-20). Profiles = how to reason; skills + scripts = the code that runs. No SignalFold code,
+  pipeline, or git state was modified.
+</footer>
+
+</div>
+</body>
+</html>

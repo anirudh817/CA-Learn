@@ -1,0 +1,1619 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Science of SignalFold — Biology, Analysis &amp; Statistics, From Scratch</title>
+<style>
+/* system-overview.css — shared component vocabulary (inlined, no CDN, no deps). */
+
+:root {
+  --bg: #ffffff;
+  --fg: #1a1d23;
+  --muted: #5b6470;
+  --accent: #2563eb;
+  --accent-soft: #eff6ff;
+  --border: #e5e7eb;
+  --code-bg: #f4f5f7;
+  --ok: #15803d;
+  --warn: #b45309;
+  --danger: #b91c1c;
+  --shadow: 0 1px 2px rgba(0,0,0,.04), 0 4px 12px rgba(0,0,0,.05);
+  --radius: 8px;
+  --maxw: 1180px;
+  --content-maxw: 820px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1115;
+    --fg: #e6e8eb;
+    --muted: #9aa3ad;
+    --accent: #60a5fa;
+    --accent-soft: rgba(30, 58, 138, .25);
+    --border: #2a2f37;
+    --code-bg: #161a20;
+    --ok: #4ade80;
+    --warn: #fbbf24;
+    --danger: #f87171;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.5);
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #0f1115;
+  --fg: #e6e8eb;
+  --muted: #9aa3ad;
+  --accent: #60a5fa;
+  --accent-soft: rgba(30, 58, 138, .25);
+  --border: #2a2f37;
+  --code-bg: #161a20;
+  --ok: #4ade80;
+  --warn: #fbbf24;
+  --danger: #f87171;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.5);
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 1rem; font-size: 18px; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font: 1rem/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+}
+
+.so-layout {
+  display: grid; grid-template-columns: minmax(0, 1fr);
+  max-width: var(--maxw); margin: 0 auto; padding: 2rem 1.25rem 6rem;
+}
+@media (min-width: 1100px) {
+  .so-layout { grid-template-columns: minmax(0, 1fr) 250px; gap: 2.5rem; padding: 2.5rem 1.25rem 6rem; }
+}
+.so-main { min-width: 0; }
+.so-main > * { max-width: var(--content-maxw); }
+
+/* TOC */
+.so-toc { display: none; }
+@media (min-width: 1100px) {
+  .so-toc {
+    display: block; position: sticky; top: 2rem; align-self: start;
+    max-height: calc(100vh - 4rem); overflow-y: auto;
+    padding: 1rem 0 1rem 1rem; border-left: 1px solid var(--border);
+    font-size: .88rem;
+  }
+  .so-toc h4 { margin: 0 0 .5rem; font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+  .so-toc ul { list-style: none; padding: 0; margin: 0; }
+  .so-toc li { margin: .15rem 0; }
+  .so-toc a { color: var(--muted); display: block; padding: .15rem .5rem; border-left: 2px solid transparent; border-radius: 0 4px 4px 0; text-decoration: none; }
+  .so-toc a:hover { color: var(--fg); background: var(--code-bg); }
+  .so-toc a.active { color: var(--accent); border-left-color: var(--accent); background: var(--accent-soft); }
+}
+
+/* Toolbar */
+.so-toolbar { position: fixed; top: .75rem; right: .75rem; z-index: 50; display: flex; gap: .5rem; }
+.so-toolbar button { background: var(--bg); color: var(--fg); border: 1px solid var(--border); border-radius: 6px; padding: .35rem .7rem; font-size: .82rem; cursor: pointer; box-shadow: var(--shadow); }
+.so-toolbar button:hover { border-color: var(--accent); }
+
+/* Typography */
+h1, h2, h3, h4 { line-height: 1.25; margin: 2rem 0 .8rem; scroll-margin-top: 1rem; color: var(--fg); }
+h1 { font-size: 2rem; padding-bottom: .4rem; border-bottom: 1px solid var(--border); margin-top: .5rem; }
+h2 { font-size: 1.45rem; padding-bottom: .3rem; border-bottom: 1px solid var(--border); }
+h3 { font-size: 1.12rem; }
+h4 { font-size: 1rem; }
+p, li { color: var(--fg); }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+code { background: var(--code-bg); padding: .1rem .35rem; border-radius: 4px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .9em; color: var(--fg); }
+pre { position: relative; background: var(--code-bg); padding: 1rem; border-radius: var(--radius); overflow-x: auto; border: 1px solid var(--border); margin: 1rem 0; }
+pre code { background: transparent; padding: 0; font-size: .88em; }
+pre .so-copy { position: absolute; top: .4rem; right: .4rem; padding: .15rem .5rem; font-size: .72rem; background: var(--bg); color: var(--muted); border: 1px solid var(--border); border-radius: 4px; cursor: pointer; opacity: 0; transition: opacity .15s; font-family: inherit; }
+pre:hover .so-copy { opacity: 1; }
+pre .so-copy.copied { color: var(--ok); border-color: var(--ok); }
+
+/* Tables */
+table { border-collapse: collapse; margin: 1rem 0; width: 100%; font-size: .94em; }
+th, td { border: 1px solid var(--border); padding: .55rem .8rem; text-align: left; vertical-align: top; }
+th { background: var(--code-bg); font-weight: 600; }
+tbody tr:nth-child(even) { background: rgba(0,0,0,.02); }
+:root[data-theme="dark"] tbody tr:nth-child(even) { background: rgba(255,255,255,.02); }
+
+/* Hero */
+.so-hero { margin: 0 0 2rem; padding: 1.5rem 1.75rem; background: linear-gradient(135deg, var(--accent-soft), transparent); border: 1px solid var(--border); border-radius: var(--radius); }
+.so-hero h1 { margin: 0 0 .5rem; border: none; padding: 0; font-size: 1.95rem; }
+.so-hero .so-tagline { margin: 0 0 1rem; color: var(--muted); font-size: 1.02rem; line-height: 1.55; }
+.so-hero .so-chips { display: flex; flex-wrap: wrap; gap: .4rem; }
+
+/* Section wrapper */
+.so-section { margin: 2.75rem 0 0; }
+
+/* Pills */
+.so-pill { display: inline-block; padding: .12rem .55rem; font-size: .72rem; font-weight: 500; color: var(--muted); background: var(--code-bg); border: 1px solid var(--border); border-radius: 999px; vertical-align: middle; line-height: 1.4; }
+.so-pill.ok { color: var(--ok); border-color: var(--ok); background: rgba(34,197,94,.08); }
+.so-pill.warn { color: var(--warn); border-color: var(--warn); background: rgba(217,119,6,.08); }
+.so-pill.danger { color: var(--danger); border-color: var(--danger); background: rgba(220,38,38,.08); }
+.so-pill.accent { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+
+/* KPI cards */
+.so-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: .75rem; margin: 1rem 0 1.5rem; }
+.so-kpi { padding: .85rem 1rem; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); }
+.so-kpi-value { font-size: 1.5rem; font-weight: 600; color: var(--fg); line-height: 1.1; }
+.so-kpi-label { font-size: .76rem; color: var(--muted); margin-top: .25rem; text-transform: uppercase; letter-spacing: .04em; }
+
+/* Diagrams — light surface always; we force Arial + dark text so labels are
+   crisp and never clipped. Box fills MUST be light because text fill is forced
+   dark by the rules below. */
+.so-diagram { margin: 1.5rem 0; padding: 1.25rem; background: #ffffff; border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); cursor: zoom-in; transition: transform .15s, border-color .15s; }
+.so-diagram:hover { transform: translateY(-1px); border-color: var(--accent); }
+.so-diagram svg {
+  display: block; max-width: 100%; height: auto; margin: 0 auto;
+  font-family: Arial, Helvetica, sans-serif !important;
+  text-rendering: geometricPrecision;
+}
+.so-diagram figcaption { margin-top: .6rem; text-align: center; color: var(--muted); font-size: .85rem; font-style: italic; }
+:root[data-theme="dark"] .so-diagram { border-color: #3a3f47; }
+.so-diagram svg text,
+.so-diagram svg tspan,
+.so-lightbox-stage svg text,
+.so-lightbox-stage svg tspan {
+  font-family: Arial, Helvetica, sans-serif !important;
+  fill: #111827 !important;
+}
+
+/* Lightbox modal */
+.so-lightbox { position: fixed; inset: 0; background: rgba(0,0,0,.85); z-index: 100; display: none; align-items: center; justify-content: center; padding: 2rem; }
+.so-lightbox.open { display: flex; }
+.so-lightbox-stage { width: 100%; height: 100%; background: #fff; border-radius: var(--radius); overflow: auto; position: relative; padding: 2rem; }
+.so-lightbox-stage svg { width: 100%; height: 100%; max-width: none; }
+.so-lightbox-close { position: absolute; top: .5rem; right: .5rem; background: rgba(0,0,0,.6); color: #fff; border: none; border-radius: 6px; padding: .35rem .75rem; font-size: .9rem; cursor: pointer; font-family: inherit; }
+
+/* Glossary */
+.so-glossary { display: grid; grid-template-columns: 1fr; gap: .25rem .75rem; margin: 1rem 0; }
+@media (min-width: 700px) { .so-glossary { grid-template-columns: max-content 1fr; } }
+.so-glossary dt { font-weight: 600; color: var(--accent); }
+.so-glossary dd { margin: 0 0 .4rem; color: var(--fg); }
+
+/* Workflow: numbered timeline */
+.so-workflow { padding: 0; counter-reset: wf; list-style: none; }
+.so-workflow > li { padding: .85rem 0 .85rem 2.75rem; position: relative; counter-increment: wf; border-bottom: 1px dashed var(--border); }
+.so-workflow > li:last-child { border-bottom: none; }
+.so-workflow > li::before { content: counter(wf); position: absolute; left: 0; top: .8rem; width: 1.9rem; height: 1.9rem; line-height: 1.9rem; text-align: center; background: var(--accent-soft); color: var(--accent); border-radius: 50%; font-weight: 700; font-size: .9rem; }
+
+/* Print */
+@media print {
+  .so-toolbar, .so-toc, pre .so-copy { display: none !important; }
+  body { background: #fff !important; color: #000 !important; }
+  .so-main { padding: 0; max-width: none; }
+  .so-diagram { box-shadow: none; page-break-inside: avoid; cursor: default; border-color: #ccc; }
+  h2 { page-break-before: always; }
+}
+
+/* Callouts */
+.so-callout { margin: 1.25rem 0; padding: .9rem 1.1rem; border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: var(--radius); background: var(--accent-soft); }
+.so-callout.warn { border-left-color: var(--warn); background: rgba(217,119,6,.07); }
+.so-callout.danger { border-left-color: var(--danger); background: rgba(220,38,38,.07); }
+.so-callout.ok { border-left-color: var(--ok); background: rgba(34,197,94,.07); }
+.so-callout.plain { border-left-color: var(--muted); background: var(--code-bg); }
+.so-callout p { margin: .3rem 0 0; }
+.so-callout p:first-of-type { margin-top: .15rem; }
+.so-callout strong.so-tag { display: inline-block; font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--accent); }
+.so-callout.warn strong.so-tag { color: var(--warn); }
+.so-callout.danger strong.so-tag { color: var(--danger); }
+.so-callout.ok strong.so-tag { color: var(--ok); }
+.so-callout.plain strong.so-tag { color: var(--muted); }
+
+/* Equation / formula display */
+.so-eqn { margin: 1rem 0; padding: .85rem 1rem; background: var(--code-bg); border: 1px solid var(--border); border-radius: var(--radius); text-align: center; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .96rem; overflow-x: auto; }
+.so-eqn .so-where { display: block; margin-top: .5rem; font-size: .8rem; color: var(--muted); text-align: left; }
+
+/* Lede paragraph */
+.so-lede { font-size: 1.1rem; line-height: 1.6; }
+.so-section > p:first-of-type { }
+
+/* Q-anchor: the question each stage answers */
+.so-q { margin: 1rem 0; padding: .8rem 1.1rem; border: 1px dashed var(--accent); border-radius: var(--radius); background: var(--accent-soft); font-size: 1.02rem; }
+.so-q strong { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="so-toolbar"><button id="so-theme" type="button">Theme</button></div>
+<div class="so-layout">
+  <main class="so-main">
+
+    <header class="so-hero">
+      <h1>The Science of SignalFold</h1>
+      <p class="so-tagline">A from-scratch tutorial on the <strong>biology, the analysis, and the statistics</strong> behind the SignalFold pipeline. It assumes <em>no</em> prior knowledge of biology or statistics: every idea is built up from plain language, with worked examples and pictures. A later <strong>Deep Dive</strong> adds the formal detail, the caveats, and references for further reading. (The AI Insights chat feature is deliberately out of scope here.)</p>
+      <div class="so-chips">
+        <span class="so-pill">last reviewed 2026-06-22</span>
+        <span class="so-pill accent">Proteomics</span>
+        <span class="so-pill">Stage 1 · 2 · 3</span>
+        <span class="so-pill">Novice &rarr; Deep Dive</span>
+        <span class="so-pill ok">no code required</span>
+      </div>
+    </header>
+
+    <div class="so-kpis">
+      <div class="so-kpi"><div class="so-kpi-value">3</div><div class="so-kpi-label">analysis stages</div></div>
+      <div class="so-kpi"><div class="so-kpi-value">5</div><div class="so-kpi-label">normalization options</div></div>
+      <div class="so-kpi"><div class="so-kpi-value">&beta; = 8</div><div class="so-kpi-label">default network power</div></div>
+      <div class="so-kpi"><div class="so-kpi-value">5%</div><div class="so-kpi-label">default FDR cutoff</div></div>
+      <div class="so-kpi"><div class="so-kpi-value">5</div><div class="so-kpi-label">human cell-type signatures</div></div>
+    </div>
+
+    <section class="so-section" id="orientation">
+      <h2>How to read this</h2>
+      <p class="so-lede">SignalFold takes a spreadsheet of protein measurements and turns it into a biological story: <em>what changed between two groups of samples, which proteins behave as a team, what those teams do for a living, and which cell types they point to.</em> This document explains the science that makes that possible — slowly, from the ground up.</p>
+
+      <p>There are two layers, and you can stop at either one:</p>
+      <ul>
+        <li><strong>The tutorial (sections 1&ndash;10)</strong> &mdash; written for someone who has never taken a biology or statistics class. Each idea starts with plain language and a real-world analogy, then shows how SignalFold uses it. <span class="so-pill accent">Novice</span></li>
+        <li><strong>The Deep Dive (section 11) and References (section 12)</strong> &mdash; the formulas, the assumptions, the things that can go wrong, and where to read more. Come here once the concepts click. <span class="so-pill">Deep Dive</span></li>
+      </ul>
+
+      <p>Throughout, three kinds of coloured boxes recur:</p>
+      <div class="so-callout"><strong class="so-tag">Plain English</strong><p>Restates a technical idea in everyday words.</p></div>
+      <div class="so-callout ok"><strong class="so-tag">In SignalFold</strong><p>Shows exactly how the concept appears in the app &mdash; the setting you can change, and its default value.</p></div>
+      <div class="so-callout warn"><strong class="so-tag">Watch out</strong><p>A common misunderstanding or a limitation worth knowing before you trust a result.</p></div>
+
+      <div class="so-callout plain">
+        <strong class="so-tag">The whole pipeline in one sentence</strong>
+        <p>Measure thousands of proteins in two groups of samples &rarr; make the samples fairly comparable &rarr; find the proteins that differ and the proteins that rise and fall together &rarr; ask what those groups of proteins <em>do</em> and which <em>cell types</em> they belong to.</p>
+      </div>
+    </section>
+
+    <section class="so-section" id="big-picture">
+      <h2>1 · The big picture</h2>
+
+      <p>Modern instruments can measure the amount of <strong>thousands of different proteins at once</strong> in a single biological sample &mdash; a tube of blood, a piece of tissue, a sample of spinal fluid. Run that instrument on, say, 10 healthy people and 10 patients, and you get a giant table: thousands of rows (proteins), twenty columns (samples), each cell a number for &ldquo;how much of this protein was here.&rdquo;</p>
+
+      <p>That table is exciting and useless at the same time. Exciting, because the answer to a medical question is probably hiding in it. Useless, because no human can stare at 20,000 numbers &times; 20 columns and <em>see</em> the answer. SignalFold is the machine that turns the table into understanding. It does so by answering four questions in order:</p>
+
+      <div class="so-q"><strong>Q1 &mdash; What changed?</strong> Which individual proteins are present at clearly different levels in patients versus healthy controls? <span class="so-pill">differential expression</span></div>
+      <div class="so-q"><strong>Q2 &mdash; What moves together?</strong> Which proteins rise and fall <em>in lockstep</em> across samples, suggesting they work as a team? <span class="so-pill">co-expression network</span></div>
+      <div class="so-q"><strong>Q3 &mdash; What does it mean?</strong> What biological <em>jobs</em> (functions, pathways) are those teams responsible for? <span class="so-pill">GO enrichment</span></div>
+      <div class="so-q"><strong>Q4 &mdash; Which cells?</strong> Which <em>cell types</em> do these proteins belong to, telling us which populations of cells are involved? <span class="so-pill">cell-type enrichment</span></div>
+
+      <p>The four questions map onto a fixed sequence of steps. Data is cleaned first, then Stage 1 answers Q1 and Q2, Stage 2 answers Q3, and Stage 3 answers Q4:</p>
+
+      <figure class="so-diagram">
+        <svg viewBox="0 0 760 600" width="100%" style="max-width: 760px;" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Vertical flowchart of the SignalFold pipeline from data to results">
+          <defs>
+            <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+            </marker>
+          </defs>
+          <!-- connectors -->
+          <g stroke="#94a3b8" stroke-width="2" marker-end="url(#ar)">
+            <line x1="380" y1="74"  x2="380" y2="90"/>
+            <line x1="380" y1="146" x2="380" y2="162"/>
+            <line x1="380" y1="318" x2="380" y2="334"/>
+            <line x1="380" y1="404" x2="380" y2="420"/>
+            <line x1="380" y1="490" x2="380" y2="506"/>
+          </g>
+
+          <!-- Box 1: data -->
+          <rect x="80" y="20" width="600" height="54" rx="8" fill="#eef2ff" stroke="#6366f1" stroke-width="1.5"/>
+          <text x="380" y="42" text-anchor="middle" font-size="16" font-weight="bold">Your data</text>
+          <text x="380" y="62" text-anchor="middle" font-size="13.5">a table of protein amounts &times; samples, split into two groups</text>
+
+          <!-- Box 2: ETL -->
+          <rect x="80" y="92" width="600" height="54" rx="8" fill="#f1f5f9" stroke="#64748b" stroke-width="1.5"/>
+          <text x="380" y="114" text-anchor="middle" font-size="16" font-weight="bold">Cleaning &amp; preparation (ETL)</text>
+          <text x="380" y="134" text-anchor="middle" font-size="13.5">fix protein names, drop unreliable rows, put numbers on a sensible scale</text>
+
+          <!-- Box 3: STAGE 1 -->
+          <rect x="80" y="164" width="600" height="154" rx="8" fill="#ecfeff" stroke="#0891b2" stroke-width="1.5"/>
+          <text x="380" y="188" text-anchor="middle" font-size="16" font-weight="bold">STAGE 1 &mdash; the heavy lifting</text>
+          <line x1="110" y1="198" x2="650" y2="198" stroke="#a5d8e0" stroke-width="1"/>
+          <text x="380" y="222" text-anchor="middle" font-size="13.5">1 &middot; Normalization &mdash; make the samples fairly comparable</text>
+          <text x="380" y="252" text-anchor="middle" font-size="13.5">2 &middot; Differential expression &mdash; which proteins changed?  (Q1)</text>
+          <text x="380" y="282" text-anchor="middle" font-size="13.5">3 &middot; Co-expression network / WGCNA &mdash; which move together?  (Q2)</text>
+          <text x="380" y="306" text-anchor="middle" font-size="12">groups of co-moving proteins are called &ldquo;modules&rdquo;</text>
+
+          <!-- Box 4: STAGE 2 -->
+          <rect x="80" y="334" width="600" height="70" rx="8" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.5"/>
+          <text x="380" y="358" text-anchor="middle" font-size="16" font-weight="bold">STAGE 2 &mdash; functional enrichment (GO)</text>
+          <text x="380" y="380" text-anchor="middle" font-size="13.5">what biological jobs do the modules perform?  (Q3)</text>
+          <text x="380" y="397" text-anchor="middle" font-size="12">e.g. &ldquo;immune response&rdquo;, &ldquo;energy metabolism&rdquo;</text>
+
+          <!-- Box 5: STAGE 3 -->
+          <rect x="80" y="420" width="600" height="70" rx="8" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+          <text x="380" y="444" text-anchor="middle" font-size="16" font-weight="bold">STAGE 3 &mdash; cell-type enrichment</text>
+          <text x="380" y="466" text-anchor="middle" font-size="13.5">which cell types do the modules point to?  (Q4)</text>
+          <text x="380" y="483" text-anchor="middle" font-size="12">e.g. &ldquo;astrocytes&rdquo;, &ldquo;microglia&rdquo;, &ldquo;neurons&rdquo;</text>
+
+          <!-- Box 6: results -->
+          <rect x="80" y="506" width="600" height="70" rx="8" fill="#faf5ff" stroke="#9333ea" stroke-width="1.5"/>
+          <text x="380" y="530" text-anchor="middle" font-size="16" font-weight="bold">Results you can read</text>
+          <text x="380" y="552" text-anchor="middle" font-size="13.5">volcano plot, module network, enriched functions, cell-type map</text>
+          <text x="380" y="569" text-anchor="middle" font-size="12">plus tables you can download and explore</text>
+        </svg>
+        <figcaption>The SignalFold pipeline, top to bottom. Data is cleaned once, then flows through three analysis stages. Each stage hands its results to the next. Click any diagram to enlarge it.</figcaption>
+      </figure>
+
+      <div class="so-callout">
+        <strong class="so-tag">Mental model</strong>
+        <p>Think of SignalFold as a detective working a case. <strong>Stage&nbsp;1</strong> gathers the evidence (which proteins look suspicious, and which ones keep showing up together). <strong>Stage&nbsp;2</strong> asks what those suspects <em>do</em> &mdash; their occupations and known associates. <strong>Stage&nbsp;3</strong> asks <em>where they live</em> &mdash; which cell-type neighbourhood they come from. The final report ties motive, method, and location into one narrative.</p>
+      </div>
+
+      <p>The rest of this tutorial walks each box of that diagram, in order. We begin with the two things you must understand before any of it makes sense: a little biology, and what the data actually is.</p>
+    </section>
+
+    <section class="so-section" id="biology-primer">
+      <h2>2 · Biology from zero</h2>
+
+      <p>You can follow this whole document with just a handful of biology ideas. Here they are.</p>
+
+      <h3>Cells, genes, and proteins</h3>
+      <p>Your body is built from tiny units called <strong>cells</strong>. Almost every cell carries the same master instruction set, written in a molecule called <strong>DNA</strong>. You can picture DNA as an enormous cookbook that every cell owns a copy of.</p>
+      <p>A <strong>gene</strong> is one recipe in that cookbook &mdash; the instructions for making one particular thing. The &ldquo;thing&rdquo; a recipe produces is usually a <strong>protein</strong>. Proteins are the molecules that actually <em>do the work</em> of life: they digest food, carry oxygen, fight infections, give cells their shape, send signals. If DNA is the cookbook and a gene is a recipe, a protein is the finished dish that does a job at the dinner table.</p>
+
+      <p>Getting from recipe to dish happens in two steps, together called the <strong>central dogma</strong> of biology:</p>
+
+      <figure class="so-diagram">
+        <svg viewBox="0 0 900 250" width="100%" style="max-width: 900px;" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The central dogma: DNA to gene to mRNA to protein to function">
+          <defs>
+            <marker id="ar2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+            </marker>
+          </defs>
+          <g stroke="#94a3b8" stroke-width="2.5" marker-end="url(#ar2)">
+            <line x1="170" y1="70" x2="192" y2="70"/>
+            <line x1="350" y1="70" x2="372" y2="70"/>
+            <line x1="530" y1="70" x2="552" y2="70"/>
+            <line x1="710" y1="70" x2="732" y2="70"/>
+          </g>
+
+          <rect x="20" y="40" width="150" height="60" rx="8" fill="#eef2ff" stroke="#6366f1" stroke-width="1.5"/>
+          <text x="95" y="66" text-anchor="middle" font-size="15" font-weight="bold">DNA</text>
+          <text x="95" y="86" text-anchor="middle" font-size="12">the full cookbook</text>
+
+          <rect x="200" y="40" width="150" height="60" rx="8" fill="#eef2ff" stroke="#6366f1" stroke-width="1.5"/>
+          <text x="275" y="66" text-anchor="middle" font-size="15" font-weight="bold">Gene</text>
+          <text x="275" y="86" text-anchor="middle" font-size="12">one recipe</text>
+
+          <rect x="380" y="40" width="150" height="60" rx="8" fill="#f0fdfa" stroke="#0d9488" stroke-width="1.5"/>
+          <text x="455" y="66" text-anchor="middle" font-size="15" font-weight="bold">mRNA</text>
+          <text x="455" y="86" text-anchor="middle" font-size="12">a working copy</text>
+
+          <rect x="560" y="40" width="150" height="60" rx="8" fill="#ecfeff" stroke="#0891b2" stroke-width="2.5"/>
+          <text x="635" y="66" text-anchor="middle" font-size="15" font-weight="bold">Protein</text>
+          <text x="635" y="86" text-anchor="middle" font-size="12">the worker</text>
+
+          <rect x="740" y="40" width="150" height="60" rx="8" fill="#faf5ff" stroke="#9333ea" stroke-width="1.5"/>
+          <text x="815" y="66" text-anchor="middle" font-size="15" font-weight="bold">Function</text>
+          <text x="815" y="86" text-anchor="middle" font-size="12">a job gets done</text>
+
+          <text x="275" y="28" text-anchor="middle" font-size="12.5" fill="#475569">transcription</text>
+          <text x="455" y="28" text-anchor="middle" font-size="12.5" fill="#475569">translation</text>
+
+          <!-- highlight brace on protein -->
+          <path d="M 560 120 Q 560 132 572 132 L 629 132 Q 635 132 635 142 Q 635 132 641 132 L 698 132 Q 710 132 710 120" fill="none" stroke="#0891b2" stroke-width="1.5"/>
+          <text x="635" y="166" text-anchor="middle" font-size="13.5" font-weight="bold">Proteomics measures THIS</text>
+          <text x="635" y="186" text-anchor="middle" font-size="12.5">how much of each protein is present</text>
+          <text x="635" y="206" text-anchor="middle" font-size="12.5">&mdash; that amount is called its &ldquo;abundance&rdquo; or &ldquo;expression&rdquo;</text>
+        </svg>
+        <figcaption>The central dogma. The same DNA sits in every cell, but how much of each protein a cell actually makes changes with cell type, health, and environment. SignalFold works at the protein end of this chain.</figcaption>
+      </figure>
+
+      <h3>&ldquo;Expression&rdquo; is just an amount</h3>
+      <p>When biologists say a gene or protein is <strong>highly expressed</strong>, they simply mean &ldquo;there is a lot of it.&rdquo; <strong>Expression level</strong> = <strong>abundance</strong> = how many copies are present. This is the single most important word in this document, because every stage of SignalFold is ultimately reasoning about <em>amounts</em> and how they differ.</p>
+      <p>Crucially, even though every cell has the same DNA, cells make wildly different amounts of each protein depending on what they are and what is happening to them. A liver cell and a brain cell run different recipes at different volumes. A sick cell makes different amounts than a healthy one. Those differences are the signal we are hunting.</p>
+
+      <h3>Why proteins, and not genes?</h3>
+      <p>You may have heard of <em>genomics</em> (reading DNA) or <em>transcriptomics</em> (measuring mRNA). SignalFold is a <strong>proteomics</strong> platform: it measures the proteins themselves. Proteins are one step closer to what a cell actually <em>does</em> than DNA or RNA are &mdash; the recipe and the working copy matter, but it is the finished dish that feeds you. Measuring proteins is harder than measuring RNA, but it is often more directly relevant to disease and to drugs (most drugs target proteins).</p>
+
+      <div class="so-callout">
+        <strong class="so-tag">Plain English</strong>
+        <p><strong>Gene symbol.</strong> Each human gene/protein has a short official nickname, written in capitals: <code>APOE</code>, <code>GFAP</code>, <code>TP53</code>. Throughout SignalFold, proteins are usually referred to by these symbols. You do not need to know what they stand for &mdash; treat them as names, like surnames in a phone book.</p>
+      </div>
+
+      <div class="so-callout ok">
+        <strong class="so-tag">In SignalFold</strong>
+        <p>The whole pipeline is organism-aware. By default it expects <strong>human</strong> proteins identified by gene symbol, and it also ships a <strong>mouse</strong> reference for pre-clinical studies. The biology references it leans on later (functional categories in Stage&nbsp;2, cell-type markers in Stage&nbsp;3) are likewise human-by-default.</p>
+      </div>
+    </section>
+
+    <section class="so-section" id="the-data">
+      <h2>3 · The raw material: your data</h2>
+
+      <h3>How protein amounts get measured</h3>
+      <p>You do not need the engineering details, but a one-paragraph picture helps. There are two broad ways to measure thousands of proteins:</p>
+      <ul>
+        <li><strong>Mass spectrometry</strong> chops proteins into small fragments (called <strong>peptides</strong>) and effectively <em>weighs</em> them with extreme precision. The heavier the signal for a given protein, the more of it was present. Instruments and software in this family include <strong>PEAKS, Spectronaut, MaxQuant,</strong> and <strong>DIA-NN</strong>.</li>
+        <li><strong>Affinity panels</strong> use designer molecules that stick only to specific target proteins and light up in proportion to how much is there. <strong>Olink</strong> is the best-known example.</li>
+      </ul>
+      <p>Either way, the end product is the same shape: a big table of numbers. SignalFold does not care which instrument you used &mdash; it only needs that table.</p>
+
+      <h3>The table itself</h3>
+      <p>The central object is a grid called the <strong>abundance matrix</strong>: one <strong>row per protein</strong>, one <strong>column per sample</strong>, and in each cell, <em>how much of that protein was measured in that sample</em>. The samples are split into the two groups you want to compare.</p>
+
+      <figure class="so-diagram">
+        <svg viewBox="0 0 615 250" width="100%" style="max-width: 615px;" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Example abundance matrix: proteins as rows, samples as columns, split into Control and Disease groups">
+          <!-- changed-gene highlight behind grid -->
+          <rect x="347" y="68" width="252" height="112" fill="#fff7ed"/>
+          <!-- group bands -->
+          <rect x="95" y="12" width="252" height="26" rx="4" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.3"/>
+          <rect x="347" y="12" width="252" height="26" rx="4" fill="#fee2e2" stroke="#ef4444" stroke-width="1.3"/>
+          <text x="221" y="30" text-anchor="middle" font-size="13" font-weight="bold">Control group</text>
+          <text x="473" y="30" text-anchor="middle" font-size="13" font-weight="bold">Disease group</text>
+
+          <!-- outer + grid -->
+          <rect x="15" y="40" width="584" height="168" fill="none" stroke="#94a3b8" stroke-width="1.3"/>
+          <g stroke="#cbd5e1" stroke-width="1">
+            <line x1="95" y1="40" x2="95" y2="208"/>
+            <line x1="179" y1="40" x2="179" y2="208"/>
+            <line x1="263" y1="40" x2="263" y2="208"/>
+            <line x1="347" y1="40" x2="347" y2="208"/>
+            <line x1="431" y1="40" x2="431" y2="208"/>
+            <line x1="515" y1="40" x2="515" y2="208"/>
+            <line x1="15" y1="68" x2="599" y2="68"/>
+            <line x1="15" y1="96" x2="599" y2="96"/>
+            <line x1="15" y1="124" x2="599" y2="124"/>
+            <line x1="15" y1="152" x2="599" y2="152"/>
+            <line x1="15" y1="180" x2="599" y2="180"/>
+          </g>
+
+          <!-- header row -->
+          <text x="55" y="59" text-anchor="middle" font-size="12.5" font-weight="bold">Protein</text>
+          <text x="137" y="59" text-anchor="middle" font-size="11.5">Ctrl_1</text>
+          <text x="221" y="59" text-anchor="middle" font-size="11.5">Ctrl_2</text>
+          <text x="305" y="59" text-anchor="middle" font-size="11.5">Ctrl_3</text>
+          <text x="389" y="59" text-anchor="middle" font-size="11.5">Dis_1</text>
+          <text x="473" y="59" text-anchor="middle" font-size="11.5">Dis_2</text>
+          <text x="557" y="59" text-anchor="middle" font-size="11.5">Dis_3</text>
+
+          <!-- data rows -->
+          <g font-size="12.5">
+            <text x="55" y="87" text-anchor="middle" font-weight="bold">APOE</text>
+            <text x="137" y="87" text-anchor="middle">10.0</text><text x="221" y="87" text-anchor="middle">10.2</text><text x="305" y="87" text-anchor="middle">10.1</text>
+            <text x="389" y="87" text-anchor="middle">13.0</text><text x="473" y="87" text-anchor="middle">13.1</text><text x="557" y="87" text-anchor="middle">13.2</text>
+
+            <text x="55" y="115" text-anchor="middle" font-weight="bold">CLU</text>
+            <text x="137" y="115" text-anchor="middle">8.5</text><text x="221" y="115" text-anchor="middle">8.7</text><text x="305" y="115" text-anchor="middle">8.6</text>
+            <text x="389" y="115" text-anchor="middle">11.8</text><text x="473" y="115" text-anchor="middle">11.6</text><text x="557" y="115" text-anchor="middle">12.0</text>
+
+            <text x="55" y="143" text-anchor="middle" font-weight="bold">C3</text>
+            <text x="137" y="143" text-anchor="middle">7.1</text><text x="221" y="143" text-anchor="middle">7.2</text><text x="305" y="143" text-anchor="middle">7.0</text>
+            <text x="389" y="143" text-anchor="middle">9.6</text><text x="473" y="143" text-anchor="middle">9.4</text><text x="557" y="143" text-anchor="middle">9.7</text>
+
+            <text x="55" y="171" text-anchor="middle" font-weight="bold">GFAP</text>
+            <text x="137" y="171" text-anchor="middle">4.2</text><text x="221" y="171" text-anchor="middle">4.1</text><text x="305" y="171" text-anchor="middle">4.0</text>
+            <text x="389" y="171" text-anchor="middle">5.8</text><text x="473" y="171" text-anchor="middle">5.7</text><text x="557" y="171" text-anchor="middle">5.9</text>
+
+            <text x="55" y="199" text-anchor="middle" font-weight="bold">ACTB</text>
+            <text x="137" y="199" text-anchor="middle">9.0</text><text x="221" y="199" text-anchor="middle">9.1</text><text x="305" y="199" text-anchor="middle">8.9</text>
+            <text x="389" y="199" text-anchor="middle">9.0</text><text x="473" y="199" text-anchor="middle">9.1</text><text x="557" y="199" text-anchor="middle">9.0</text>
+          </g>
+          <text x="307" y="226" text-anchor="middle" font-size="12" fill="#9a3412">Shaded = these four proteins sit higher in disease;</text>
+          <text x="307" y="242" text-anchor="middle" font-size="12" fill="#9a3412">ACTB barely moves. Spotting that is Stage&nbsp;1's job.</text>
+        </svg>
+        <figcaption>A toy abundance matrix. Real ones have thousands of rows and as many columns as you have samples. Values here are on a log&#8322; scale (explained in section&nbsp;4), so 10.0 vs 13.0 is a large jump.</figcaption>
+      </figure>
+
+      <h3>The experiment behind the table</h3>
+      <p>Three design ideas are baked into how SignalFold reads your data:</p>
+      <ul>
+        <li><strong>Two groups (cohorts).</strong> The pipeline compares one group against another &mdash; classically a <em>control</em> group against a <em>disease</em> (or treated) group. By default these are literally named <code>Control</code> and <code>Disease</code>, and SignalFold can guess which sample belongs to which group from the column names.</li>
+        <li><strong>Replicates.</strong> You never measure just one control and one patient. You measure several of each &mdash; these repeats are <strong>replicates</strong>. They are what let statistics tell a real difference from random noise. The engine requires at least <strong>2</strong> samples per group to run, and by default a protein must be measured in at least <strong>3</strong> samples to be kept at all.</li>
+        <li><strong>Traits (optional).</strong> You can attach a second small table of <strong>clinical measurements</strong> per sample &mdash; age, a lab value, a disease-severity score. In SignalFold these are called <strong>traits</strong>, and Stage&nbsp;1 can later test whether any protein team tracks them. (For example, Alzheimer's studies often attach tau and amyloid-&beta; measurements.)</li>
+      </ul>
+
+      <div class="so-callout">
+        <strong class="so-tag">Plain English</strong>
+        <p><strong>Protein vs. peptide.</strong> Mass spectrometers actually see peptides (the chopped-up fragments), not whole proteins. Some files report results already rolled up to whole proteins (&ldquo;protein level&rdquo;); others report the individual fragments (&ldquo;peptide level&rdquo;). SignalFold handles both &mdash; it just calls each row a &ldquo;feature&rdquo; so the same machinery works either way.</p>
+      </div>
+
+      <div class="so-callout ok">
+        <strong class="so-tag">In SignalFold &mdash; the formats it understands</strong>
+        <p>You can upload a CSV, TSV, or Excel file. SignalFold auto-detects which instrument it came from and adjusts sensible defaults accordingly:</p>
+      </div>
+
+      <table>
+        <thead><tr><th>Format</th><th>Level</th><th>What it is</th></tr></thead>
+        <tbody>
+          <tr><td><strong>PEAKS</strong></td><td>protein or peptide</td><td>Output from PEAKS mass-spec software</td></tr>
+          <tr><td><strong>Spectronaut</strong></td><td>peptide</td><td>Peptide-level mass-spec quantities (tracks chemical modifications)</td></tr>
+          <tr><td><strong>Olink</strong></td><td>protein</td><td>Affinity-panel results reported as <em>NPX</em> values (see below)</td></tr>
+          <tr><td><strong>MaxQuant</strong></td><td>protein or peptide</td><td>Output from the MaxQuant mass-spec pipeline</td></tr>
+          <tr><td><strong>DIA-NN</strong></td><td>peptide</td><td>Peptide quantities from DIA-NN</td></tr>
+          <tr><td><strong>Generic matrix</strong></td><td>your choice</td><td>Any plain &ldquo;features &times; samples&rdquo; table of numbers</td></tr>
+        </tbody>
+      </table>
+
+      <div class="so-callout">
+        <strong class="so-tag">Plain English &mdash; what is NPX?</strong>
+        <p><strong>NPX</strong> (Normalized Protein eXpression) is Olink's unit. Two facts are enough: (1) it is a <em>relative</em> measure of abundance, not an absolute concentration, so it is meant for comparing samples within one study; and (2) it is already on a <strong>log&#8322; scale</strong> &mdash; each <em>+1 NPX</em> means roughly a <em>doubling</em> of the protein. SignalFold knows NPX is pre-logged and will not log it a second time.</p>
+      </div>
+    </section>
+
+    <section class="so-section" id="cleaning">
+      <h2>4 · Cleaning the data (ETL)</h2>
+      <p>Before any analysis, SignalFold runs a preparation step often called <strong>ETL</strong> (Extract, Transform, Load). It is unglamorous and absolutely essential: every later result is only as trustworthy as the table that feeds it. Three jobs happen here.</p>
+
+      <h3>4.1 Fixing the names</h3>
+      <p>Protein names arrive messy. The most infamous problem: open a gene list in Excel and it &ldquo;helpfully&rdquo; converts gene symbols into dates. The gene <code>SEPT2</code> becomes <code>2-Sep</code>; <code>MARCH1</code> becomes <code>1-Mar</code>. This corrupted so many published datasets that the official naming body eventually renamed some genes. SignalFold detects these mangled names and converts them back. It also maps cryptic database IDs to the standard human gene symbol so the same protein is never split across two different names.</p>
+      <div class="so-callout warn">
+        <strong class="so-tag">Watch out</strong>
+        <p>If the same protein appears under two names, every downstream count is wrong: it looks like two proteins, enrichment tallies are off, and a real hit can be diluted into invisibility. Name-cleaning is not pedantry &mdash; it protects the statistics.</p>
+      </div>
+
+      <h3>4.2 Dropping the unreliable rows</h3>
+      <p>Real instruments miss things. A protein might be measured in some samples and come back blank in others. A row that is mostly blanks cannot support a trustworthy comparison, so SignalFold filters it out using two simple rules.</p>
+      <div class="so-callout ok">
+        <strong class="so-tag">In SignalFold</strong>
+        <p><strong>Missing-value threshold</strong> (default <strong>0.5</strong>): a protein may be blank in at most 50% of samples. <strong>Minimum samples present</strong> (default <strong>3</strong>): a protein must have a real measurement in at least 3 samples. Rows failing either rule are removed before anything else happens. Both are adjustable.</p>
+      </div>
+
+      <h3>4.3 Putting numbers on a sensible scale: the log&#8322; transform</h3>
+      <p>Raw protein amounts span an enormous range &mdash; some proteins are thousands of times more abundant than others. Worse, the numbers are <strong>skewed</strong>: a handful of giant values and a huge crowd of small ones. Two problems follow. First, the giants dominate every calculation. Second, &ldquo;change&rdquo; is multiplicative in biology (a protein <em>doubles</em> or <em>halves</em>), but raw subtraction treats a jump from 10&rarr;20 as trivial next to 1000&rarr;1010, even though the first is a doubling and the second is nothing.</p>
+      <p>The fix is the <strong>logarithm</strong>, base 2. Taking <code>log&#8322;</code> of every value compresses the giants, spreads out the crowd, and &mdash; the magic part &mdash; turns <em>multiplication into addition</em>. On a log&#8322; scale, a doubling is always <em>+1</em>, whether you go 10&rarr;20 or 1000&rarr;2000. That makes &ldquo;fold change&rdquo; (the next section) clean and symmetric.</p>
+
+      <figure class="so-diagram">
+        <svg viewBox="0 0 820 305" width="100%" style="max-width: 820px;" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Histograms showing raw skewed protein amounts becoming roughly symmetric after a log2 transform">
+          <defs>
+            <marker id="ar4" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+            </marker>
+          </defs>
+
+          <text x="192" y="26" text-anchor="middle" font-size="15" font-weight="bold">Raw protein amounts</text>
+          <text x="612" y="26" text-anchor="middle" font-size="15" font-weight="bold">After log&#8322; transform</text>
+
+          <!-- left skewed histogram -->
+          <g fill="#bae6fd" stroke="#0284c7" stroke-width="1">
+            <rect x="50" y="120" width="34" height="120"/>
+            <rect x="86" y="168" width="34" height="72"/>
+            <rect x="122" y="200" width="34" height="40"/>
+            <rect x="158" y="216" width="34" height="24"/>
+            <rect x="194" y="225" width="34" height="15"/>
+            <rect x="230" y="230" width="34" height="10"/>
+            <rect x="266" y="233" width="34" height="7"/>
+            <rect x="302" y="235" width="34" height="5"/>
+          </g>
+          <line x1="44" y1="240" x2="344" y2="240" stroke="#475569" stroke-width="1.5"/>
+          <text x="192" y="262" text-anchor="middle" font-size="12.5" fill="#475569">a few huge values, a long thin tail</text>
+
+          <!-- arrow -->
+          <line x1="360" y1="165" x2="455" y2="165" stroke="#475569" stroke-width="2.5" marker-end="url(#ar4)"/>
+          <text x="407" y="152" text-anchor="middle" font-size="14" font-weight="bold">log&#8322;</text>
+
+          <!-- right symmetric histogram -->
+          <g fill="#bbf7d0" stroke="#16a34a" stroke-width="1">
+            <rect x="470" y="228" width="34" height="12"/>
+            <rect x="506" y="206" width="34" height="34"/>
+            <rect x="542" y="168" width="34" height="72"/>
+            <rect x="578" y="128" width="34" height="112"/>
+            <rect x="614" y="128" width="34" height="112"/>
+            <rect x="650" y="168" width="34" height="72"/>
+            <rect x="686" y="206" width="34" height="34"/>
+            <rect x="722" y="228" width="34" height="12"/>
+          </g>
+          <line x1="464" y1="240" x2="760" y2="240" stroke="#475569" stroke-width="1.5"/>
+          <text x="612" y="262" text-anchor="middle" font-size="12.5" fill="#475569">tamed and roughly symmetric (bell-shaped)</text>
+
+          <text x="410" y="292" text-anchor="middle" font-size="13">On a log&#8322; scale: 1&rarr;0,  2&rarr;1,  4&rarr;2,  8&rarr;3,  1024&rarr;10.  Every <tspan font-weight="bold">doubling</tspan> adds exactly <tspan font-weight="bold">1</tspan>.</text>
+        </svg>
+        <figcaption>Why almost all proteomics analysis happens on a log scale. The transform tames extreme values and makes &ldquo;twice as much&rdquo; mean the same step size everywhere &mdash; which is exactly what makes fold changes and most statistical tests behave.</figcaption>
+      </figure>
+
+      <div class="so-callout ok">
+        <strong class="so-tag">In SignalFold</strong>
+        <p>The app inspects your numbers and <strong>auto-detects</strong> whether they already look log-scaled. If they are raw (large, skewed), it applies <code>log&#8322;(value + 1)</code> &mdash; the &ldquo;+1&rdquo; is a small trick so that zeros don't blow up the logarithm. If they already look logged (like Olink NPX), it leaves them alone. You can override this with the <strong>log handling</strong> switch.</p>
+      </div>
+    </section>
+
+    <section class="so-section" id="normalization">
+      <h2>5 · Normalization &mdash; making samples comparable</h2>
+      <p>This is the first step of Stage&nbsp;1, and the first place statistics enters.</p>
+
+      <div class="so-q"><strong>The problem.</strong> Even two identical samples never give identical totals. One tube had slightly more material loaded; the instrument drifted between Monday and Friday; one batch of reagent was a touch stronger. These <strong>technical</strong> differences have nothing to do with biology &mdash; but they sit right on top of the biological signal we care about.</p>
+
+      <p>Here is the analogy. Imagine ten photographers shoot the same landscape, each with their camera set to a different brightness. If you compare raw photos, you will &ldquo;discover&rdquo; that some skies are darker &mdash; but that is the camera, not the weather. Before you can compare the <em>scenes</em>, you must put every photo on the same brightness. <strong>Normalization is that brightness adjustment for samples.</strong></p>
+
+      <p>The goal is delicate: remove the <em>technical</em> offsets without erasing the <em>biological</em> ones. SignalFold does this by gently sliding each sample's numbers up or down so the samples line up, leaving the internal pattern of each sample intact.</p>
+
+      <figure class="so-diagram">
+        <svg viewBox="0 0 820 290" width="100%" style="max-width: 820px;" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Box plots of six samples before and after normalization; medians become aligned">
+          <defs>
+            <marker id="ar5" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+            </marker>
+          </defs>
+          <text x="195" y="28" text-anchor="middle" font-size="15" font-weight="bold">Before normalization</text>
+          <text x="595" y="28" text-anchor="middle" font-size="15" font-weight="bold">After normalization</text>
+
+          <!-- LEFT box plots: medians scattered -->
+          <g stroke="#0369a1">
+            <!-- s1 m150 -->
+            <line x1="70" y1="105" x2="70" y2="195" stroke-width="1.5"/><line x1="62" y1="105" x2="78" y2="105" stroke-width="1.5"/><line x1="62" y1="195" x2="78" y2="195" stroke-width="1.5"/>
+            <rect x="55" y="128" width="30" height="44" fill="#bae6fd" stroke-width="1.3"/><line x1="55" y1="150" x2="85" y2="150" stroke-width="2.5"/>
+            <!-- s2 m122 -->
+            <line x1="120" y1="77" x2="120" y2="167" stroke-width="1.5"/><line x1="112" y1="77" x2="128" y2="77" stroke-width="1.5"/><line x1="112" y1="167" x2="128" y2="167" stroke-width="1.5"/>
+            <rect x="105" y="100" width="30" height="44" fill="#bae6fd" stroke-width="1.3"/><line x1="105" y1="122" x2="135" y2="122" stroke-width="2.5"/>
+            <!-- s3 m168 -->
+            <line x1="170" y1="123" x2="170" y2="213" stroke-width="1.5"/><line x1="162" y1="123" x2="178" y2="123" stroke-width="1.5"/><line x1="162" y1="213" x2="178" y2="213" stroke-width="1.5"/>
+            <rect x="155" y="146" width="30" height="44" fill="#bae6fd" stroke-width="1.3"/><line x1="155" y1="168" x2="185" y2="168" stroke-width="2.5"/>
+            <!-- s4 m136 -->
+            <line x1="220" y1="91" x2="220" y2="181" stroke-width="1.5"/><line x1="212" y1="91" x2="228" y2="91" stroke-width="1.5"/><line x1="212" y1="181" x2="228" y2="181" stroke-width="1.5"/>
+            <rect x="205" y="114" width="30" height="44" fill="#bae6fd" stroke-width="1.3"/><line x1="205" y1="136" x2="235" y2="136" stroke-width="2.5"/>
+            <!-- s5 m158 -->
+            <line x1="270" y1="113" x2="270" y2="203" stroke-width="1.5"/><line x1="262" y1="113" x2="278" y2="113" stroke-width="1.5"/><line x1="262" y1="203" x2="278" y2="203" stroke-width="1.5"/>
+            <rect x="255" y="136" width="30" height="44" fill="#bae6fd" stroke-width="1.3"/><line x1="255" y1="158" x2="285" y2="158" stroke-width="2.5"/>
+            <!-- s6 m110 -->
+            <line x1="320" y1="65" x2="320" y2="155" stroke-width="1.5"/><line x1="312" y1="65" x2="328" y2="65" stroke-width="1.5"/><line x1="312" y1="155" x2="328" y2="155" stroke-width="1.5"/>
+            <rect x="305" y="88" width="30" height="44" fill="#bae6fd" stroke-width="1.3"/><line x1="305" y1="110" x2="335" y2="110" stroke-width="2.5"/>
+          </g>
+
+          <!-- arrow -->
+          <line x1="392" y1="150" x2="442" y2="150" stroke="#475569" stroke-width="2.5" marker-end="url(#ar5)"/>
+          <text x="417" y="138" text-anchor="middle" font-size="13" font-weight="bold">align</text>
+
+          <!-- RIGHT box plots: medians aligned to y=140 -->
+          <line x1="452" y1="140" x2="742" y2="140" stroke="#b91c1c" stroke-width="1.3" stroke-dasharray="6 4"/>
+          <text x="742" y="133" text-anchor="end" font-size="11.5" fill="#b91c1c">common median</text>
+          <g stroke="#15803d">
+            <!-- all medians at 140, slight box-size variation kept -->
+            <g>
+              <line x1="470" y1="95" x2="470" y2="185" stroke-width="1.5"/><line x1="462" y1="95" x2="478" y2="95" stroke-width="1.5"/><line x1="462" y1="185" x2="478" y2="185" stroke-width="1.5"/>
+              <rect x="455" y="118" width="30" height="44" fill="#bbf7d0" stroke-width="1.3"/><line x1="455" y1="140" x2="485" y2="140" stroke-width="2.5"/>
+            </g>
+            <g>
+              <line x1="520" y1="98" x2="520" y2="182" stroke-width="1.5"/><line x1="512" y1="98" x2="528" y2="98" stroke-width="1.5"/><line x1="512" y1="182" x2="528" y2="182" stroke-width="1.5"/>
+              <rect x="505" y="120" width="30" height="40" fill="#bbf7d0" stroke-width="1.3"/><line x1="505" y1="140" x2="535" y2="140" stroke-width="2.5"/>
+            </g>
+            <g>
+              <line x1="570" y1="92" x2="570" y2="188" stroke-width="1.5"/><line x1="562" y1="92" x2="578" y2="92" stroke-width="1.5"/><line x1="562" y1="188" x2="578" y2="188" stroke-width="1.5"/>
+              <rect x="555" y="116" width="30" height="48" fill="#bbf7d0" stroke-width="1.3"/><line x1="555" y1="140" x2="585" y2="140" stroke-width="2.5"/>
+            </g>
+            <g>
+              <line x1="620" y1="96" x2="620" y2="184" stroke-width="1.5"/><line x1="612" y1="96" x2="628" y2="96" stroke-width="1.5"/><line x1="612" y1="184" x2="628" y2="184" stroke-width="1.5"/>
+              <rect x="605" y="118" width="30" height="44" fill="#bbf7d0" stroke-width="1.3"/><line x1="605" y1="140" x2="635" y2="140" stroke-width="2.5"/>
+            </g>
+            <g>
+              <line x1="670" y1="99" x2="670" y2="181" stroke-width="1.5"/><line x1="662" y1="99" x2="678" y2="99" stroke-width="1.5"/><line x1="662" y1="181" x2="678" y2="181" stroke-width="1.5"/>
+              <rect x="655" y="120" width="30" height="40" fill="#bbf7d0" stroke-width="1.3"/><line x1="655" y1="140" x2="685" y2="140" stroke-width="2.5"/>
+            </g>
+            <g>
+              <line x1="720" y1="93" x2="720" y2="187" stroke-width="1.5"/><line x1="712" y1="93" x2="728" y2="93" stroke-width="1.5"/><line x1="712" y1="187" x2="728" y2="187" stroke-width="1.5"/>
+              <rect x="705" y="117" width="30" height="46" fill="#bbf7d0" stroke-width="1.3"/><line x1="705" y1="140" x2="735" y2="140" stroke-width="2.5"/>
+            </g>
+          </g>
+
+          <text x="195" y="252" text-anchor="middle" font-size="12.5" fill="#475569">each sample floats at its own level</text>
+          <text x="195" y="270" text-anchor="middle" font-size="12.5" fill="#475569">(loading, drift, batch &mdash; all technical)</text>
+          <text x="595" y="252" text-anchor="middle" font-size="12.5" fill="#475569">technical offset removed,</text>
+          <text x="595" y="270" text-anchor="middle" font-size="12.5" fill="#475569">each sample's internal spread preserved</text>
+        </svg>
+        <figcaption>Each vertical box summarises one sample's protein values (the thick line is its median). Before normalization the samples sit at different heights for purely technical reasons. The default method slides each one so the medians agree, without flattening the real variation inside each sample.</figcaption>
+      </figure>
+
+      <h3>The menu of methods</h3>
+      <p>SignalFold offers several recipes for &ldquo;lining up,&rdquo; differing in how aggressive they are:</p>
+      <table>
+        <thead><tr><th>Method</th><th>What it does</th><th>Good when&hellip;</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Median</strong> <span class="so-pill accent">default</span></td><td>Slides each sample so its <em>middle</em> value matches a common one. Uses the median, so a few wild values can't throw it off.</td><td>almost always a safe first choice</td></tr>
+          <tr><td><strong>Mean</strong></td><td>Same idea but matches the <em>average</em> instead of the middle.</td><td>data is clean with few outliers</td></tr>
+          <tr><td><strong>Quantile</strong></td><td>The strong version: forces every sample to have an <em>identical</em> distribution of values, not just the same centre.</td><td>you believe samples <em>should</em> look identical overall</td></tr>
+          <tr><td><strong>Z-score</strong></td><td>Re-expresses each sample as &ldquo;how many standard deviations from its own average&rdquo; (centre 0, spread 1).</td><td>you care about pattern/shape more than level</td></tr>
+          <tr><td><strong>TIN</strong> (total intensity)</td><td>Divides by the sample's total signal &mdash; directly correcting for &ldquo;how much was loaded.&rdquo;</td><td>mass-spec data where loading amount varies</td></tr>
+          <tr><td><strong>None</strong></td><td>Leave the numbers as-is.</td><td>data was already normalized upstream</td></tr>
+        </tbody>
+      </table>
+
+      <div class="so-callout ok">
+        <strong class="so-tag">In SignalFold</strong>
+        <p>The <strong>Normalization Method</strong> setting defaults to <strong>median</strong> &mdash; the robust, hard-to-go-wrong choice. For Olink data (already NPX-normalized and log-scaled), if you ask for TIN the app sensibly falls back to median, because dividing by a total makes no sense on a log scale.</p>
+      </div>
+
+      <div class="so-callout warn">
+        <strong class="so-tag">Watch out &mdash; the key assumption</strong>
+        <p>Lining up whole-sample distributions assumes that <em>most</em> proteins don't actually change between samples, so any global shift must be technical. That is usually true. But if your two groups are radically different at a global level (e.g. one has far more total protein for a real biological reason), aggressive normalization like quantile can scrub away genuine signal. When in doubt, the gentler median is safer.</p>
+      </div>
+    </section>
+
+    <section class="so-section" id="differential-expression">
+      <h2>6 · Differential expression &mdash; what changed?</h2>
+      <p>This answers <strong>Q1</strong>. For every single protein, we ask: <em>is its level meaningfully different between the two groups?</em> Two numbers decide it &mdash; <strong>how big</strong> the difference is, and <strong>how sure</strong> we are it isn't luck.</p>
+
+      <h3>6.1 How big: fold change</h3>
+      <p><strong>Fold change</strong> is just a ratio: &ldquo;how many times more (or less) in disease than in control.&rdquo; If a protein averages 100 in patients and 50 in controls, that is a <strong>2-fold</strong> increase. Because we work on a log&#8322; scale, SignalFold reports the <strong>log&#8322; fold change</strong> (often &ldquo;log2FC&rdquo;), computed simply as <em>(average in disease) &minus; (average in control)</em>.</p>
+      <div class="so-eqn">log2FC = mean(Disease) &minus; mean(Control)
+        <span class="so-where"><strong>Reading it:</strong> +1 = doubled, +2 = quadrupled, +3 = 8&times;. &nbsp; &minus;1 = halved. &nbsp; 0 = no change. The sign tells you direction; the size tells you magnitude.</span></div>
+      <p>From our toy matrix, APOE went from ~10 to ~13 on the log&#8322; scale &mdash; a log2FC of about <strong>+3</strong>, i.e. roughly an 8-fold increase in disease. That is enormous. ACTB stayed flat (log2FC &asymp; 0).</p>
+
+      <h3>6.2 How sure: the p-value</h3>
+      <p>A big difference in the averages might still be a fluke of <em>which</em> patients you happened to sample. Statistics quantifies that doubt with a <strong>p-value</strong>.</p>
+      <div class="so-callout">
+        <strong class="so-tag">Plain English &mdash; what a p-value is</strong>
+        <p>Pretend, just for argument, that a protein truly does <em>not</em> differ between the groups. The <strong>p-value</strong> is the probability that pure chance would hand you a difference at least as large as the one you saw. <strong>Small p (say below 0.05) = &ldquo;chance alone would rarely do this&rdquo;</strong>, so the difference is probably real. Large p = &ldquo;eh, could easily be noise.&rdquo;</p>
+      </div>
+      <p>To compute that probability, SignalFold runs a <strong>statistical test</strong> on each protein, comparing the two groups' values. You can choose between two:</p>
+      <ul>
+        <li><strong>t-test</strong> <span class="so-pill accent">default</span> &mdash; compares the two group averages while accounting for how spread out the values are and how many samples you have. (Specifically a <em>Welch</em> t-test, which doesn't assume the two groups are equally variable.) Works best when values are roughly bell-shaped.</li>
+        <li><strong>Wilcoxon / Mann&ndash;Whitney</strong> &mdash; a <em>rank-based</em> test. Instead of using the raw numbers it just asks &ldquo;do disease values tend to rank higher than control values?&rdquo; It makes no bell-curve assumption and shrugs off outliers, at the cost of some power when samples are few.</li>
+      </ul>
+
+      <h3>6.3 The trap of testing thousands of proteins at once</h3>
+      <p>Here is a subtlety that catches everyone. A p-value below 0.05 means &ldquo;chance would do this less than 5% of the time.&rdquo; Fine for one test. But SignalFold runs the test on <em>thousands</em> of proteins. If you test 20,000 proteins that are all pure noise, 5% of them &mdash; about <strong>1,000 proteins</strong> &mdash; will sail under p&nbsp;&lt;&nbsp;0.05 <em>by chance alone</em>. Your &ldquo;hits&rdquo; would be mostly garbage.</p>
+      <div class="so-callout">
+        <strong class="so-tag">Plain English &mdash; false discovery rate (FDR)</strong>
+        <p>The fix is to <strong>adjust</strong> the p-values for the sheer number of tests. SignalFold uses the <strong>Benjamini&ndash;Hochberg</strong> procedure, which controls the <strong>False Discovery Rate</strong>: the expected <em>fraction of your declared hits that are actually false</em>. Setting FDR&nbsp;&lt;&nbsp;0.05 means: &ldquo;of the proteins I call significant, on average no more than 5% should be mistakes.&rdquo; The adjusted value is often called a <strong>q-value</strong> or <strong>adjusted p-value</strong>.</p>
+      </div>
+      <p>This is gentler and smarter than the old, harsh <em>Bonferroni</em> approach (which demands near-impossible certainty and throws away real findings). FDR keeps you honest without making you blind. SignalFold offers Bonferroni too, for the rare case you need that severity.</p>
+
+      <h3>6.4 The verdict, and the volcano plot</h3>
+      <p>A protein is flagged <strong>significant</strong> only if it clears <em>both</em> bars at once:</p>
+      <div class="so-eqn">significant  =  ( |log2FC| &ge; log&#8322;(1.5) )  AND  ( adjusted p &lt; 0.05 )
+        <span class="so-where">Big enough to matter <strong>and</strong> sure enough to believe. Either one alone is not enough. log&#8322;(1.5) &asymp; 0.585.</span></div>
+      <p>The classic way to see all proteins at once is the <strong>volcano plot</strong>. Each dot is one protein. Left&ndash;right shows fold change (direction and size); up&ndash;down shows significance (how small the p-value is). The proteins that matter erupt up and out to the sides &mdash; hence &ldquo;volcano.&rdquo;</p>
+
+      <figure class="so-diagram">
+        <svg viewBox="0 0 780 380" width="100%" style="max-width: 780px;" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Annotated volcano plot of log2 fold change versus statistical significance">
+          <!-- significant region shading -->
+          <rect x="447" y="60" width="273" height="188" fill="#fef2f2"/>
+          <rect x="80" y="60" width="273" height="188" fill="#eff6ff"/>
+          <!-- axes -->
+          <line x1="80" y1="60" x2="80" y2="300" stroke="#475569" stroke-width="1.5"/>
+          <line x1="80" y1="300" x2="720" y2="300" stroke="#475569" stroke-width="1.5"/>
+          <!-- x ticks -->
+          <g font-size="12" fill="#475569" text-anchor="middle">
+            <line x1="80" y1="300" x2="80" y2="305" stroke="#475569"/><text x="80" y="320">&minus;4</text>
+            <line x1="240" y1="300" x2="240" y2="305" stroke="#475569"/><text x="240" y="320">&minus;2</text>
+            <line x1="400" y1="300" x2="400" y2="305" stroke="#475569"/><text x="400" y="320">0</text>
+            <line x1="560" y1="300" x2="560" y2="305" stroke="#475569"/><text x="560" y="320">2</text>
+            <line x1="720" y1="300" x2="720" y2="305" stroke="#475569"/><text x="720" y="320">4</text>
+          </g>
+          <!-- y ticks -->
+          <g font-size="12" fill="#475569" text-anchor="end">
+            <line x1="75" y1="300" x2="80" y2="300" stroke="#475569"/><text x="70" y="304">0</text>
+            <line x1="75" y1="220" x2="80" y2="220" stroke="#475569"/><text x="70" y="224">2</text>
+            <line x1="75" y1="140" x2="80" y2="140" stroke="#475569"/><text x="70" y="144">4</text>
+            <line x1="75" y1="60" x2="80" y2="60" stroke="#475569"/><text x="70" y="64">6</text>
+          </g>
+          <!-- threshold lines -->
+          <line x1="353" y1="60" x2="353" y2="300" stroke="#9ca3af" stroke-width="1.2" stroke-dasharray="5 4"/>
+          <line x1="447" y1="60" x2="447" y2="300" stroke="#9ca3af" stroke-width="1.2" stroke-dasharray="5 4"/>
+          <line x1="80" y1="248" x2="720" y2="248" stroke="#9ca3af" stroke-width="1.2" stroke-dasharray="5 4"/>
+          <text x="452" y="293" font-size="11" fill="#6b7280">&plusmn;1.5-fold</text>
+          <text x="84" y="243" font-size="11" fill="#6b7280">significance cutoff (FDR = 0.05)</text>
+
+          <!-- ns dots -->
+          <g fill="#94a3b8">
+            <circle cx="360" cy="288" r="4"/><circle cx="382" cy="278" r="4"/><circle cx="400" cy="292" r="4"/><circle cx="420" cy="282" r="4"/><circle cx="345" cy="270" r="4"/><circle cx="455" cy="276" r="4"/><circle cx="372" cy="262" r="4"/><circle cx="430" cy="266" r="4"/><circle cx="410" cy="258" r="4"/><circle cx="390" cy="286" r="4"/><circle cx="335" cy="284" r="4"/><circle cx="440" cy="260" r="4"/><circle cx="475" cy="270" r="4"/><circle cx="320" cy="280" r="4"/><circle cx="520" cy="282" r="4"/><circle cx="300" cy="286" r="4"/><circle cx="560" cy="290" r="4"/><circle cx="280" cy="278" r="4"/><circle cx="495" cy="262" r="4"/><circle cx="305" cy="258" r="4"/>
+          </g>
+          <!-- up significant (red) -->
+          <g fill="#dc2626">
+            <circle cx="560" cy="170" r="5"/><circle cx="600" cy="120" r="5"/><circle cx="640" cy="84" r="5"/><circle cx="664" cy="104" r="5"/><circle cx="620" cy="150" r="5"/><circle cx="580" cy="196" r="5"/><circle cx="544" cy="206" r="5"/><circle cx="528" cy="140" r="5"/>
+          </g>
+          <!-- down significant (blue) -->
+          <g fill="#2563eb">
+            <circle cx="300" cy="150" r="5"/><circle cx="270" cy="120" r="5"/><circle cx="240" cy="140" r="5"/><circle cx="320" cy="184" r="5"/><circle cx="285" cy="165" r="5"/><circle cx="255" cy="196" r="5"/><circle cx="305" cy="205" r="5"/>
+          </g>
+          <!-- named labels -->
+          <g font-size="12" font-weight="bold">
+            <text x="648" y="80" text-anchor="start">APOE</text>
+            <text x="656" y="100" text-anchor="end">CLU</text>
+            <text x="520" y="136" text-anchor="end">GFAP</text>
+            <text x="232" y="138" text-anchor="end">VIM</text>
+          </g>
+          <!-- region captions -->
+          <text x="600" y="52" text-anchor="middle" font-size="13" font-weight="bold" fill="#b91c1c">UP &amp; significant</text>
+          <text x="216" y="52" text-anchor="middle" font-size="13" font-weight="bold" fill="#1d4ed8">DOWN &amp; significant</text>
+          <text x="400" y="343" text-anchor="middle" font-size="13" font-weight="bold">log&#8322; fold change  (Disease vs Control)  &rarr; more abundant in disease</text>
+          <text x="400" y="362" text-anchor="middle" font-size="12" fill="#475569">grey dots near the bottom = changes too small or too uncertain to call</text>
+          <text x="26" y="180" text-anchor="middle" font-size="13" font-weight="bold" transform="rotate(-90 26 180)">significance  &rarr;</text>
+        </svg>
+        <figcaption>A volcano plot. Far-right red dots (like APOE) shot up in disease and are statistically solid; far-left blue dots dropped. The grey crowd at the bottom didn't move enough, or we aren't sure enough &mdash; they stay unflagged. The dashed lines are the two cutoffs that must both be cleared.</figcaption>
+      </figure>
+
+      <div class="so-callout ok">
+        <strong class="so-tag">In SignalFold &mdash; the knobs</strong>
+        <p><strong>Statistical test</strong> = t-test (default) or Wilcoxon. <strong>p-value threshold</strong> = 0.05. <strong>Fold-change threshold</strong> = 1.5&times;. <strong>Use BH-adjusted p-value (FDR)</strong> = on by default, with the correction method set to Benjamini&ndash;Hochberg (Bonferroni available). The output is the volcano table &mdash; every protein with its log2FC, raw p, adjusted p, and an up / down / not-significant call &mdash; plus ready-made lists of the up- and down-regulated hits.</p>
+      </div>
+
+      <div class="so-callout warn">
+        <strong class="so-tag">Watch out</strong>
+        <p><strong>Significant &ne; important.</strong> With enough samples, a tiny, biologically meaningless change can earn a microscopic p-value. That is exactly why SignalFold demands a real fold change <em>too</em>. Conversely, a huge fold change with a weak p-value (few, noisy samples) is not yet trustworthy. Always read both axes of the volcano together &mdash; never one alone.</p>
+      </div>
+    </section>
+
+    <section class="so-section" id="coexpression">
+      <h2>7 · Co-expression networks (WGCNA)</h2>
+      <p>This answers <strong>Q2</strong>, and it is the most powerful idea in the pipeline. The method is called <strong>WGCNA</strong> &mdash; Weighted Gene Co-expression Network Analysis.</p>
+
+      <div class="so-q"><strong>The idea: guilt by association.</strong> Differential expression looks at proteins one at a time. But proteins don't work alone &mdash; they work in teams (pathways, machines, complexes). If two proteins <em>rise and fall together</em> across your samples, that synchrony is a strong hint they belong to the same team. Find the teams, and you've found the biology.</p>
+
+      <h3>7.1 &ldquo;Move together&rdquo; means correlated</h3>
+      <p>The raw signal is <strong>correlation</strong>: do two proteins' levels track each other across samples? When sample 3 is high for protein A and also high for protein B, and sample 5 is low for both, they are <em>correlated</em>. When there's no such pattern, they aren't.</p>
+
+      <figure class="so-diagram">
+        <svg viewBox="0 0 720 260" width="100%" style="max-width: 720px;" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Two line charts: correlated proteins track each other; uncorrelated proteins do not">
+          <text x="195" y="32" text-anchor="middle" font-size="15" font-weight="bold">Move together (correlated)</text>
+          <text x="535" y="32" text-anchor="middle" font-size="15" font-weight="bold">Move independently</text>
+
+          <!-- left axes -->
+          <line x1="52" y1="55" x2="52" y2="210" stroke="#475569" stroke-width="1.3"/>
+          <line x1="52" y1="210" x2="340" y2="210" stroke="#475569" stroke-width="1.3"/>
+          <!-- left A (blue) -->
+          <polyline points="60,180 114,120 168,150 222,90 276,160 330,110" fill="none" stroke="#2563eb" stroke-width="2.5"/>
+          <g fill="#2563eb"><circle cx="60" cy="180" r="3.5"/><circle cx="114" cy="120" r="3.5"/><circle cx="168" cy="150" r="3.5"/><circle cx="222" cy="90" r="3.5"/><circle cx="276" cy="160" r="3.5"/><circle cx="330" cy="110" r="3.5"/></g>
+          <!-- left B (teal) -->
+          <polyline points="60,172 114,131 168,142 222,101 276,151 330,121" fill="none" stroke="#0d9488" stroke-width="2.5"/>
+          <g fill="#0d9488"><circle cx="60" cy="172" r="3.5"/><circle cx="114" cy="131" r="3.5"/><circle cx="168" cy="142" r="3.5"/><circle cx="222" cy="101" r="3.5"/><circle cx="276" cy="151" r="3.5"/><circle cx="330" cy="121" r="3.5"/></g>
+          <text x="338" y="112" font-size="12" font-weight="bold" fill="#2563eb">A</text>
+          <text x="338" y="128" font-size="12" font-weight="bold" fill="#0d9488">B</text>
+
+          <!-- right axes -->
+          <line x1="392" y1="55" x2="392" y2="210" stroke="#475569" stroke-width="1.3"/>
+          <line x1="392" y1="210" x2="680" y2="210" stroke="#475569" stroke-width="1.3"/>
+          <!-- right C (blue) -->
+          <polyline points="400,180 454,120 508,150 562,90 616,160 670,110" fill="none" stroke="#2563eb" stroke-width="2.5"/>
+          <g fill="#2563eb"><circle cx="400" cy="180" r="3.5"/><circle cx="454" cy="120" r="3.5"/><circle cx="508" cy="150" r="3.5"/><circle cx="562" cy="90" r="3.5"/><circle cx="616" cy="160" r="3.5"/><circle cx="670" cy="110" r="3.5"/></g>
+          <!-- right D (teal) -->
+          <polyline points="400,100 454,160 508,110 562,170 616,90 670,150" fill="none" stroke="#0d9488" stroke-width="2.5"/>
+          <g fill="#0d9488"><circle cx="400" cy="100" r="3.5"/><circle cx="454" cy="160" r="3.5"/><circle cx="508" cy="110" r="3.5"/><circle cx="562" cy="170" r="3.5"/><circle cx="616" cy="90" r="3.5"/><circle cx="670" cy="150" r="3.5"/></g>
+          <text x="678" y="112" font-size="12" font-weight="bold" fill="#2563eb">C</text>
+          <text x="678" y="152" font-size="12" font-weight="bold" fill="#0d9488">D</text>
+
+          <text x="196" y="232" text-anchor="middle" font-size="12" fill="#475569">levels track sample-to-sample &rarr; likely a team</text>
+          <text x="536" y="232" text-anchor="middle" font-size="12" fill="#475569">no relationship &rarr; probably unrelated</text>
+          <text x="196" y="250" text-anchor="middle" font-size="11.5" fill="#475569">(horizontal axis = samples, vertical = abundance)</text>
+          <text x="536" y="250" text-anchor="middle" font-size="11.5" fill="#475569">(horizontal axis = samples, vertical = abundance)</text>
+        </svg>
+        <figcaption>Co-expression in one picture. On the left, proteins A and B move in near-lockstep across samples &mdash; high correlation. On the right, C and D wander independently. WGCNA scores every pair of proteins this way, then groups the ones that move together.</figcaption>
+      </figure>
+
+      <h3>7.2 From pairs to a network, carefully</h3>
+      <p>WGCNA computes a togetherness score for <em>every pair</em> of proteins and treats the result as a network: proteins are dots, strong correlations are connections. But it does three clever things rather than naively drawing a line wherever correlation is high:</p>
+      <ol class="so-workflow">
+        <li><strong>Robust correlation (bicor).</strong> Instead of the ordinary correlation (which a single weird sample can distort), SignalFold defaults to the <strong>biweight midcorrelation</strong> &mdash; same idea, but it quietly down-weights outliers so one odd sample can't manufacture a fake relationship.</li>
+        <li><strong>Soft thresholding (the power &beta;).</strong> Rather than a hard &ldquo;connected / not connected&rdquo; cutoff, every correlation is raised to a power (default <strong>&beta; = 8</strong>). Raising numbers between 0 and 1 to the 8th power barely touches strong correlations but crushes weak ones toward zero. The effect: faint, probably-coincidental links fade out, strong links remain. This tuning is what makes the network <em>&ldquo;scale-free&rdquo;</em> &mdash; a realistic shape where a few proteins are highly connected hubs and most have only a few links (more on this in the Deep Dive).</li>
+        <li><strong>Topological overlap (TOM): counting mutual friends.</strong> Two proteins are judged truly close not only if they are directly correlated, but if they <em>share the same neighbours</em>. Just like two people who have dozens of friends in common are probably in the same circle even if they've never met, proteins with many shared partners get grouped together. This &ldquo;mutual friends&rdquo; measure makes the grouping far more robust than raw correlation alone.</li>
+      </ol>
+      <p>You can also choose whether direction matters. A <strong>signed</strong> network (the default) treats &ldquo;both go up together&rdquo; as related but &ldquo;one up, one down&rdquo; as <em>not</em>; an <strong>unsigned</strong> network treats any strong relationship as a link regardless of direction.</p>
+
+      <h3>7.3 The payoff: modules</h3>
+      <p>Once every protein pair has a robust togetherness score, WGCNA <strong>clusters</strong> the proteins &mdash; repeatedly merging the closest ones &mdash; until distinct groups fall out. Each group is a <strong>module</strong>: a set of proteins that move as one. By long-standing convention, modules are named by <strong>colour</strong> (turquoise, blue, brown, yellow&hellip;). Proteins that don't fit any module are dumped into a leftover bin called <strong>grey</strong>.</p>
+
+      <figure class="so-diagram">
+        <svg viewBox="0 0 640 360" width="100%" style="max-width: 640px;" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A co-expression network with three coloured modules and a highlighted hub protein">
+          <!-- edges -->
+          <g stroke="#9aa3ad" stroke-width="1.3">
+            <!-- turquoise edges from hub -->
+            <line x1="185" y1="160" x2="120" y2="115"/><line x1="185" y1="160" x2="130" y2="205"/><line x1="185" y1="160" x2="225" y2="105"/><line x1="185" y1="160" x2="245" y2="200"/><line x1="185" y1="160" x2="255" y2="150"/><line x1="120" y1="115" x2="225" y2="105"/><line x1="130" y1="205" x2="245" y2="200"/>
+            <!-- blue edges -->
+            <line x1="465" y1="95" x2="505" y2="125"/><line x1="465" y1="95" x2="525" y2="80"/><line x1="465" y1="95" x2="475" y2="155"/><line x1="505" y1="125" x2="545" y2="140"/><line x1="525" y1="80" x2="545" y2="140"/>
+            <!-- brown edges -->
+            <line x1="425" y1="255" x2="385" y2="295"/><line x1="425" y1="255" x2="465" y2="295"/><line x1="425" y1="255" x2="435" y2="210"/><line x1="425" y1="255" x2="490" y2="255"/><line x1="385" y1="295" x2="465" y2="295"/>
+            <!-- sparse inter-module -->
+            <line x1="255" y1="150" x2="475" y2="155" stroke-dasharray="4 4"/><line x1="435" y1="210" x2="245" y2="200" stroke-dasharray="4 4"/>
+          </g>
+
+          <!-- turquoise module nodes -->
+          <g fill="#5eead4" stroke="#0d9488" stroke-width="1.5">
+            <circle cx="120" cy="115" r="9"/><circle cx="130" cy="205" r="9"/><circle cx="225" cy="105" r="9"/><circle cx="245" cy="200" r="9"/><circle cx="255" cy="150" r="9"/>
+          </g>
+          <circle cx="185" cy="160" r="18" fill="#2dd4bf" stroke="#0f766e" stroke-width="2.5"/>
+          <!-- blue module nodes -->
+          <g fill="#93c5fd" stroke="#2563eb" stroke-width="1.5">
+            <circle cx="505" cy="125" r="9"/><circle cx="525" cy="80" r="9"/><circle cx="475" cy="155" r="9"/><circle cx="545" cy="140" r="9"/>
+          </g>
+          <circle cx="465" cy="95" r="13" fill="#60a5fa" stroke="#1d4ed8" stroke-width="2"/>
+          <!-- brown module nodes -->
+          <g fill="#d9b48a" stroke="#a16207" stroke-width="1.5">
+            <circle cx="385" cy="295" r="9"/><circle cx="465" cy="295" r="9"/><circle cx="435" cy="210" r="9"/><circle cx="490" cy="255" r="9"/>
+          </g>
+          <circle cx="425" cy="255" r="12" fill="#c79257" stroke="#854d0e" stroke-width="2"/>
+
+          <!-- labels -->
+          <text x="185" y="250" text-anchor="middle" font-size="14" font-weight="bold">Turquoise module</text>
+          <text x="505" y="48" text-anchor="middle" font-size="14" font-weight="bold">Blue module</text>
+          <text x="430" y="335" text-anchor="middle" font-size="14" font-weight="bold">Brown module</text>
+
+          <!-- hub annotation -->
+          <line x1="150" y1="120" x2="120" y2="95" stroke="#0f766e" stroke-width="1.3"/>
+          <text x="112" y="86" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#0f766e">hub protein</text>
+          <text x="112" y="70" text-anchor="middle" font-size="11" fill="#0f766e">(most connected)</text>
+
+          <text x="330" y="120" text-anchor="middle" font-size="11.5" fill="#6b7280" transform="rotate(-12 330 120)">few weak links</text>
+          <text x="330" y="186" text-anchor="middle" font-size="11.5" fill="#6b7280">between modules</text>
+        </svg>
+        <figcaption>The output of WGCNA: proteins cluster into colour-named modules of tightly co-moving members, with sparse links between modules. The big node is a <strong>hub</strong> &mdash; a protein central to its module, often a key regulator. Each module becomes a single &ldquo;unit of biology&rdquo; that Stages 2 and 3 then interpret.</figcaption>
+      </figure>
+
+      <h3>7.4 Summarising and labelling a module</h3>
+      <p>Two more ideas make modules usable:</p>
+      <ul>
+        <li><strong>Module eigengene.</strong> A module might have 300 proteins. Their shared up-and-down pattern can be distilled into a <em>single representative profile</em> &mdash; the <strong>module eigengene</strong>. Think of it as the module's &ldquo;theme song&rdquo;: one line that captures how the whole module rises and falls across samples. It lets us treat a 300-protein module as one tidy variable.</li>
+        <li><strong>Membership (kME) and hubs.</strong> Not every member belongs equally. <strong>kME</strong> measures how tightly a protein follows its module's theme song (from 0 to 1). High-kME proteins are the <strong>hubs</strong> &mdash; the core, most-connected members, and the best candidates for &ldquo;the protein that matters most&rdquo; in that module.</li>
+      </ul>
+
+      <h3>7.5 Linking modules to the disease: module&ndash;trait correlation</h3>
+      <p>Now the magic. Because each module has a single eigengene (theme song), we can <strong>correlate that one number against the things we care about</strong> &mdash; disease status, and any clinical traits you uploaded. A module whose theme song rises steadily with disease severity is a module worth investigating.</p>
+
+      <figure class="so-diagram">
+        <svg viewBox="0 0 470 320" width="100%" style="max-width: 470px;" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Heatmap of module-trait correlations">
+          <text x="235" y="24" text-anchor="middle" font-size="14" font-weight="bold">Module &ndash; trait correlations</text>
+          <!-- column headers -->
+          <text x="160" y="58" text-anchor="middle" font-size="12.5" font-weight="bold">Disease</text>
+          <text x="250" y="58" text-anchor="middle" font-size="12.5" font-weight="bold">Tau</text>
+          <text x="340" y="58" text-anchor="middle" font-size="12.5" font-weight="bold">Amyloid</text>
+          <!-- rows -->
+          <g font-size="12.5">
+            <!-- turquoise -->
+            <text x="105" y="86" text-anchor="end" font-weight="bold">turquoise</text>
+            <rect x="115" y="68" width="90" height="36" fill="#fca5a5" stroke="#fff" stroke-width="2"/><text x="160" y="91" text-anchor="middle">+0.82</text>
+            <rect x="205" y="68" width="90" height="36" fill="#fca5a5" stroke="#fff" stroke-width="2"/><text x="250" y="91" text-anchor="middle">+0.75</text>
+            <rect x="295" y="68" width="90" height="36" fill="#fecaca" stroke="#fff" stroke-width="2"/><text x="340" y="91" text-anchor="middle">+0.60</text>
+            <!-- blue -->
+            <text x="105" y="126" text-anchor="end" font-weight="bold">blue</text>
+            <rect x="115" y="108" width="90" height="36" fill="#93c5fd" stroke="#fff" stroke-width="2"/><text x="160" y="131" text-anchor="middle">&minus;0.55</text>
+            <rect x="205" y="108" width="90" height="36" fill="#bfdbfe" stroke="#fff" stroke-width="2"/><text x="250" y="131" text-anchor="middle">&minus;0.40</text>
+            <rect x="295" y="108" width="90" height="36" fill="#bfdbfe" stroke="#fff" stroke-width="2"/><text x="340" y="131" text-anchor="middle">&minus;0.30</text>
+            <!-- brown -->
+            <text x="105" y="166" text-anchor="end" font-weight="bold">brown</text>
+            <rect x="115" y="148" width="90" height="36" fill="#fee2e2" stroke="#fff" stroke-width="2"/><text x="160" y="171" text-anchor="middle">+0.30</text>
+            <rect x="205" y="148" width="90" height="36" fill="#fef2f2" stroke="#fff" stroke-width="2"/><text x="250" y="171" text-anchor="middle">+0.10</text>
+            <rect x="295" y="148" width="90" height="36" fill="#fecaca" stroke="#fff" stroke-width="2"/><text x="340" y="171" text-anchor="middle">+0.45</text>
+            <!-- yellow -->
+            <text x="105" y="206" text-anchor="end" font-weight="bold">yellow</text>
+            <rect x="115" y="188" width="90" height="36" fill="#f8fafc" stroke="#fff" stroke-width="2"/><text x="160" y="211" text-anchor="middle">&minus;0.10</text>
+            <rect x="205" y="188" width="90" height="36" fill="#f8fafc" stroke="#fff" stroke-width="2"/><text x="250" y="211" text-anchor="middle">+0.05</text>
+            <rect x="295" y="188" width="90" height="36" fill="#f8fafc" stroke="#fff" stroke-width="2"/><text x="340" y="211" text-anchor="middle">&minus;0.08</text>
+          </g>
+          <!-- legend -->
+          <rect x="115" y="244" width="26" height="16" fill="#fca5a5"/><text x="148" y="257" font-size="11.5">rises with trait (+)</text>
+          <rect x="270" y="244" width="26" height="16" fill="#93c5fd"/><text x="303" y="257" font-size="11.5">falls with trait (&minus;)</text>
+          <text x="235" y="284" text-anchor="middle" font-size="11.5" fill="#475569">number = correlation, from &minus;1 to +1; deeper colour = stronger</text>
+          <text x="235" y="302" text-anchor="middle" font-size="11.5" fill="#475569">the turquoise module tracks disease and both pathology markers</text>
+        </svg>
+        <figcaption>A module&ndash;trait heatmap. Each row is a module's theme song, each column a clinical variable; the cell is how strongly they move together. Here the turquoise module lights up red across the board &mdash; it rises with disease, tau, and amyloid &mdash; making it the prime suspect to hand to Stages 2 and 3.</figcaption>
+      </figure>
+
+      <div class="so-callout ok">
+        <strong class="so-tag">In SignalFold &mdash; the WGCNA knobs</strong>
+        <p><strong>Soft power &beta;</strong> = 8. <strong>Correlation</strong> = bicor (robust). <strong>Network type</strong> = signed. <strong>Minimum module size</strong> = 20 proteins. <strong>Deep split</strong> = 3 and <strong>merge height</strong> = 0.30 control how finely the clusters are cut and merged. You can also let the app auto-pick &beta; by a &ldquo;scale-free fit&rdquo; criterion instead of fixing it. Outputs include each protein's module and kME, the hub lists, the eigengenes, and the module&ndash;trait table behind the heatmap.</p>
+      </div>
+
+      <div class="so-callout warn">
+        <strong class="so-tag">Watch out</strong>
+        <p>Modules are <em>discovered from your data</em>, not handed down as truth &mdash; a different cohort may yield somewhat different modules. Co-expression also shows association, <strong>not causation</strong>: a hub is a great lead, not a proven driver. And WGCNA needs a decent number of samples to find stable patterns; with very few samples, treat modules as hypotheses. (For speed and memory, the network is built on the most variable proteins &mdash; up to 5,000 &mdash; while differential expression in section 6 still runs on every protein.)</p>
+      </div>
+    </section>
+
+    <section class="so-section" id="go-enrichment">
+      <h2>8 · Functional enrichment (GO) &mdash; what does it mean?</h2>
+      <p>This answers <strong>Q3</strong>. Stage&nbsp;1 handed us modules &mdash; teams of co-moving proteins &mdash; but a team is just a list of names until we know what it <em>does</em>. Stage&nbsp;2 attaches biological meaning.</p>
+
+      <h3>8.1 A dictionary of biological jobs: the Gene Ontology</h3>
+      <p>Biologists have spent decades building the <strong>Gene Ontology (GO)</strong>: a huge, carefully curated catalogue that tags every known protein with the jobs it performs. GO has three branches:</p>
+      <ul>
+        <li><strong>Biological Process (BP)</strong> &mdash; the <em>goal</em> a protein contributes to. E.g. &ldquo;immune response,&rdquo; &ldquo;cell death,&rdquo; &ldquo;synaptic signalling.&rdquo;</li>
+        <li><strong>Molecular Function (MF)</strong> &mdash; the <em>molecular action</em> it performs. E.g. &ldquo;ATP binding,&rdquo; &ldquo;enzyme activity.&rdquo;</li>
+        <li><strong>Cellular Component (CC)</strong> &mdash; <em>where</em> in the cell it acts. E.g. &ldquo;mitochondrion,&rdquo; &ldquo;cell membrane.&rdquo;</li>
+      </ul>
+      <p>SignalFold also folds in curated <strong>pathway</strong> collections (Reactome, KEGG, Hallmark) alongside GO. Together these are the &ldquo;job descriptions&rdquo; we'll test each module against.</p>
+
+      <h3>8.2 The question: more than you'd expect by chance?</h3>
+      <p>The core technique is <strong>over-representation analysis</strong>. For one module and one job description (say &ldquo;immune response&rdquo;), we ask: <em>does this module contain noticeably more immune-response proteins than a random handful of proteins would?</em> If yes, the module is &ldquo;enriched&rdquo; for immune response &mdash; that's its biology.</p>
+      <div class="so-callout">
+        <strong class="so-tag">Plain English &mdash; the bag-of-marbles picture</strong>
+        <p>Put every measured protein into a bag. Some marbles are painted &mdash; they're the &ldquo;immune response&rdquo; proteins. Your module is a handful you scooped out. If the bag is 2% painted but your handful is 8% painted, you probably didn't scoop at random &mdash; something drew immune proteins together. The statistical test that puts a number on &ldquo;probably&rdquo; is <strong>Fisher's exact test</strong>.</p>
+      </div>
+
+      <figure class="so-diagram">
+        <svg viewBox="0 0 740 330" width="100%" style="max-width: 740px;" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Venn overlap of a module and a GO term, plus the 2 by 2 contingency table for Fisher's exact test">
+          <text x="370" y="26" text-anchor="middle" font-size="15" font-weight="bold">Is the module enriched for a biological job?</text>
+
+          <!-- left: universe + two circles -->
+          <rect x="20" y="48" width="320" height="234" rx="8" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.3"/>
+          <text x="180" y="68" text-anchor="middle" font-size="12.5" fill="#475569">All measured proteins (the background) &asymp; 5000</text>
+          <circle cx="140" cy="185" r="74" fill="#a5f3fc" fill-opacity="0.6" stroke="#0891b2" stroke-width="1.8"/>
+          <circle cx="238" cy="185" r="60" fill="#bbf7d0" fill-opacity="0.6" stroke="#16a34a" stroke-width="1.8"/>
+          <text x="110" y="150" text-anchor="middle" font-size="12.5" font-weight="bold">Module</text>
+          <text x="110" y="167" text-anchor="middle" font-size="12">300 proteins</text>
+          <text x="262" y="150" text-anchor="middle" font-size="12.5" font-weight="bold">GO term</text>
+          <text x="262" y="167" text-anchor="middle" font-size="12">120 proteins</text>
+          <text x="190" y="190" text-anchor="middle" font-size="13" font-weight="bold">25</text>
+          <text x="190" y="206" text-anchor="middle" font-size="10.5">shared</text>
+
+          <!-- right: 2x2 table -->
+          <g font-size="12.5">
+            <!-- column headers -->
+            <text x="525" y="84" text-anchor="middle" font-weight="bold">In term</text>
+            <text x="640" y="84" text-anchor="middle" font-weight="bold">Not in term</text>
+            <!-- grid -->
+            <rect x="470" y="92" width="110" height="44" fill="#ecfeff" stroke="#475569" stroke-width="1.2"/>
+            <rect x="580" y="92" width="130" height="44" fill="#ffffff" stroke="#475569" stroke-width="1.2"/>
+            <rect x="470" y="136" width="110" height="44" fill="#ffffff" stroke="#475569" stroke-width="1.2"/>
+            <rect x="580" y="136" width="130" height="44" fill="#ffffff" stroke="#475569" stroke-width="1.2"/>
+            <!-- row headers -->
+            <text x="465" y="118" text-anchor="end" font-weight="bold">In module</text>
+            <text x="465" y="162" text-anchor="end" font-weight="bold">Not in module</text>
+            <!-- cells -->
+            <text x="525" y="114" text-anchor="middle" font-weight="bold">a = 25</text>
+            <text x="525" y="128" text-anchor="middle" font-size="10.5" fill="#475569">the overlap</text>
+            <text x="645" y="118" text-anchor="middle">b = 275</text>
+            <text x="525" y="162" text-anchor="middle">c = 95</text>
+            <text x="645" y="162" text-anchor="middle">d = 4605</text>
+          </g>
+          <text x="590" y="212" text-anchor="middle" font-size="12.5">Expected overlap by chance &asymp; <tspan font-weight="bold">7</tspan></text>
+          <text x="590" y="232" text-anchor="middle" font-size="12.5">Observed = <tspan font-weight="bold">25</tspan>  &rarr;  far more than chance</text>
+          <text x="590" y="256" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#15803d">enriched (small p-value)</text>
+
+          <text x="180" y="306" text-anchor="middle" font-size="12" fill="#475569">Fisher's exact test turns these four counts</text>
+          <text x="180" y="323" text-anchor="middle" font-size="12" fill="#475569">into the probability the overlap is just luck.</text>
+        </svg>
+        <figcaption>Over-representation in one picture. The four counts a/b/c/d (overlap, module-only, term-only, neither) are fed to Fisher's exact test. Because 25 is far above the ~7 you'd expect by chance, the term is enriched &mdash; this module is &ldquo;about&rdquo; that biological job.</figcaption>
+      </figure>
+
+      <h3>8.3 Three details that keep it honest</h3>
+      <ul>
+        <li><strong>Which bag? (the background universe).</strong> Enrichment is always relative to a background. SignalFold's default is the proteins you actually <em>measured</em>, not every protein in existence &mdash; because only measured proteins ever had a chance to land in a module. Using the right background prevents inflated, misleading results.</li>
+        <li><strong>Correct for many terms (FDR again).</strong> We test thousands of job descriptions against every module, so the same multiple-testing trap from section&nbsp;6 returns. SignalFold applies Benjamini&ndash;Hochberg FDR across all the tests and reports only terms below the cutoff.</li>
+        <li><strong>Trim the duplicates.</strong> GO terms overlap heavily (&ldquo;immune response&rdquo; vs &ldquo;adaptive immune response&rdquo; vs &ldquo;defense response&rdquo;). Reporting all of them is noise. SignalFold uses a similarity measure (<strong>Cohen's kappa</strong>) to collapse near-duplicate terms down to one representative, so you read a clean list of distinct themes.</li>
+      </ul>
+      <p>Beyond a yes/no call, SignalFold also reports a <strong>signed enrichment score</strong> (a z-score) for each term &mdash; positive when the module is enriched, negative when it is unusually <em>depleted</em> of that job &mdash; with larger magnitude meaning stronger evidence. This is handy for ranking and for heatmaps across modules.</p>
+
+      <div class="so-callout ok">
+        <strong class="so-tag">In SignalFold</strong>
+        <p><strong>GO categories</strong> = BP + MF + CC (toggle each). <strong>FDR threshold</strong> = 0.05. <strong>Minimum hits per term</strong> = 3 (don't test a job description that barely any measured protein could match). <strong>Background</strong> = measured features (or the full database, your choice). <strong>Redundancy removal</strong> = kappa. The gene-set definitions come from a bundled, dated human collection of GO + pathways, and you can supply your own.</p>
+      </div>
+
+      <div class="so-callout warn">
+        <strong class="so-tag">Watch out</strong>
+        <p>Over-representation is <em>membership</em>-based: it counts which proteins are in the module, but ignores <em>how much</em> each one changed. (A different family of methods, GSEA, uses the magnitudes &mdash; see the Deep Dive.) Also, very broad terms like &ldquo;metabolic process&rdquo; can light up easily and tell you little; the specific, mid-sized terms are usually the informative ones. And remember: change the background and the p-values change &mdash; enrichment is always a statement <em>relative to</em> the bag you chose.</p>
+      </div>
+    </section>
+
+    <section class="so-section" id="cell-types">
+      <h2>9 · Cell-type enrichment &mdash; which cells?</h2>
+      <p>This answers <strong>Q4</strong>, the final layer of interpretation.</p>
+
+      <div class="so-q"><strong>The problem of the blend.</strong> A tissue sample is not one kind of cell &mdash; it's a <em>mixture</em>. Brain tissue, for instance, is a blend of neurons, astrocytes, microglia, oligodendrocytes, and blood-vessel (endothelial) cells. When you grind up tissue and measure proteins, you get the combined signal of all of them. So when a protein team changes, a natural question is: <em>did one cell population change &mdash; grow, shrink, or switch on &mdash; and which one?</em></p>
+
+      <h3>9.1 Marker proteins are cell-type name tags</h3>
+      <p>Each cell type reliably makes certain signature proteins that other cells barely make &mdash; its <strong>markers</strong>. GFAP marks astrocytes; proteins like IBA1 mark microglia; MBP marks oligodendrocytes. Researchers have compiled curated lists of these markers per cell type. They act like name tags: if a protein team is stuffed with astrocyte markers, the team is probably an astrocyte story.</p>
+
+      <h3>9.2 The same test, a new question</h3>
+      <p>Here's the elegant part: Stage&nbsp;3 reuses the <em>exact same</em> Fisher's exact test from Stage&nbsp;2. The only thing that changes is what we test against. Instead of asking &ldquo;does this module overlap the &lsquo;immune response&rsquo; gene set more than chance?&rdquo; we ask &ldquo;does this module overlap the <em>astrocyte marker</em> set more than chance?&rdquo; Run that for every module against every cell type, correct for multiple testing with FDR, and you get a map of module &rarr; cell type.</p>
+
+      <figure class="so-diagram">
+        <svg viewBox="0 0 760 340" width="100%" style="max-width: 760px;" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Left: tissue as a mixture of cell types. Right: heatmap of module by cell-type enrichment.">
+          <defs>
+            <marker id="ar9" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+            </marker>
+          </defs>
+
+          <!-- LEFT: mixture -->
+          <text x="165" y="34" text-anchor="middle" font-size="14" font-weight="bold">Tissue = a mixture of cell types</text>
+          <rect x="40" y="50" width="250" height="96" rx="12" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.3"/>
+          <g stroke-width="1.5">
+            <circle cx="78" cy="92" r="15" fill="#5eead4" stroke="#0d9488"/><text x="78" y="97" text-anchor="middle" font-size="13" font-weight="bold">A</text>
+            <circle cx="128" cy="116" r="13" fill="#fca5a5" stroke="#dc2626"/><text x="128" y="121" text-anchor="middle" font-size="12" font-weight="bold">M</text>
+            <circle cx="170" cy="82" r="15" fill="#93c5fd" stroke="#2563eb"/><text x="170" y="87" text-anchor="middle" font-size="13" font-weight="bold">N</text>
+            <circle cx="216" cy="116" r="13" fill="#d9b48a" stroke="#a16207"/><text x="216" y="121" text-anchor="middle" font-size="12" font-weight="bold">O</text>
+            <circle cx="256" cy="86" r="12" fill="#c4b5fd" stroke="#7c3aed"/><text x="256" y="91" text-anchor="middle" font-size="12" font-weight="bold">E</text>
+          </g>
+          <line x1="165" y1="150" x2="165" y2="176" stroke="#475569" stroke-width="2.5" marker-end="url(#ar9)"/>
+          <rect x="40" y="180" width="250" height="40" rx="8" fill="#eef2ff" stroke="#6366f1" stroke-width="1.3"/>
+          <text x="165" y="205" text-anchor="middle" font-size="12.5">ground up &rarr; one blended protein signal</text>
+          <text x="165" y="246" text-anchor="middle" font-size="12" fill="#475569">A change in the blend may mean one</text>
+          <text x="165" y="263" text-anchor="middle" font-size="12" fill="#475569">cell population shifted &mdash; markers reveal which.</text>
+          <text x="165" y="298" text-anchor="middle" font-size="10.5" fill="#475569">A astrocyte &nbsp; M microglia &nbsp; N neuron</text>
+          <text x="165" y="314" text-anchor="middle" font-size="10.5" fill="#475569">O oligodendrocyte &nbsp; E endothelia</text>
+
+          <!-- RIGHT: heatmap -->
+          <text x="575" y="34" text-anchor="middle" font-size="14" font-weight="bold">Module &rarr; cell-type map</text>
+          <!-- column headers -->
+          <g font-size="11" text-anchor="middle" fill="#475569">
+            <text x="459" y="54">Astro</text><text x="517" y="54">Micro</text><text x="575" y="54">Neuron</text><text x="633" y="54">Oligo</text><text x="691" y="54">Endo</text>
+          </g>
+          <!-- rows -->
+          <g font-size="12">
+            <!-- turquoise -->
+            <text x="425" y="82" text-anchor="end" font-weight="bold">turquoise</text>
+            <rect x="430" y="60" width="58" height="34" fill="#fb923c" stroke="#fff" stroke-width="2"/><text x="459" y="82" text-anchor="middle" font-weight="bold">73</text>
+            <rect x="488" y="60" width="58" height="34" fill="#fdba74" stroke="#fff" stroke-width="2"/><text x="517" y="82" text-anchor="middle">12</text>
+            <rect x="546" y="60" width="58" height="34" fill="#fff7ed" stroke="#fff" stroke-width="2"/><text x="575" y="82" text-anchor="middle">1</text>
+            <rect x="604" y="60" width="58" height="34" fill="#ffedd5" stroke="#fff" stroke-width="2"/><text x="633" y="82" text-anchor="middle">2</text>
+            <rect x="662" y="60" width="58" height="34" fill="#ffedd5" stroke="#fff" stroke-width="2"/><text x="691" y="82" text-anchor="middle">3</text>
+            <!-- blue -->
+            <text x="425" y="118" text-anchor="end" font-weight="bold">blue</text>
+            <rect x="430" y="96" width="58" height="34" fill="#fff7ed" stroke="#fff" stroke-width="2"/><text x="459" y="118" text-anchor="middle">1</text>
+            <rect x="488" y="96" width="58" height="34" fill="#ffedd5" stroke="#fff" stroke-width="2"/><text x="517" y="118" text-anchor="middle">2</text>
+            <rect x="546" y="96" width="58" height="34" fill="#fdba74" stroke="#fff" stroke-width="2"/><text x="575" y="118" text-anchor="middle" font-weight="bold">18</text>
+            <rect x="604" y="96" width="58" height="34" fill="#fff7ed" stroke="#fff" stroke-width="2"/><text x="633" y="118" text-anchor="middle">1</text>
+            <rect x="662" y="96" width="58" height="34" fill="#fff7ed" stroke="#fff" stroke-width="2"/><text x="691" y="118" text-anchor="middle">1</text>
+            <!-- brown -->
+            <text x="425" y="154" text-anchor="end" font-weight="bold">brown</text>
+            <rect x="430" y="132" width="58" height="34" fill="#ffedd5" stroke="#fff" stroke-width="2"/><text x="459" y="154" text-anchor="middle">2</text>
+            <rect x="488" y="132" width="58" height="34" fill="#fff7ed" stroke="#fff" stroke-width="2"/><text x="517" y="154" text-anchor="middle">1</text>
+            <rect x="546" y="132" width="58" height="34" fill="#fff7ed" stroke="#fff" stroke-width="2"/><text x="575" y="154" text-anchor="middle">1</text>
+            <rect x="604" y="132" width="58" height="34" fill="#fed7aa" stroke="#fff" stroke-width="2"/><text x="633" y="154" text-anchor="middle" font-weight="bold">9</text>
+            <rect x="662" y="132" width="58" height="34" fill="#fff7ed" stroke="#fff" stroke-width="2"/><text x="691" y="154" text-anchor="middle">1</text>
+            <!-- yellow -->
+            <text x="425" y="190" text-anchor="end" font-weight="bold">yellow</text>
+            <rect x="430" y="168" width="58" height="34" fill="#ffffff" stroke="#e5e7eb" stroke-width="2"/><text x="459" y="190" text-anchor="middle">0.5</text>
+            <rect x="488" y="168" width="58" height="34" fill="#ffffff" stroke="#e5e7eb" stroke-width="2"/><text x="517" y="190" text-anchor="middle">0.3</text>
+            <rect x="546" y="168" width="58" height="34" fill="#ffffff" stroke="#e5e7eb" stroke-width="2"/><text x="575" y="190" text-anchor="middle">0.6</text>
+            <rect x="604" y="168" width="58" height="34" fill="#ffffff" stroke="#e5e7eb" stroke-width="2"/><text x="633" y="190" text-anchor="middle">0.4</text>
+            <rect x="662" y="168" width="58" height="34" fill="#ffffff" stroke="#e5e7eb" stroke-width="2"/><text x="691" y="190" text-anchor="middle">0.5</text>
+          </g>
+          <!-- legend -->
+          <rect x="430" y="222" width="20" height="14" fill="#ffffff" stroke="#e5e7eb"/><rect x="450" y="222" width="20" height="14" fill="#ffedd5"/><rect x="470" y="222" width="20" height="14" fill="#fed7aa"/><rect x="490" y="222" width="20" height="14" fill="#fdba74"/><rect x="510" y="222" width="20" height="14" fill="#fb923c"/>
+          <text x="538" y="234" font-size="11" fill="#475569">weak &rarr; strong match  (&minus;log&#8321;&#8320; FDR)</text>
+          <text x="575" y="262" text-anchor="middle" font-size="12" fill="#475569">turquoise = astrocyte module; blue = neuronal;</text>
+          <text x="575" y="279" text-anchor="middle" font-size="12" fill="#475569">brown = oligodendrocyte. yellow points nowhere.</text>
+        </svg>
+        <figcaption>Left: why the question matters &mdash; bulk tissue blends many cell types. Right: the answer &mdash; each module is scored against each cell type's marker list. Bigger, warmer numbers mean a stronger-than-chance match. The turquoise module is unmistakably astrocytic.</figcaption>
+      </figure>
+
+      <div class="so-callout ok">
+        <strong class="so-tag">In SignalFold</strong>
+        <p>The default human reference covers <strong>five brain cell types</strong> &mdash; <strong>astrocytes, microglia, neurons, oligodendrocytes,</strong> and <strong>endothelia</strong> &mdash; with marker lists drawn from a curated union of published single-cell references (the Sharma/Zhang union, built on resources like PanglaoDB and CellMarker). A <strong>mouse</strong> reference is included, and you can upload your own marker file for other tissues. Significance again uses Fisher's exact test with Benjamini&ndash;Hochberg FDR; results are shown as a module&times;cell-type heatmap of &minus;log&#8321;&#8320;(FDR).</p>
+      </div>
+
+      <div class="so-callout warn">
+        <strong class="so-tag">Watch out</strong>
+        <p>This is enrichment, <strong>not</strong> true &ldquo;deconvolution&rdquo; &mdash; it tells you which cell-type signatures are over-represented in a module, not the exact percentage of each cell type in your sample. Markers can be shared between related cell types, so a module can light up for more than one. And the built-in references are <em>brain-focused</em>; for liver, blood, or tumour work you'll want to supply matching markers, or the map will be uninformative.</p>
+      </div>
+    </section>
+
+    <section class="so-section" id="worked-example">
+      <h2>10 · A worked example, end to end</h2>
+      <p>Let's watch the same cast of proteins travel through every stage, in a realistic (if simplified) Alzheimer's-style study. This is where the four questions become one narrative.</p>
+
+      <p><strong>The setup.</strong> A lab measures the proteins in spinal fluid from 10 healthy people and 10 Alzheimer's patients, and also records two pathology markers per person &mdash; tau and amyloid-&beta; &mdash; as <em>traits</em>. They upload the abundance table and the traits, leave the defaults, and run SignalFold.</p>
+
+      <figure class="so-diagram">
+        <svg viewBox="0 0 760 512" width="100%" style="max-width: 760px;" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="End-to-end narrative from input through the four questions to a conclusion">
+          <defs>
+            <marker id="ar10" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+            </marker>
+          </defs>
+          <g stroke="#94a3b8" stroke-width="2" marker-end="url(#ar10)">
+            <line x1="380" y1="70" x2="380" y2="84"/>
+            <line x1="380" y1="140" x2="380" y2="154"/>
+            <line x1="380" y1="210" x2="380" y2="224"/>
+            <line x1="380" y1="280" x2="380" y2="294"/>
+            <line x1="380" y1="350" x2="380" y2="364"/>
+            <line x1="380" y1="420" x2="380" y2="434"/>
+          </g>
+
+          <!-- b1 input -->
+          <rect x="70" y="16" width="620" height="54" rx="8" fill="#eef2ff" stroke="#6366f1" stroke-width="1.5"/>
+          <text x="380" y="38" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#4338ca">INPUT</text>
+          <text x="380" y="58" text-anchor="middle" font-size="13.5">10 controls vs 10 Alzheimer's; CSF proteomics + tau &amp; amyloid traits</text>
+
+          <!-- b2 DE -->
+          <rect x="70" y="86" width="620" height="54" rx="8" fill="#fef2f2" stroke="#dc2626" stroke-width="1.5"/>
+          <text x="380" y="108" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#b91c1c">Q1 &middot; DIFFERENTIAL EXPRESSION</text>
+          <text x="380" y="128" text-anchor="middle" font-size="13.5">APOE, CLU, C3, GFAP rise sharply in patients (volcano: top-right)</text>
+
+          <!-- b3 WGCNA -->
+          <rect x="70" y="156" width="620" height="54" rx="8" fill="#ecfeff" stroke="#0891b2" stroke-width="1.5"/>
+          <text x="380" y="178" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#0e7490">Q2 &middot; CO-EXPRESSION (WGCNA)</text>
+          <text x="380" y="198" text-anchor="middle" font-size="13.5">those proteins cluster together in the turquoise module</text>
+
+          <!-- b4 module-trait -->
+          <rect x="70" y="224" width="620" height="54" rx="8" fill="#ecfeff" stroke="#0891b2" stroke-width="1.5"/>
+          <text x="380" y="246" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#0e7490">MODULE &ndash; TRAIT LINK</text>
+          <text x="380" y="266" text-anchor="middle" font-size="13.5">turquoise theme song rises with disease, tau, and amyloid (r &asymp; 0.8)</text>
+
+          <!-- b5 GO -->
+          <rect x="70" y="294" width="620" height="54" rx="8" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.5"/>
+          <text x="380" y="316" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#15803d">Q3 &middot; GO ENRICHMENT</text>
+          <text x="380" y="336" text-anchor="middle" font-size="13.5">turquoise is enriched for complement &amp; innate immune response</text>
+
+          <!-- b6 cell type -->
+          <rect x="70" y="364" width="620" height="54" rx="8" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+          <text x="380" y="386" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#b45309">Q4 &middot; CELL TYPE</text>
+          <text x="380" y="406" text-anchor="middle" font-size="13.5">turquoise matches the astrocyte signature (plus some microglia)</text>
+
+          <!-- b7 conclusion -->
+          <rect x="70" y="434" width="620" height="62" rx="8" fill="#faf5ff" stroke="#9333ea" stroke-width="2"/>
+          <text x="380" y="456" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#7e22ce">THE STORY</text>
+          <text x="380" y="476" text-anchor="middle" font-size="13.5" font-weight="bold">Astrocyte activation + a complement/inflammation response</text>
+          <text x="380" y="492" text-anchor="middle" font-size="13.5" font-weight="bold">tracks Alzheimer's pathology &mdash; candidate biomarkers &amp; mechanism</text>
+        </svg>
+        <figcaption>The same proteins, followed through the whole pipeline. No single stage tells the story; the power is in the chain. Differential expression finds the suspects, the network shows they act as a team, the trait link ties the team to the disease, and the last two stages reveal <em>what the team does</em> and <em>which cells it comes from</em>.</figcaption>
+      </figure>
+
+      <p>Notice that the conclusion is something <em>no single number</em> could have given you. A volcano plot alone would have left you with a list of proteins and no theme. The modules, the functional labels, and the cell-type map turn a list into an explanation: <em>in these patients, a population of astrocytes appears activated and is mounting a complement-driven inflammatory response that scales with the hallmark pathology.</em> That is a hypothesis a scientist can act on.</p>
+
+      <h3>Reading the result tabs</h3>
+      <p>In the app, the run's results are organised into tabs. Each one is just a window onto a stage you now understand:</p>
+      <table>
+        <thead><tr><th>Tab</th><th>Answers</th><th>What you see</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Overview</strong></td><td>&mdash;</td><td>Headline counts: proteins kept, how many up / down, number of modules, number of enriched terms</td></tr>
+          <tr><td><strong>QC &amp; Normalization</strong></td><td>trust</td><td>Quality-control plots and the before/after of normalization &mdash; sanity-check the data before believing the rest</td></tr>
+          <tr><td><strong>Volcano Plot</strong></td><td>Q1</td><td>The differential-expression table and volcano &mdash; what changed, with fold change and significance</td></tr>
+          <tr><td><strong>Module Network</strong></td><td>Q2</td><td>The WGCNA modules, hub proteins, eigengenes, and the module&ndash;trait heatmap</td></tr>
+          <tr><td><strong>GO Enrichment</strong></td><td>Q3</td><td>Enriched biological processes, functions, and pathways per module</td></tr>
+          <tr><td><strong>Cell Types</strong></td><td>Q4</td><td>The module&times;cell-type enrichment heatmap</td></tr>
+          <tr><td><strong>Tables / Files</strong></td><td>&mdash;</td><td>Every underlying table to download, and a browser of the raw output files</td></tr>
+          <tr><td><strong>Parameters</strong></td><td>&mdash;</td><td>The exact settings used &mdash; your reproducibility record</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Where this is useful</h3>
+      <ul>
+        <li><strong>Biomarker discovery</strong> &mdash; find proteins (and protein teams) that separate patients from controls and track disease severity, e.g. in neurodegeneration with tau/amyloid traits.</li>
+        <li><strong>Mechanism &amp; cell-type implication</strong> &mdash; move beyond &ldquo;what changed&rdquo; to &ldquo;what process, in which cells&rdquo; &mdash; the difference between a list and an explanation.</li>
+        <li><strong>Any two-group proteomics comparison</strong> &mdash; treated vs untreated, responder vs non-responder, timepoint A vs B &mdash; from Olink panels, Spectronaut/PEAKS/DIA-NN/MaxQuant runs, or a generic matrix.</li>
+        <li><strong>Hypothesis generation</strong> &mdash; the modules and enrichments are leads to validate with targeted follow-up experiments.</li>
+      </ul>
+    </section>
+
+    <section class="so-section" id="deep-dive">
+      <h2>11 · Deep dive</h2>
+      <p>Everything above was the &ldquo;what&rdquo; and &ldquo;why.&rdquo; This section adds the &ldquo;exactly how,&rdquo; the assumptions that can bite you, and the formulas &mdash; for readers who want to reason about the methods, not just use them. It is denser by design. Section 12 lists where to read further.</p>
+
+      <h3>11.1 Hypothesis testing, properly</h3>
+      <p>Every significance test shares one logic. You state a <strong>null hypothesis</strong> H&#8320; (&ldquo;this protein does not differ between groups&rdquo;) and an <strong>alternative</strong> H&#8321; (&ldquo;it does&rdquo;). You compute a <strong>test statistic</strong> that summarises the evidence, then ask how surprising that statistic would be <em>if H&#8320; were true</em>. That surprise, expressed as a probability, is the <strong>p-value</strong>.</p>
+      <p>For two groups, the workhorse is the <strong>two-sample t-test</strong>. SignalFold uses the <strong>Welch</strong> variant, which &mdash; unlike Student's original &mdash; does <em>not</em> assume the two groups have equal variance:</p>
+      <div class="so-eqn">t = ( x&#772;&#8321; &minus; x&#772;&#8322; ) / &radic;( s&#8321;&#178;/n&#8321; + s&#8322;&#178;/n&#8322; )
+        <span class="so-where">x&#772; = group mean, s&#178; = group variance, n = group size. Bigger mean-gap &rarr; bigger |t|. More scatter or fewer samples &rarr; smaller |t|. The t value is converted to a p-value via the t-distribution.</span></div>
+      <p>The <strong>Wilcoxon rank-sum (Mann&ndash;Whitney)</strong> alternative discards the raw values and works only with their <em>ranks</em>, testing whether one group's values tend to outrank the other's. It assumes far less (no bell curve) and resists outliers, but with very small samples it can lack the resolution to reach significance at all.</p>
+      <div class="so-callout">
+        <strong class="so-tag">Two errors, and power</strong>
+        <p>A <strong>Type&nbsp;I error</strong> (false positive) is calling a difference real when it isn't &mdash; the rate is the threshold you set (e.g. 0.05). A <strong>Type&nbsp;II error</strong> (false negative) is missing a real difference. <strong>Statistical power</strong> is 1 &minus; the Type&nbsp;II rate: your chance of catching a true effect. Power rises with more replicates, larger effects, and less noise &mdash; which is why replicate count is the single biggest lever on what a study can find.</p>
+      </div>
+
+      <h3>11.2 Multiple testing and the false discovery rate</h3>
+      <p>Run one test at &alpha;&nbsp;=&nbsp;0.05 and your false-positive risk is 5%. Run <em>m</em> independent tests and the chance of at least one false positive is 1&nbsp;&minus;&nbsp;(0.95)<sup>m</sup> &mdash; which is essentially 100% by the time <em>m</em> is in the thousands. There are two philosophies for controlling this:</p>
+      <ul>
+        <li><strong>Family-wise error rate (FWER)</strong> &mdash; control the probability of <em>any</em> false positive. <strong>Bonferroni</strong> does this by testing each hypothesis at &alpha;/m. Safe, but brutally conservative: with m&nbsp;=&nbsp;20,000 you'd need p&nbsp;&lt;&nbsp;0.0000025, burying most real findings.</li>
+        <li><strong>False discovery rate (FDR)</strong> &mdash; control the expected <em>proportion</em> of your declared discoveries that are false. Far more powerful for screening thousands of features, at the cost of tolerating a known, small fraction of mistakes.</li>
+      </ul>
+      <p>SignalFold defaults to the <strong>Benjamini&ndash;Hochberg (BH)</strong> FDR procedure. The rule is simple to state: sort the m p-values ascending, p<sub>(1)</sub> &le; &hellip; &le; p<sub>(m)</sub>; find the largest rank <em>k</em> for which</p>
+      <div class="so-eqn">p<sub>(k)</sub>  &le;  (k / m) &times; &alpha;
+        <span class="so-where">Then reject (call significant) all hypotheses with rank 1&hellip;k. The &ldquo;adjusted p-value&rdquo; or &ldquo;q-value&rdquo; reported per feature is the smallest FDR at which that feature would be called &mdash; convenient because you can threshold it directly at 0.05.</span></div>
+      <p>BH assumes the tests are independent or positively correlated &mdash; generally fine for omics. Note that SignalFold corrects <em>globally</em> within each stage (all module&times;term tests pooled together in Stage&nbsp;2, all module&times;cell-type tests in Stage&nbsp;3), which is the conservative, defensible choice.</p>
+
+      <h3>11.3 Normalization, and what each method quietly assumes</h3>
+      <p>Every normalization encodes a belief about what is &ldquo;technical&rdquo; vs &ldquo;biological.&rdquo; Choosing one is choosing an assumption:</p>
+      <ul>
+        <li><strong>Median / mean</strong> assume a single per-sample <em>shift</em> (location offset) explains the technical difference &mdash; equivalently, that <em>most</em> proteins don't truly change, so the bulk centre should align. Median is the robust form (the breakdown point of the median is 50%; one wild value can't move it).</li>
+        <li><strong>Quantile</strong> assumes every sample should share an <em>identical distribution</em>, not just an identical centre. It is the most aggressive option: extremely effective at removing technical structure, but it will erase a genuine global difference between groups if one exists. Use it when you trust that samples are exchangeable in distribution.</li>
+        <li><strong>Z-score</strong> (per sample) removes both location and scale, re-expressing values in standard-deviation units. This discards absolute-level information and is best when you care about <em>co-variation patterns</em> (as the network does) rather than magnitudes.</li>
+        <li><strong>TIN (total-intensity)</strong> assumes the summed signal per sample should be constant, directly modelling &ldquo;amount loaded.&rdquo; Natural for label-free mass spec; meaningless on an already-log, already-normalized scale like Olink NPX (which is why SignalFold redirects it to median there).</li>
+      </ul>
+      <p>Methods you'll meet elsewhere and may want for harder cases: <strong>VSN</strong> (variance-stabilizing normalization, which also tames the mean&ndash;variance relationship) and <strong>cyclic loess</strong> (which corrects intensity-dependent biases). They are not built in here but are standard further reading.</p>
+
+      <h3>11.4 Ordinary t-tests vs. moderated statistics (limma)</h3>
+      <p>It is worth being precise about what SignalFold's Stage&nbsp;1 actually computes: an <strong>ordinary, per-protein Welch t-test</strong> (or Wilcoxon), each protein tested in isolation, with Benjamini&ndash;Hochberg correction afterwards. This is transparent and makes minimal assumptions, but in the small-sample regime typical of proteomics (say 3&ndash;6 per group) a single protein's variance estimate is itself noisy &mdash; and a protein that happens to look near-constant by chance can earn a spuriously tiny p-value.</p>
+      <p>The most widely used remedy is <strong>limma</strong>'s <strong>empirical-Bayes moderation</strong>. It fits the same linear model per protein but then <em>borrows strength across all proteins</em>: each protein's variance is shrunk toward a global trend, producing a <strong>moderated t-statistic</strong> whose denominator is a compromise between the protein's own scatter and the proteome-wide average. The result is more stable and more powerful when replicates are few, and it is the de-facto standard for differential expression in both transcriptomics and proteomics. If you outgrow plain t-tests, this is the natural next step; the tradeoff is an added modelling assumption (a shared prior on variances).</p>
+
+      <h3>11.5 The mathematics of WGCNA</h3>
+      <p><strong>Adjacency.</strong> From the (robust, bicor) correlation <em>c<sub>ij</sub></em> between proteins i and j, a weighted connection is</p>
+      <div class="so-eqn">unsigned:  a<sub>ij</sub> = | c<sub>ij</sub> |<sup>&beta;</sup>          signed:  a<sub>ij</sub> = ( (1 + c<sub>ij</sub>) / 2 )<sup>&beta;</sup>
+        <span class="so-where">&beta; is the soft-thresholding power (default 8). In a signed network, anti-correlated proteins (c &asymp; &minus;1) map to a &asymp; 0 &mdash; opposite behaviour is treated as &ldquo;not connected.&rdquo;</span></div>
+      <p><strong>Why a power, and why 8?</strong> Raising correlations to a power suppresses weak links far more than strong ones, pushing the network toward <em>scale-free</em> topology &mdash; the empirically observed shape of biological networks, where most proteins have few connections and a handful of hubs have many. The <code>pickSoftThreshold</code> routine scans candidate &beta; values and selects the smallest one whose network's degree distribution fits a scale-free model with R&#178; above a cutoff (SignalFold's auto mode uses 0.8; the default fixed value is 8). The curve below shows the mechanism.</p>
+
+      <figure class="so-diagram">
+        <svg viewBox="0 0 560 360" width="100%" style="max-width: 560px;" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Curves of correlation raised to the power beta, showing weak correlations crushed toward zero">
+          <text x="285" y="24" text-anchor="middle" font-size="13.5" font-weight="bold">Soft-thresholding: weak links vanish, strong links remain</text>
+          <!-- axes -->
+          <line x1="70" y1="60" x2="70" y2="300" stroke="#475569" stroke-width="1.3"/>
+          <line x1="70" y1="300" x2="470" y2="300" stroke="#475569" stroke-width="1.3"/>
+          <!-- ticks -->
+          <g font-size="11.5" fill="#475569">
+            <text x="70" y="318" text-anchor="middle">0</text>
+            <text x="270" y="318" text-anchor="middle">0.5</text>
+            <text x="470" y="318" text-anchor="middle">1.0</text>
+            <text x="64" y="304" text-anchor="end">0</text>
+            <text x="64" y="184" text-anchor="end">0.5</text>
+            <text x="64" y="64" text-anchor="end">1.0</text>
+          </g>
+          <!-- curves -->
+          <polyline points="70,300 470,60" fill="none" stroke="#9ca3af" stroke-width="2"/>
+          <polyline points="70,300 110,300 150,298 190,294 230,285 270,270 310,248 350,218 390,177 430,125 470,60" fill="none" stroke="#2563eb" stroke-width="2.5"/>
+          <polyline points="70,300 110,300 150,300 190,300 230,300 270,299 310,296 350,286 390,260 430,197 470,60" fill="none" stroke="#0d9488" stroke-width="3"/>
+          <!-- legend (upper-left, clear area) -->
+          <line x1="100" y1="86" x2="130" y2="86" stroke="#9ca3af" stroke-width="2"/><text x="136" y="90" font-size="12">&beta; = 1 (raw correlation)</text>
+          <line x1="100" y1="106" x2="130" y2="106" stroke="#2563eb" stroke-width="2.5"/><text x="136" y="110" font-size="12">&beta; = 3</text>
+          <line x1="100" y1="126" x2="130" y2="126" stroke="#0d9488" stroke-width="3"/><text x="136" y="130" font-size="12">&beta; = 8 (default)</text>
+          <!-- annotations -->
+          <text x="250" y="290" text-anchor="middle" font-size="11.5" fill="#0f766e">weak correlations crushed toward 0</text>
+          <text x="412" y="96" text-anchor="middle" font-size="11.5" fill="#0f766e">strong</text>
+          <text x="412" y="110" text-anchor="middle" font-size="11.5" fill="#0f766e">links kept</text>
+          <text x="270" y="340" text-anchor="middle" font-size="12.5" fill="#475569">correlation between two proteins</text>
+          <text x="22" y="180" text-anchor="middle" font-size="12" fill="#475569" transform="rotate(-90 22 180)">connection weight = corr<tspan font-size="9" dy="-4">&beta;</tspan></text>
+        </svg>
+        <figcaption>The same correlation, raised to different powers. At &beta;&nbsp;=&nbsp;8 (teal), a correlation of 0.5 becomes a connection weight of only ~0.004, while 0.9 stays a respectable ~0.43 and 1.0 stays 1.0. The power acts like a noise gate that keeps strong relationships and silences faint ones.</figcaption>
+      </figure>
+
+      <p><strong>Topological overlap.</strong> Direct adjacency is then refined into the Topological Overlap Measure, which rewards shared neighbours:</p>
+      <div class="so-eqn">TOM<sub>ij</sub> = ( &Sigma;<sub>u</sub> a<sub>iu</sub>a<sub>uj</sub> + a<sub>ij</sub> ) / ( min(k<sub>i</sub>, k<sub>j</sub>) + 1 &minus; a<sub>ij</sub> )
+        <span class="so-where">k<sub>i</sub> = total connectivity of protein i (its summed adjacencies). The numerator counts the partners i and j share. Clustering then runs on the dissimilarity <em>1 &minus; TOM</em>.</span></div>
+      <p><strong>From dissimilarity to modules.</strong> Average-linkage hierarchical clustering on (1&nbsp;&minus;&nbsp;TOM) yields a dendrogram; the <strong>Dynamic Tree Cut</strong> algorithm carves it into modules, governed by <code>deepSplit</code> (sensitivity, 0&ndash;4; default 3) and <code>minModuleSize</code> (default 20). Modules whose <strong>eigengenes</strong> are very similar are then merged if their correlation exceeds 1&nbsp;&minus;&nbsp;<code>mergeCutHeight</code> (default merge height 0.30), and an optional PAM step tidies borderline assignments.</p>
+      <p><strong>Eigengene, membership, trait link.</strong> A module's <strong>eigengene (ME)</strong> is the first principal component of its standardized member profiles &mdash; the single direction capturing the most shared variance. <strong>Module membership</strong> is kME<sub>i</sub>&nbsp;=&nbsp;cor(x<sub>i</sub>,&nbsp;ME); high-|kME| proteins are hubs. <strong>Module&ndash;trait</strong> association is just cor(ME,&nbsp;trait), with a p-value from the standard correlation t-test (and the same caution about sample size applies).</p>
+      <div class="so-callout warn">
+        <strong class="so-tag">Parameter sensitivity</strong>
+        <p>Module results move with &beta;, <code>deepSplit</code>, <code>mergeCutHeight</code>, and <code>minModuleSize</code>. There is no single &ldquo;correct&rdquo; setting &mdash; bigger &beta; and bigger min-size give fewer, cleaner modules; higher deepSplit gives more, smaller ones. Treat the defaults as a sensible starting point and confirm that your key module is robust to reasonable changes. Also recall the network is built on up to the 5,000 most-variable proteins for tractability, so very low-variance proteins are absent from modules (they remain &ldquo;grey&rdquo;) even though they were tested for differential expression.</p>
+      </div>
+
+      <h3>11.6 Over-representation: the exact test and its cousins</h3>
+      <p>The enrichment p-value comes from the <strong>hypergeometric distribution</strong> &mdash; the &ldquo;draw without replacement&rdquo; model &mdash; which is exactly the one-sided form of Fisher's exact test. With universe size N, term size K, module size n, and observed overlap a:</p>
+      <div class="so-eqn">P(X = a) = [ C(K, a) &middot; C(N&minus;K, n&minus;a) ] / C(N, n)
+        <span class="so-where">C(&middot;,&middot;) is &ldquo;n-choose-k.&rdquo; The enrichment p-value is the upper tail P(X &ge; a) = &Sigma;<sub>x &ge; a</sub> P(X = x): the chance of an overlap <em>at least</em> this large if the module were a random draw. SignalFold computes the one-sided &ldquo;greater&rdquo; test.</span></div>
+      <p>Being <em>exact</em> (rather than the &chi;&#178; approximation) matters here because overlaps are often tiny &mdash; a handful of genes &mdash; where approximations are unreliable.</p>
+      <ul>
+        <li><strong>ORA vs GSEA.</strong> Over-representation analysis needs a <em>cut</em> list (here, the module membership) and counts overlaps &mdash; it ignores <em>how strongly</em> each protein changed. <strong>Gene Set Enrichment Analysis (GSEA)</strong> instead walks the <em>entire ranked</em> list and detects gene sets that drift coherently toward one end, catching coordinated subtle shifts ORA misses. SignalFold's Stage&nbsp;2 is ORA, applied per module &mdash; a natural fit, since modules are themselves the &ldquo;interesting&rdquo; gene lists.</li>
+        <li><strong>The universe is a real choice.</strong> Using all measured proteins (default) vs the full annotation database changes N, and therefore every p-value. The measured-feature background is the honest one for &ldquo;what's special about this module among proteins we could have seen.&rdquo;</li>
+        <li><strong>Signed z-score (piano-style).</strong> To rank and to draw cross-module heatmaps, SignalFold converts each result to a signed z by running both the &ldquo;greater&rdquo; (enrichment) and &ldquo;less&rdquo; (depletion) tests and mapping the smaller p through the inverse normal, with the sign showing direction. One number then carries both &ldquo;which way&rdquo; and &ldquo;how strongly.&rdquo;</li>
+        <li><strong>Redundancy via Cohen's kappa.</strong> Term gene-sets overlap heavily; &kappa; measures agreement between two sets beyond chance, and terms above a similarity threshold are collapsed to a single representative so the report shows distinct themes rather than twenty rewordings of one.</li>
+      </ul>
+
+      <h3>11.7 Cell-type enrichment: specifics and limits</h3>
+      <p>Mechanically identical to Stage&nbsp;2 &mdash; one-sided Fisher's exact test, global BH&ndash;FDR &mdash; but the gene sets are <strong>cell-type marker lists</strong> and the visual metric is &minus;log&#8321;&#8320;(FDR) (clamped to avoid numerical underflow, since the best overlaps can produce astronomically small p-values).</p>
+      <ul>
+        <li><strong>Enrichment, not proportions.</strong> This identifies which cell-type signatures are over-represented in a module. It does <em>not</em> estimate the fraction of each cell type in your sample. For true proportion estimates you need dedicated <strong>deconvolution</strong> methods (e.g. reference-based regression like CIBERSORT), which are a different tool for a different question &mdash; good further reading if percentages are what you need.</li>
+        <li><strong>The universe definition bites here.</strong> How duplicate gene names are counted (&ldquo;allow&rdquo; vs &ldquo;collapse&rdquo;) changes the effective N and can shift p-values by many orders of magnitude. SignalFold exposes this as a setting precisely because it is consequential; the default reproduces the established reference behaviour.</li>
+        <li><strong>Reference dependence.</strong> The built-in markers are curated for <em>brain</em> cell types. Applied to another tissue without swapping the marker file, the map is meaningless &mdash; not wrong-looking, just uninformative. Supply tissue-matched markers for non-brain work.</li>
+      </ul>
+
+      <h3>11.8 The assumptions that can bite &mdash; a checklist</h3>
+      <div class="so-callout warn">
+        <strong class="so-tag">Read before you over-trust a result</strong>
+        <p>None of these invalidate the pipeline; they are the conditions under which its outputs mean what you think.</p>
+      </div>
+      <ul>
+        <li><strong>Correlation is not causation.</strong> Modules, hubs, and trait links are associations. A hub is a strong lead, never a proven driver.</li>
+        <li><strong>Batch effects are your responsibility.</strong> Normalization removes simple per-sample offsets, but if your two groups were run on different days/instruments/batches, that confound can masquerade as biology. (Covariate/batch correction exists in the design but is gated off by default.) Randomise and record batch up front.</li>
+        <li><strong>Missing values are filtered, not modelled.</strong> Proteins too sparsely measured are dropped rather than imputed. That is conservative and safe, but a protein absent in <em>one whole group</em> (biologically real on/off behaviour) can be filtered out before it's ever tested.</li>
+        <li><strong>Small samples limit everything.</strong> t-tests, correlations, and module stability all degrade with few replicates. With n of 3&ndash;4 per group, read results as hypotheses.</li>
+        <li><strong>Multiplicity is controlled within, not across, stages.</strong> Each stage's FDR is internally valid; the pipeline does not apply one grand correction spanning DE + GO + cell type. Interpret the whole as an integrated <em>discovery</em> workflow, not a single confirmatory test.</li>
+        <li><strong>Discovery &ne; validation.</strong> Everything here generates hypotheses from one dataset. Confirming them needs an independent cohort or a targeted experiment &mdash; the scientific non-negotiable.</li>
+        <li><strong>Identity hygiene matters.</strong> Gene-symbol cleanup is essential but imperfect; a mis-mapped or split identifier silently distorts counts in every enrichment. Spot-check that your key proteins carry the names you expect.</li>
+      </ul>
+
+      <h3>11.9 Every knob, in one place</h3>
+      <p>The settings you can change before a run, grouped by the stage they affect, with SignalFold's default. The defaults are deliberately conservative &mdash; a sensible run needs none of them touched.</p>
+      <table>
+        <thead><tr><th>Setting</th><th>Default</th><th>What it controls</th></tr></thead>
+        <tbody>
+          <tr><th colspan="3">Cleaning &amp; QC</th></tr>
+          <tr><td>Normalization method</td><td><strong>median</strong></td><td>How samples are made comparable (median / mean / quantile / z-score / TIN / none)</td></tr>
+          <tr><td>Missing-value threshold</td><td>0.5</td><td>Max fraction of samples a protein may be blank in</td></tr>
+          <tr><td>Min samples present</td><td>3</td><td>Fewest real measurements a protein needs to be kept</td></tr>
+          <tr><td>Log handling</td><td>auto</td><td>Apply log&#8322;(x+1) to raw-scale data; skipped if already logged</td></tr>
+          <tr><td>Outlier Z-threshold / mode</td><td>3.0 / low-connectivity</td><td>Flags samples poorly connected to the rest for optional review</td></tr>
+
+          <tr><th colspan="3">Differential expression (Q1)</th></tr>
+          <tr><td>Statistical test</td><td><strong>t-test</strong></td><td>Welch t-test or Wilcoxon rank-sum</td></tr>
+          <tr><td>p-value threshold</td><td>0.05</td><td>Significance cutoff</td></tr>
+          <tr><td>Fold-change threshold</td><td>1.5&times;</td><td>Minimum magnitude to call a change</td></tr>
+          <tr><td>Use BH-adjusted p (FDR)</td><td>on</td><td>Threshold on corrected rather than raw p-values</td></tr>
+          <tr><td>Multiple-testing method</td><td>fdr_bh</td><td>Benjamini&ndash;Hochberg, or Bonferroni</td></tr>
+
+          <tr><th colspan="3">Co-expression network / WGCNA (Q2)</th></tr>
+          <tr><td>Soft power &beta;</td><td><strong>8</strong></td><td>Exponent that emphasises strong correlations</td></tr>
+          <tr><td>Power mode / auto cutoff</td><td>fixed / 0.8</td><td>Use the fixed &beta;, or auto-pick by scale-free fit R&#178;</td></tr>
+          <tr><td>Correlation type</td><td>bicor</td><td>Robust biweight midcorrelation, or Pearson</td></tr>
+          <tr><td>Network type / TOM type</td><td>signed / signed</td><td>Whether direction of co-movement matters</td></tr>
+          <tr><td>Min module size</td><td>20</td><td>Smallest allowed module</td></tr>
+          <tr><td>Deep split</td><td>3</td><td>Cluster-cutting sensitivity (0&ndash;4)</td></tr>
+          <tr><td>Merge cut height</td><td>0.30</td><td>How aggressively similar modules are merged</td></tr>
+          <tr><td>PAM stage</td><td>on</td><td>Tidy borderline protein assignments</td></tr>
+
+          <tr><th colspan="3">GO / functional enrichment (Q3)</th></tr>
+          <tr><td>GO categories</td><td>BP + MF + CC</td><td>Which ontology branches to test</td></tr>
+          <tr><td>FDR threshold</td><td>0.05</td><td>Significance cutoff for terms</td></tr>
+          <tr><td>Min hits per term</td><td>3</td><td>Skip terms with too few measurable genes</td></tr>
+          <tr><td>Background</td><td>measured features</td><td>Universe = measured proteins, or the whole database</td></tr>
+          <tr><td>Redundancy removal</td><td>kappa</td><td>Collapse near-duplicate terms (Cohen's kappa)</td></tr>
+
+          <tr><th colspan="3">Cell-type enrichment (Q4)</th></tr>
+          <tr><td>Reference</td><td>human (Sharma/Zhang union)</td><td>Marker set: human or mouse (or upload your own)</td></tr>
+          <tr><td>Duplicate handling</td><td>allow</td><td>Whether repeated gene names inflate the universe</td></tr>
+
+          <tr><th colspan="3">Design</th></tr>
+          <tr><td>Cohort 1 / Cohort 2</td><td>Control / Disease</td><td>Names of the two groups being compared</td></tr>
+        </tbody>
+      </table>
+
+      <h3>11.10 Glossary</h3>
+      <dl class="so-glossary">
+        <dt>Abundance / expression</dt><dd>How much of a protein is present. The quantity every stage reasons about.</dd>
+        <dt>Proteome</dt><dd>The full set of proteins present in a sample.</dd>
+        <dt>Peptide</dt><dd>A fragment of a protein; what mass spectrometers actually measure.</dd>
+        <dt>Feature</dt><dd>SignalFold's neutral word for &ldquo;a row&rdquo; &mdash; a protein or a peptide.</dd>
+        <dt>Cohort</dt><dd>One of the two groups being compared (e.g. Control, Disease).</dd>
+        <dt>Replicate</dt><dd>A repeated sample within a group; the basis of statistical confidence.</dd>
+        <dt>Trait</dt><dd>An optional clinical measurement per sample (age, tau, a severity score).</dd>
+        <dt>Normalization</dt><dd>Adjusting samples to be fairly comparable by removing technical offsets.</dd>
+        <dt>log&#8322; fold change</dt><dd>Size and direction of a change on a log&#8322; scale; +1 = doubled.</dd>
+        <dt>p-value</dt><dd>Probability that chance alone would produce a result this extreme if nothing were truly different.</dd>
+        <dt>FDR / q-value</dt><dd>p-value adjusted for testing many features; the expected false fraction among your hits.</dd>
+        <dt>t-test / Wilcoxon</dt><dd>Tests for whether two groups differ &mdash; by means (t) or by ranks (Wilcoxon).</dd>
+        <dt>Volcano plot</dt><dd>Scatter of fold change (x) vs significance (y); hits sit up and to the sides.</dd>
+        <dt>WGCNA</dt><dd>Weighted Gene Co-expression Network Analysis &mdash; groups co-moving proteins into modules.</dd>
+        <dt>bicor</dt><dd>Biweight midcorrelation: a robust, outlier-resistant correlation.</dd>
+        <dt>Soft power (&beta;)</dt><dd>Exponent applied to correlations to mute weak links and keep strong ones.</dd>
+        <dt>Scale-free</dt><dd>A network shape with a few highly-connected hubs and many sparsely-connected nodes.</dd>
+        <dt>TOM</dt><dd>Topological Overlap Measure: closeness based on shared neighbours, not just direct correlation.</dd>
+        <dt>Module</dt><dd>A colour-named group of proteins that move together.</dd>
+        <dt>Eigengene</dt><dd>A module's single representative profile (its first principal component).</dd>
+        <dt>kME / hub</dt><dd>How tightly a protein follows its module; high-kME proteins are hubs.</dd>
+        <dt>Gene Ontology (GO)</dt><dd>A curated catalogue of protein jobs: Biological Process, Molecular Function, Cellular Component.</dd>
+        <dt>Over-representation / Fisher's exact</dt><dd>Testing whether a group contains more members of a category than chance predicts.</dd>
+        <dt>Background / universe</dt><dd>The reference set enrichment is measured against (here, measured proteins).</dd>
+        <dt>GSEA</dt><dd>An alternative enrichment method that uses the full ranked list, not a cut membership list.</dd>
+        <dt>Marker gene</dt><dd>A protein characteristically abundant in one cell type; a cell-type name tag.</dd>
+        <dt>NPX</dt><dd>Olink's relative, log&#8322;-scaled protein-abundance unit.</dd>
+        <dt>GMT</dt><dd>A simple file format listing gene sets (a term name followed by its genes).</dd>
+      </dl>
+
+    </section>
+
+    <section class="so-section" id="references">
+      <h2>12 · References &amp; further reading</h2>
+      <p>The methods in SignalFold are standard, well-documented techniques. Below are the primary sources and the friendliest tutorials for each, so you can go as deep as you like. If you are starting cold, begin with the &ldquo;start here&rdquo; picks.</p>
+
+      <div class="so-callout ok">
+        <strong class="so-tag">Start here (gentle, visual)</strong>
+        <p>StatQuest's short videos on p-values, FDR, and PCA (<a href="https://statquest.org/">statquest.org</a>) &middot; the Gene Ontology site's overview (<a href="https://geneontology.org/docs/ontology-documentation/">geneontology.org</a>) &middot; the WGCNA R tutorial (<a href="https://bioinformaticsworkbook.org/tutorials/wgcna.html">bioinformaticsworkbook.org</a>) &middot; the clusterProfiler enrichment book (<a href="https://yulab-smu.top/biomedical-knowledge-mining-book/02-Enrichment.html">yulab-smu.top</a>).</p>
+      </div>
+
+      <h3>Differential expression &amp; statistics</h3>
+      <ul>
+        <li><strong>Benjamini, Y. &amp; Hochberg, Y. (1995).</strong> Controlling the False Discovery Rate. <em>J. R. Statist. Soc. B</em> 57(1):289&ndash;300. The paper that introduced FDR. <a href="https://rss.onlinelibrary.wiley.com/doi/10.1111/j.2517-6161.1995.tb02031.x">Wiley</a> &middot; plain-English overview: <a href="https://en.wikipedia.org/wiki/False_discovery_rate">Wikipedia: False discovery rate</a>.</li>
+        <li><strong>Ritchie, M. E. et al. (2015).</strong> limma powers differential expression analyses&hellip; <em>Nucleic Acids Research</em> 43(7):e47. The standard moderated-statistics (empirical Bayes) approach &mdash; the natural step beyond plain t-tests. <a href="https://academic.oup.com/nar/article/43/7/e47/2414268">NAR</a>.</li>
+        <li><strong>Welch's t-test &amp; the Wilcoxon rank-sum test</strong> &mdash; the two tests SignalFold offers; any introductory statistics text covers them. Friendly version: StatQuest on <a href="https://statquest.org/">p-values and t-tests</a>.</li>
+        <li><strong>Volcano plots in proteomics</strong> &mdash; how to read fold change vs significance: <a href="https://biologyinsights.com/proteomics-volcano-plot-analysis-key-points-to-know/">Biology Insights</a>.</li>
+      </ul>
+
+      <h3>Normalization</h3>
+      <ul>
+        <li><strong>Olink NPX</strong> &mdash; what the unit means and how it is normalized: <a href="https://cran.r-project.org/web/packages/OlinkAnalyze/vignettes/Vignett.html">OlinkAnalyze vignette (CRAN)</a>.</li>
+        <li><strong>Bolstad, B. M. et al. (2003)</strong> on quantile normalization, and <strong>Huber, W. et al. (2002)</strong> on variance-stabilizing normalization (VSN) &mdash; classic references for the more aggressive normalization options and their alternatives.</li>
+        <li><strong>Proteomics data analysis in R/Bioconductor</strong> &mdash; a practical, soup-to-nuts tutorial covering normalization and testing: <a href="https://pnnl-comp-mass-spec.github.io/proteomics-data-analysis-tutorial/">PNNL tutorial</a>.</li>
+      </ul>
+
+      <h3>Co-expression networks (WGCNA)</h3>
+      <ul>
+        <li><strong>Langfelder, P. &amp; Horvath, S. (2008).</strong> WGCNA: an R package for weighted correlation network analysis. <em>BMC Bioinformatics</em> 9:559. The package paper. Overview: <a href="https://en.wikipedia.org/wiki/Weighted_correlation_network_analysis">Wikipedia: Weighted correlation network analysis</a>.</li>
+        <li><strong>Zhang, B. &amp; Horvath, S. (2005).</strong> A General Framework for Weighted Gene Co-Expression Network Analysis. <em>Stat. Appl. Genet. Mol. Biol.</em> 4:Article 17. The theory of adjacency, TOM, and modules.</li>
+        <li><strong>Langfelder, P. &amp; Horvath, S. (2012).</strong> Fast R Functions for Robust Correlations and Hierarchical Clustering. <em>J. Stat. Softw.</em> 46(11). The basis for the biweight midcorrelation (bicor).</li>
+        <li><strong>Tutorials</strong> &mdash; step-by-step walkthroughs: <a href="https://bioinformaticsworkbook.org/tutorials/wgcna.html">Bioinformatics Workbook</a> and the original <a href="https://gds-yazarlab.bilkent.edu.tr/wp-content/uploads/GBMTutorialHorvath.pdf">Horvath-lab WGCNA tutorial (PDF)</a>.</li>
+      </ul>
+
+      <h3>Gene Ontology &amp; enrichment</h3>
+      <ul>
+        <li><strong>Ashburner, M. et al. / The Gene Ontology Consortium (2000).</strong> Gene Ontology: tool for the unification of biology. <em>Nature Genetics</em> 25:25&ndash;29. The foundation of GO. Living resource: <a href="https://geneontology.org/">geneontology.org</a>.</li>
+        <li><strong>Over-representation analysis</strong> &mdash; the Fisher's-exact / hypergeometric method, clearly explained with examples: <a href="https://yulab-smu.top/clusterProfiler-book/chapter2.html">clusterProfiler book, ch.2</a>.</li>
+        <li><strong>Subramanian, A. et al. (2005).</strong> Gene Set Enrichment Analysis. <em>PNAS</em> 102(43):15545&ndash;15550. The ranked-list alternative to ORA, for when magnitude matters.</li>
+      </ul>
+
+      <h3>Cell-type markers &amp; deconvolution</h3>
+      <ul>
+        <li><strong>Franz&eacute;n, O. et al. (2019).</strong> PanglaoDB: a web server for exploration of single-cell RNA-seq data. <em>Database</em>. A major source of cell-type markers. <a href="https://panglaodb.se/">panglaodb.se</a> &middot; <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6450036/">PMC</a>.</li>
+        <li><strong>Hu, C. et al. (2023).</strong> CellMarker 2.0: a curated database of cell markers. <em>Nucleic Acids Research</em> 51(D1):D870. <a href="https://academic.oup.com/nar/article/51/D1/D870/6775381">NAR</a>.</li>
+        <li><strong>Reference-based deconvolution</strong> (e.g. CIBERSORT) &mdash; the family of methods to consult if you need cell-type <em>proportions</em> rather than enrichment.</li>
+      </ul>
+
+      <div class="so-callout plain">
+        <strong class="so-tag">Provenance</strong>
+        <p>The method choices, parameter names, and defaults described here were read directly from the running SignalFold pipeline as of the review date at the top of this page. If the application is updated, treat the source code as the source of truth and refresh this document accordingly. This tutorial intentionally covers only the scientific pipeline (cleaning, differential expression, co-expression, GO enrichment, and cell-type enrichment); the AI Insights chat feature is out of scope.</p>
+      </div>
+    </section>
+
+
+  </main>
+
+  <nav class="so-toc">
+    <h4>Contents</h4>
+    <ul>
+      <li><a href="#orientation">How to read this</a></li>
+      <li><a href="#big-picture">1 · The big picture</a></li>
+      <li><a href="#biology-primer">2 · Biology from zero</a></li>
+      <li><a href="#the-data">3 · The raw material: your data</a></li>
+      <li><a href="#cleaning">4 · Cleaning the data (ETL)</a></li>
+      <li><a href="#normalization">5 · Normalization</a></li>
+      <li><a href="#differential-expression">6 · Differential expression</a></li>
+      <li><a href="#coexpression">7 · Co-expression networks</a></li>
+      <li><a href="#go-enrichment">8 · Functional enrichment (GO)</a></li>
+      <li><a href="#cell-types">9 · Cell-type enrichment</a></li>
+      <li><a href="#worked-example">10 · A worked example</a></li>
+      <li><a href="#deep-dive">11 · Deep dive</a></li>
+      <li><a href="#references">12 · References &amp; reading</a></li>
+    </ul>
+  </nav>
+</div>
+
+<div class="so-lightbox" id="so-lightbox">
+  <div class="so-lightbox-stage">
+    <button class="so-lightbox-close" type="button">Close &#10005;</button>
+  </div>
+</div>
+
+<script>
+(() => {
+  const root = document.documentElement;
+  const stored = localStorage.getItem('so-theme');
+  if (stored) root.dataset.theme = stored;
+  const themeBtn = document.getElementById('so-theme');
+  if (themeBtn) themeBtn.addEventListener('click', () => {
+    const next = root.dataset.theme === 'dark' ? 'light' : 'dark';
+    root.dataset.theme = next;
+    localStorage.setItem('so-theme', next);
+  });
+
+  const lb = document.getElementById('so-lightbox');
+  const stage = lb && lb.querySelector('.so-lightbox-stage');
+  document.querySelectorAll('.so-diagram').forEach(fig => {
+    fig.addEventListener('click', () => {
+      const svg = fig.querySelector('svg');
+      if (!svg || !stage) return;
+      const clone = svg.cloneNode(true);
+      clone.removeAttribute('style');
+      stage.querySelectorAll('svg').forEach(s => s.remove());
+      stage.appendChild(clone);
+      lb.classList.add('open');
+    });
+  });
+  const close = () => lb && lb.classList.remove('open');
+  if (lb) lb.addEventListener('click', e => {
+    if (e.target === lb || e.target.classList.contains('so-lightbox-close')) close();
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+
+  document.querySelectorAll('pre').forEach(pre => {
+    const btn = document.createElement('button');
+    btn.className = 'so-copy';
+    btn.type = 'button';
+    btn.textContent = 'Copy';
+    btn.addEventListener('click', async () => {
+      const text = pre.querySelector('code')?.innerText ?? pre.innerText;
+      await navigator.clipboard.writeText(text);
+      btn.textContent = 'Copied'; btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1500);
+    });
+    pre.appendChild(btn);
+  });
+
+  const toc = document.querySelector('.so-toc');
+  if (toc) {
+    const headings = [...document.querySelectorAll('main section[id]')];
+    const links = new Map();
+    headings.forEach(h => {
+      const a = toc.querySelector('a[href="#' + h.id + '"]');
+      if (a) links.set(h.id, a);
+    });
+    const setActive = id => {
+      const a = links.get(id);
+      if (!a) return;
+      links.forEach(l => l.classList.remove('active'));
+      a.classList.add('active');
+    };
+    let ticking = false;
+    const updateActive = () => {
+      ticking = false;
+      const probeY = window.innerHeight * 0.35;
+      const current = headings.filter(h => h.getBoundingClientRect().top <= probeY).pop() || headings[0];
+      if (current) setActive(current.id);
+    };
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (!e.isIntersecting) return;
+        setActive(e.target.id);
+      });
+    }, { rootMargin: '-20% 0px -70% 0px' });
+    headings.forEach(h => obs.observe(h));
+    window.addEventListener('scroll', () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(updateActive);
+    }, { passive: true });
+    updateActive();
+  }
+})();
+</script>
+</body>
+</html>

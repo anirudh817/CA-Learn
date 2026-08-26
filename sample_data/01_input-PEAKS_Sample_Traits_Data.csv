@@ -1,0 +1,61 @@
+SAMPLE_ID,GROUP,Unnamed: 0,BATCH
+Control A01,Control,Area.Control.A01,Batch1
+Control A07,Control,Area.Control.A07,Batch1
+Control A08,Control,Area.Control.A08,Batch1
+Control B02,Control,Area.Control.B02,Batch1
+Control B06,Control,Area.Control.B06,Batch1
+Control C01,Control,Area.Control.C01,Batch1
+Control C02,Control,Area.Control.C02,Batch1
+Control C03,Control,Area.Control.C03,Batch1
+Control C06,Control,Area.Control.C06,Batch1
+Control C07,Control,Area.Control.C07,Batch1
+Control C08,Control,Area.Control.C08,Batch1
+Control C09,Control,Area.Control.C09,Batch1
+Control C10,Control,Area.Control.C10,Batch1
+Control C11,Control,Area.Control.C11,Batch1
+Control C12,Control,Area.Control.C12,Batch1
+Control D01,Control,Area.Control.D01,Batch1
+Control D02,Control,Area.Control.D02,Batch1
+Control D03,Control,Area.Control.D03,Batch1
+Control D04,Control,Area.Control.D04,Batch1
+Control D05,Control,Area.Control.D05,Batch1
+Control D06,Control,Area.Control.D06,Batch1
+Control D07,Control,Area.Control.D07,Batch1
+Control D10,Control,Area.Control.D10,Batch1
+Control D11,Control,Area.Control.D11,Batch1
+Control D12,Control,Area.Control.D12,Batch1
+Control E01,Control,Area.Control.E01,Batch1
+Control E02,Control,Area.Control.E02,Batch1
+Control E03,Control,Area.Control.E03,Batch1
+Control E04,Control,Area.Control.E04,Batch1
+Control E05,Control,Area.Control.E05,Batch1
+Control E06,Control,Area.Control.E06,Batch1
+Disease | Area.AD.A02,Disease,Area.AD.A02,Batch1
+Disease | Area.AD.A03,Disease,Area.AD.A03,Batch1
+Disease | Area.AD.A04,Disease,Area.AD.A04,Batch1
+Disease | Area.AD.A05,Disease,Area.AD.A05,Batch1
+Disease | Area.AD.A06,Disease,Area.AD.A06,Batch1
+Disease | Area.AD.A09,Disease,Area.AD.A09,Batch1
+Disease | Area.AD.A10,Disease,Area.AD.A10,Batch1
+Disease | Area.AD.A11,Disease,Area.AD.A11,Batch1
+Disease | Area.AD.A12,Disease,Area.AD.A12,Batch1
+Disease | Area.AD.B01,Disease,Area.AD.B01,Batch1
+Disease | Area.AD.B03,Disease,Area.AD.B03,Batch1
+Disease | Area.AD.B04,Disease,Area.AD.B04,Batch1
+Disease | Area.AD.B05,Disease,Area.AD.B05,Batch1
+Disease | Area.AD.B07,Disease,Area.AD.B07,Batch1
+Disease | Area.AD.B08,Disease,Area.AD.B08,Batch1
+Disease | Area.AD.B09,Disease,Area.AD.B09,Batch1
+Disease | Area.AD.B10R2,Disease,Area.AD.B10R2,Batch1
+Disease | Area.AD.B11,Disease,Area.AD.B11,Batch1
+Disease | Area.AD.B12,Disease,Area.AD.B12,Batch1
+Disease | Area.AD.C04,Disease,Area.AD.C04,Batch1
+Disease | Area.AD.C05,Disease,Area.AD.C05,Batch1
+Disease | Area.AD.D08,Disease,Area.AD.D08,Batch1
+Disease | Area.AD.D09,Disease,Area.AD.D09,Batch1
+Disease | Area.AD.E07,Disease,Area.AD.E07,Batch1
+Disease | Area.AD.E08,Disease,Area.AD.E08,Batch1
+Disease | Area.AD.E09,Disease,Area.AD.E09,Batch1
+Disease | Area.AD.E10,Disease,Area.AD.E10,Batch1
+Disease | Area.AD.E11,Disease,Area.AD.E11,Batch1
+Disease | Area.AD.E12,Disease,Area.AD.E12,Batch1

@@ -1,0 +1,2 @@
+"""ProteomicsAI application package."""
+

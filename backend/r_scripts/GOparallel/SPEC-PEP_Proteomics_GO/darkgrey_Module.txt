@@ -1,0 +1,5 @@
+GeneSymbol	SystemCode
+HBZ	Sy
+HBD	Sy
+HBB	Sy
+HBA2	Sy

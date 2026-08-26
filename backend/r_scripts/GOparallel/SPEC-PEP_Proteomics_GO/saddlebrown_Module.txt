@@ -1,0 +1,4 @@
+GeneSymbol	SystemCode
+ERN1	Sy
+HP	Sy
+HPR	Sy

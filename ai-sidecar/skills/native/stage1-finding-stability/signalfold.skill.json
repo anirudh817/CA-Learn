@@ -1,0 +1,31 @@
+{
+  "id": "stage1-finding-stability",
+  "catalogVersion": "1.0.0",
+  "label": "Stage 1 Finding Stability",
+  "kind": "native",
+  "description": "Test whether an approved Stage 1 differential-expression finding survives a declared adjusted-p threshold sweep. Use for robustness or threshold-sensitivity questions, not merely because it is available.",
+  "source": {"storage": "repository", "revision": "signalfold-native-v1", "license": "SignalFold repository license"},
+  "provider": {"type": "signalfold-pipeline", "implementation": "native/stage1-finding-stability"},
+  "entrypoints": [{
+    "id": "threshold-sweep",
+    "summary": "Sweep the adjusted-p cutoffs over the frozen differential-expression table and report how many features pass each.",
+    "network": {"policy": "none"},
+    "resources": {"cpu": 1, "memoryMb": 256, "timeoutSec": 60},
+    "deterministic": true,
+    "params": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["thresholds"],
+      "properties": {
+        "thresholds": {
+          "type": "array",
+          "items": {"type": "number"},
+          "minItems": 1,
+          "default": [0.01, 0.05, 0.1],
+          "description": "Adjusted p-value cutoffs to sweep, each between 0 and 1."
+        }
+      },
+      "examples": [{"thresholds": [0.01, 0.05, 0.1]}]
+    }
+  }]
+}

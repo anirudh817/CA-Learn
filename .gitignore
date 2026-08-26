@@ -1,0 +1,24 @@
+__pycache__/
+.DS_Store
+instance/
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+data/
+exports/
+.claude/
+*.log
+.venv/
+venv/
+*.egg-info/
+node_modules/
+.env
+.env.local
+.env.*.local
+!.env.example
+ai-sidecar/.env
+ai-sidecar/.ai-sidecar.pid
+ai-sidecar/ai-sidecar.log
+# Per-deployment egress CA + leaf certs (CA private key — never commit)
+ai-sidecar/docker/.egress-certs/

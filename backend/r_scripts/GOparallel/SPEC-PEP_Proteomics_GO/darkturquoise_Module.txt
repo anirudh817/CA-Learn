@@ -1,0 +1,17 @@
+GeneSymbol	SystemCode
+CP	Sy
+F2	Sy
+CFB	Sy
+KNG1	Sy
+IGHA1	Sy
+FGA	Sy
+FGG	Sy
+ALB	Sy
+GC	Sy
+A1BG	Sy
+C8B	Sy
+AFM	Sy
+GPLD1	Sy
+ITIH4	Sy
+PCOLCE	Sy
+CPB2	Sy

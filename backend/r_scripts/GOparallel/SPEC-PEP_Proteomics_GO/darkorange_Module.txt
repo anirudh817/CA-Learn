@@ -1,0 +1,13 @@
+GeneSymbol	SystemCode
+PLG	Sy
+CFB	Sy
+ALB	Sy
+GC	Sy
+CFI	Sy
+C8A	Sy
+C8B	Sy
+C8G	Sy
+C6	Sy
+SERPINA4	Sy
+ITIH4	Sy
+CPB2	Sy

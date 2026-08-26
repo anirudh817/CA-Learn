@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ProteomicsAI — Intelligent Proteomics Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<style>
+/* ═══════════════════════════════════════════════════════ DESIGN TOKENS */
+:root {
+  --bg:          #f5f2ee;
+  --bg-card:     #ffffff;
+  --bg-subtle:   #ede9e3;
+  --bg-input:    #f9f7f4;
+  --border:      #ddd8d0;
+  --border-focus:#a89880;
+  --primary:     #7c5c3e;
+  --primary-hover:#5f4530;
+  --primary-lt:  #a07850;
+  --accent:      #4a7c6f;
+  --accent-lt:   #6aab9c;
+  --danger:      #c0392b;
+  --warning:     #b7820a;
+  --success:     #2e7d5a;
+  --text:        #2a2420;
+  --text-muted:  #7a6e65;
+  --text-light:  #a89e95;
+  --radius:      10px;
+  --radius-sm:   6px;
+  --shadow-sm:   0 1px 3px rgba(60,40,20,0.09), 0 1px 2px rgba(60,40,20,0.06);
+  --shadow:      0 4px 12px rgba(60,40,20,0.10), 0 2px 4px rgba(60,40,20,0.06);
+  --shadow-lg:   0 12px 32px rgba(60,40,20,0.12), 0 4px 8px rgba(60,40,20,0.06);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.5;}
+button{font-family:'Inter',sans-serif;cursor:pointer;}
+a{color:var(--primary);text-decoration:none;}
+.page{display:none;padding-top:60px;min-height:100vh;}
+.page.active{display:block;animation:fadeIn 0.25s ease;}
+.container{max-width:1280px;margin:0 auto;padding:2.5rem 2rem;}
+.container-wide{max-width:1540px;margin:0 auto;padding:2.5rem 2rem;}
+nav{position:fixed;top:0;left:0;right:0;z-index:1000;height:60px;background:var(--bg-card);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 2rem;gap:2rem;box-shadow:var(--shadow-sm);}
+.nav-logo{font-size:1.05rem;font-weight:700;color:var(--primary);display:flex;align-items:center;gap:0.5rem;letter-spacing:-0.02em;white-space:nowrap;}
+.nav-logo i{color:var(--accent);}
+.nav-links{display:flex;gap:0.25rem;flex:1;}
+.nav-link{padding:0.35rem 0.85rem;border-radius:var(--radius-sm);font-size:0.8rem;font-weight:500;color:var(--text-muted);border:none;background:transparent;transition:all 0.2s;cursor:pointer;}
+.nav-link:hover{background:var(--bg-subtle);color:var(--text);}
+.nav-link.active{background:var(--primary);color:#fff;}
+.nav-right{display:flex;align-items:center;gap:0.75rem;margin-left:auto;}
+.nav-pill{display:flex;align-items:center;gap:0.4rem;background:var(--bg-subtle);border:1px solid var(--border);border-radius:20px;padding:0.3rem 0.85rem;font-size:0.75rem;font-weight:600;color:var(--text-muted);}
+.status-dot{width:7px;height:7px;border-radius:50%;background:#2e7d5a;}
+.page-title{font-size:1.5rem;font-weight:700;letter-spacing:-0.02em;color:var(--text);margin-bottom:0.35rem;}
+.page-sub{font-size:0.875rem;color:var(--text-muted);margin-bottom:2rem;}
+.section-label{font-size:0.7rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:0.75rem;}
+.btn{display:inline-flex;align-items:center;gap:0.45rem;padding:0.55rem 1.1rem;border-radius:var(--radius-sm);font-size:0.83rem;font-weight:600;border:1px solid transparent;transition:all 0.2s;cursor:pointer;}
+.btn-primary{background:var(--primary);color:#fff;border-color:var(--primary);}
+.btn-primary:hover{background:var(--primary-hover);border-color:var(--primary-hover);box-shadow:var(--shadow-sm);}
+.btn-accent{background:var(--accent);color:#fff;border-color:var(--accent);}
+.btn-accent:hover{background:#3a6b5e;border-color:#3a6b5e;}
+.btn-outline{background:transparent;color:var(--primary);border-color:var(--border);}
+.btn-outline:hover{background:var(--bg-subtle);border-color:var(--border-focus);}
+.btn-ghost{background:transparent;color:var(--text-muted);border:none;padding:0.4rem 0.75rem;}
+.btn-ghost:hover{background:var(--bg-subtle);color:var(--text);}
+.btn-sm{padding:0.35rem 0.75rem;font-size:0.78rem;}
+.btn-lg{padding:0.75rem 1.75rem;font-size:0.95rem;}
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);}
+.card-pad{padding:1.5rem;}
+.card:hover{box-shadow:var(--shadow);}
+.card-header{padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.card-body{padding:1.5rem;}
+.form-group{margin-bottom:1.25rem;}
+.form-label{display:block;font-size:0.78rem;font-weight:600;color:var(--text-muted);margin-bottom:0.4rem;}
+.form-control{width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.6rem 0.9rem;font-family:'Inter',sans-serif;font-size:0.875rem;color:var(--text);outline:none;transition:border-color 0.2s,box-shadow 0.2s;}
+.form-control:focus{border-color:var(--border-focus);box-shadow:0 0 0 3px rgba(124,92,62,0.08);}
+select.form-control{-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237a6e65'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:2rem;}
+input[type=range]{width:100%;accent-color:var(--primary);height:4px;}
+input[type=number].form-control{max-width:120px;}
+.form-hint{font-size:0.72rem;color:var(--text-muted);margin-top:0.3rem;}
+.toggle-wrap{display:flex;align-items:center;justify-content:space-between;gap:0.9rem;font-size:0.85rem;cursor:pointer;width:100%;min-height:40px;}
+.toggle-label{display:flex;flex-direction:column;gap:0.18rem;min-width:0;}
+.toggle-title{font-size:0.83rem;font-weight:600;color:var(--text);}
+.toggle-help{font-size:0.72rem;color:var(--text-muted);line-height:1.45;}
+.toggle{position:relative;width:36px;height:20px;flex-shrink:0;}
+.toggle input{opacity:0;width:0;height:0;}
+.toggle-track{position:absolute;inset:0;background:var(--border);border-radius:20px;transition:all 0.2s;}
+.toggle input:checked~.toggle-track{background:var(--primary);}
+.toggle-thumb{position:absolute;left:3px;top:3px;width:14px;height:14px;background:#fff;border-radius:50%;transition:all 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.15);}
+.toggle input:checked~.toggle-thumb{transform:translateX(16px);}
+.check-row{display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-size:0.85rem;}
+.check-row input[type=checkbox]{accent-color:var(--primary);width:14px;height:14px;}
+.accordion{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:0.75rem;}
+.accordion summary{list-style:none;padding:1rem 1.25rem;background:var(--bg-card);display:flex;align-items:center;justify-content:space-between;font-weight:600;font-size:0.875rem;cursor:pointer;transition:background 0.15s;user-select:none;}
+.accordion summary:hover{background:var(--bg-subtle);}
+.accordion[open] summary{background:var(--bg-subtle);border-bottom:1px solid var(--border);}
+.acc-icon{color:var(--text-muted);font-size:0.75rem;transition:transform 0.2s;}
+.accordion[open] .acc-icon{transform:rotate(180deg);}
+.accordion-body{padding:1.25rem;background:var(--bg-card);}
+.param-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1.1rem;}
+.param-item label{font-size:0.77rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:0.35rem;}
+.param-value{float:right;color:var(--primary);font-weight:700;}
+.badge{display:inline-flex;align-items:center;gap:0.3rem;padding:0.2rem 0.6rem;border-radius:20px;font-size:0.7rem;font-weight:600;}
+.badge-green{background:#e8f5ef;color:#2e7d5a;border:1px solid #b8dece;}
+.badge-amber{background:#fef3e0;color:#b7820a;border:1px solid #f0d494;}
+.badge-red{background:#fdecea;color:#c0392b;border:1px solid #f0b8b2;}
+.badge-blue{background:#e8f0fe;color:#1a56db;border:1px solid #b8ccf8;}
+.badge-stone{background:var(--bg-subtle);color:var(--text-muted);border:1px solid var(--border);}
+.badge-primary{background:#f2ece5;color:var(--primary);border:1px solid #d4c0aa;}
+.tag-chip{display:inline-flex;align-items:center;gap:0.35rem;background:var(--bg-subtle);border:1px solid var(--border);border-radius:20px;padding:0.25rem 0.65rem;font-size:0.78rem;font-weight:500;}
+.tag-chip .rm{color:var(--text-muted);cursor:pointer;font-size:0.65rem;line-height:1;}
+.tag-chip .rm:hover{color:var(--danger);}
+.data-table{width:100%;border-collapse:collapse;font-size:0.83rem;}
+.data-table th{text-align:left;padding:0.6rem 1rem;background:var(--bg-subtle);color:var(--text-muted);font-weight:600;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.05em;border-bottom:1px solid var(--border);}
+.data-table td{padding:0.7rem 1rem;border-bottom:1px solid var(--bg-subtle);vertical-align:middle;}
+.data-table tbody tr:hover td{background:var(--bg-subtle);}
+.data-table tbody tr:last-child td{border-bottom:none;}
+.tab-nav{display:flex;border-bottom:1px solid var(--border);gap:0;margin-bottom:1.5rem;}
+.tab-btn{padding:0.6rem 1.1rem;border:none;background:transparent;color:var(--text-muted);font-size:0.83rem;font-weight:500;cursor:pointer;transition:all 0.2s;border-bottom:2px solid transparent;margin-bottom:-1px;}
+.tab-btn:hover{color:var(--text);}
+.tab-btn.active{color:var(--primary);border-bottom-color:var(--primary);font-weight:600;}
+.tab-pane{display:none;}
+.tab-pane.active{display:block;}
+.progress-track{background:var(--bg-subtle);border-radius:4px;height:6px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:4px;background:var(--primary);transition:width 0.5s ease;}
+.terminal{background:#1e1a17;border:1px solid var(--border);border-radius:var(--radius);padding:1rem;font-family:'Courier New',monospace;font-size:0.76rem;color:#c8b89a;height:320px;overflow-y:auto;line-height:1.65;}
+.log-info{color:#7abbe8;}
+.log-success{color:#7dc99e;}
+.log-warn{color:#e8c07a;}
+.log-error{color:#e87a7a;}
+.pipeline-track{display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:2rem;}
+.p-node{display:flex;flex-direction:column;align-items:center;gap:0.4rem;padding:1rem 1.5rem;min-width:130px;background:var(--bg-card);border:1.5px solid var(--border);border-radius:var(--radius);transition:all 0.3s;}
+.p-node.running{border-color:var(--primary);background:#faf7f3;box-shadow:0 0 0 3px rgba(124,92,62,0.1);}
+.p-node.done{border-color:var(--success);background:#f2faf5;}
+.p-node-icon{font-size:1.3rem;}
+.p-node.running .p-node-icon{animation:spin-soft 2s linear infinite;}
+.p-node-label{font-size:0.78rem;font-weight:600;color:var(--text);}
+.p-node-status{font-size:0.68rem;color:var(--text-muted);}
+.p-node.running .p-node-status{color:var(--primary);}
+.p-node.done .p-node-status{color:var(--success);}
+.p-conn{width:36px;height:2px;background:var(--border);margin:0;}
+.p-conn.active{background:var(--primary);}
+.p-conn.done{background:var(--success);}
+@keyframes spin-soft{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+.hero{padding:4rem 2rem 2rem;max-width:760px;margin:0 auto;text-align:center;}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:0.4rem;background:var(--bg-subtle);border:1px solid var(--border);border-radius:20px;padding:0.3rem 0.9rem;font-size:0.75rem;font-weight:600;color:var(--primary);margin-bottom:1.5rem;}
+.hero h1{font-size:clamp(2rem,5vw,3.25rem);font-weight:800;letter-spacing:-0.04em;line-height:1.1;color:var(--text);margin-bottom:1rem;}
+.hero h1 span{color:var(--primary);}
+.hero p{font-size:1rem;color:var(--text-muted);line-height:1.75;max-width:580px;margin:0 auto 2rem;}
+.hero-actions{display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;}
+.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;max-width:840px;margin:3rem auto;padding:0 2rem;}
+.stat-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;text-align:center;box-shadow:var(--shadow-sm);}
+.stat-num{font-size:1.75rem;font-weight:800;color:var(--primary);letter-spacing:-0.03em;}
+.stat-lbl{font-size:0.75rem;color:var(--text-muted);margin-top:0.2rem;font-weight:500;}
+.trust-bar{background:var(--bg-card);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:1.5rem 2rem;text-align:center;margin:2rem 0;}
+.trust-bar p{font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-light);margin-bottom:1rem;}
+.trust-logos{display:flex;justify-content:center;gap:3rem;flex-wrap:wrap;}
+.trust-logo{font-size:0.8rem;font-weight:700;color:var(--border);letter-spacing:0.05em;}
+.pipe-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:1.25rem;max-width:1000px;margin:0 auto;padding:0 2rem 4rem;}
+.pipe-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1.75rem;box-shadow:var(--shadow-sm);transition:box-shadow 0.2s;}
+.pipe-card:hover{box-shadow:var(--shadow);}
+.pipe-num{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;background:var(--primary);color:#fff;border-radius:50%;font-size:0.75rem;font-weight:700;margin-bottom:0.85rem;}
+.pipe-card h3{font-size:0.95rem;font-weight:700;margin-bottom:0.5rem;}
+.pipe-card p{font-size:0.82rem;color:var(--text-muted);line-height:1.6;}
+.feat-list{list-style:none;margin-top:0.85rem;}
+.feat-list li{font-size:0.79rem;color:var(--text-muted);padding:0.2rem 0;display:flex;align-items:center;gap:0.45rem;}
+.feat-list li i{color:var(--accent);font-size:0.65rem;}
+.registry-toolbar{display:flex;gap:0.75rem;align-items:center;margin-bottom:1.25rem;flex-wrap:wrap;}
+.search-box{flex:1;min-width:200px;max-width:320px;position:relative;}
+.search-box i{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:0.8rem;}
+.search-box input{width:100%;padding-left:2rem;}
+.run-row{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.1rem;margin-bottom:0.65rem;display:grid;grid-template-columns:auto 1fr auto;gap:1rem;align-items:center;transition:all 0.2s;box-shadow:var(--shadow-sm);}
+.run-row:hover{border-color:var(--border-focus);box-shadow:var(--shadow);}
+.run-row.active-run{border-color:var(--primary);background:#faf7f4;}
+.run-check{display:flex;align-items:center;justify-content:center;}
+.run-main{display:flex;align-items:center;gap:0.9rem;min-width:0;cursor:pointer;}
+.run-summary{display:flex;align-items:center;gap:1rem;justify-content:flex-end;flex-wrap:wrap;}
+.run-delete{color:var(--danger);border-color:#efc9c4;}
+.run-delete:hover{background:#fff3f2;border-color:#e6b4ae;color:#a13024;}
+.run-compare-slot{display:flex;align-items:center;gap:0.35rem;background:var(--bg-subtle);border:1px solid var(--border);border-radius:999px;padding:0.3rem 0.65rem;font-size:0.75rem;font-weight:600;color:var(--text-muted);}
+.run-icon{width:36px;height:36px;border-radius:var(--radius-sm);background:var(--bg-subtle);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
+.run-info h4{font-size:0.875rem;font-weight:600;margin-bottom:0.15rem;}
+.run-info p{font-size:0.75rem;color:var(--text-muted);}
+.run-params{font-size:0.72rem;color:var(--text-light);background:var(--bg-subtle);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.25rem 0.6rem;white-space:nowrap;}
+.run-actions{display:flex;gap:0.4rem;}
+.diff-panel{background:var(--bg-subtle);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;margin-top:1.25rem;}
+.diff-table{width:100%;border-collapse:collapse;font-size:0.8rem;}
+.diff-table td{padding:0.4rem 0.75rem;border-bottom:1px solid var(--border);}
+.diff-table tr:last-child td{border-bottom:none;}
+.diff-changed{background:#fef3e0;color:#b7820a;font-weight:600;}
+.diff-same{color:var(--text-muted);}
+.file-tree{font-size:0.8rem;}
+.ftree-item{padding:0.35rem 0.75rem;border-radius:var(--radius-sm);display:flex;align-items:center;gap:0.5rem;cursor:pointer;transition:background 0.15s;color:var(--text-muted);}
+.ftree-item:hover{background:var(--bg-subtle);color:var(--text);}
+.ftree-item i{font-size:0.78rem;width:14px;text-align:center;}
+.ftree-item.folder{font-weight:600;color:var(--text);}
+.ftree-children{padding-left:1.2rem;border-left:1px solid var(--border);margin-left:1.4rem;}
+.metric-strip{display:flex;gap:0.75rem;flex-wrap:wrap;margin-bottom:1.5rem;}
+.m-chip{background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:0.35rem 0.9rem;font-size:0.78rem;display:flex;align-items:center;gap:0.4rem;box-shadow:var(--shadow-sm);}
+.m-chip strong{color:var(--primary);}
+.chart-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;margin-bottom:1.25rem;box-shadow:var(--shadow-sm);}
+.chart-title{font-size:0.9rem;font-weight:700;margin-bottom:0.15rem;}
+.chart-sub{font-size:0.75rem;color:var(--text-muted);margin-bottom:1rem;}
+.sum-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0.85rem;margin-bottom:1.25rem;}
+.sum-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1.1rem;text-align:center;box-shadow:var(--shadow-sm);}
+.sum-card .num{font-size:1.6rem;font-weight:800;color:var(--primary);}
+.sum-card .up{color:var(--danger);}
+.sum-card .dn{color:#1a56db;}
+.sum-card .lbl{font-size:0.72rem;color:var(--text-muted);margin-top:0.2rem;}
+.ai-banner{background:var(--bg-subtle);border:1px solid var(--border);border-radius:var(--radius);padding:0.75rem 1.1rem;font-size:0.8rem;color:var(--text-muted);display:flex;align-items:center;gap:0.6rem;margin-bottom:1.1rem;}
+.ai-banner strong{color:var(--accent);}
+.q-chips{display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem;}
+.q-chip{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.45rem 0.85rem;font-size:0.78rem;cursor:pointer;transition:all 0.2s;color:var(--text);}
+.q-chip:hover{border-color:var(--border-focus);background:var(--bg-subtle);color:var(--primary);}
+.msg-user{align-self:flex-end;max-width:68%;background:var(--primary);color:#fff;border-radius:12px 12px 3px 12px;padding:0.7rem 1rem;font-size:0.84rem;line-height:1.5;}
+.msg-ai{align-self:flex-start;max-width:84%;background:var(--bg-card);border:1px solid var(--border);border-radius:12px 12px 12px 3px;padding:0.85rem 1.1rem;font-size:0.82rem;line-height:1.7;box-shadow:var(--shadow-sm);}
+.msg-ai h4{font-size:0.86rem;font-weight:700;color:var(--accent);margin-bottom:0.5rem;}
+.msg-ai ul{margin:0.35rem 0 0.35rem 1.1rem;}
+.msg-ai li{margin-bottom:0.2rem;}
+.msg-ai table{width:100%;border-collapse:collapse;margin:0.5rem 0;font-size:0.78rem;}
+.msg-ai th{text-align:left;padding:0.3rem 0.6rem;background:var(--bg-subtle);font-size:0.72rem;color:var(--text-muted);}
+.msg-ai td{padding:0.3rem 0.6rem;border-bottom:1px solid var(--bg-subtle);}
+.typing-ind{display:flex;gap:4px;align-items:center;padding:0.65rem 0.9rem;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;width:fit-content;align-self:flex-start;}
+.t-dot{width:6px;height:6px;border-radius:50%;background:var(--text-muted);animation:tdot 1.3s infinite;}
+.t-dot:nth-child(2){animation-delay:0.15s;}
+.t-dot:nth-child(3){animation-delay:0.3s;}
+@keyframes tdot{0%,80%,100%{transform:scale(0.7);opacity:0.4}40%{transform:scale(1);opacity:1}}
+.export-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.1rem;margin-bottom:2rem;}
+.export-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1.75rem;transition:all 0.2s;cursor:pointer;box-shadow:var(--shadow-sm);}
+.export-card:hover{border-color:var(--border-focus);box-shadow:var(--shadow);}
+.exp-icon{font-size:2rem;margin-bottom:0.85rem;}
+.export-card h3{font-size:0.9rem;font-weight:700;margin-bottom:0.4rem;}
+.export-card p{font-size:0.79rem;color:var(--text-muted);line-height:1.6;}
+.export-card .btn{margin-top:1rem;}
+.sticky-bar{position:sticky;bottom:0;left:0;right:0;background:var(--bg-card);border-top:1px solid var(--border);padding:0.85rem 2rem;display:flex;align-items:center;justify-content:space-between;box-shadow:0 -4px 12px rgba(60,40,20,0.08);z-index:100;}
+.divider{height:1px;background:var(--border);margin:1.5rem 0;}
+.dropzone{border:2px dashed var(--border);border-radius:var(--radius);padding:3rem 2rem;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--bg-input);}
+.dropzone:hover,.dropzone.over{border-color:var(--primary);background:var(--bg-subtle);}
+.dropzone-icon{font-size:2.5rem;color:var(--text-muted);margin-bottom:0.75rem;}
+.dropzone h3{font-size:1rem;font-weight:600;margin-bottom:0.35rem;}
+.dropzone p{font-size:0.82rem;color:var(--text-muted);}
+.file-confirm{display:none;background:var(--bg-subtle);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.9rem 1.1rem;margin-top:0.85rem;align-items:center;gap:0.9rem;}
+.file-confirm.show{display:flex;}
+.upload-progress{display:none;margin-top:0.75rem;}
+.upload-progress.show{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.fade-in{animation:fadeIn 0.3s ease both;}
+.runtime-note{font-size:0.78rem;color:var(--text-muted);display:flex;align-items:center;gap:0.4rem;}
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--success);color:#fff;padding:0.75rem 1.25rem;border-radius:8px;font-size:0.83rem;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,0.15);z-index:9999;animation:fadeIn 0.25s ease;}
+.toast.error{background:var(--danger);}
+.toast.info{background:var(--primary);}
+.loading-state{text-align:center;padding:3rem;color:var(--text-muted);font-size:0.875rem;}
+.loading-state i{font-size:2rem;margin-bottom:0.75rem;display:block;color:var(--primary);animation:spin-soft 1.5s linear infinite;}
+.artifact-stack{display:flex;flex-direction:column;gap:1rem;}
+.artifact-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:1rem;}
+.artifact-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;box-shadow:var(--shadow-sm);}
+.artifact-card.preview{padding:0;}
+.artifact-head{display:flex;align-items:flex-start;justify-content:space-between;gap:0.75rem;padding:1rem 1rem 0.75rem;}
+.artifact-title{font-size:0.88rem;font-weight:700;color:var(--text);}
+.artifact-meta{font-size:0.74rem;color:var(--text-muted);margin-top:0.2rem;word-break:break-word;}
+.artifact-actions{display:flex;gap:0.5rem;flex-wrap:wrap;flex-shrink:0;}
+.artifact-frame{width:100%;height:900px;border:none;border-top:1px solid var(--border);border-radius:0 0 var(--radius) var(--radius);background:#fff;}
+.artifact-secondary{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:0.85rem;}
+.artifact-pill{display:inline-flex;align-items:center;gap:0.35rem;background:var(--bg-subtle);border:1px solid var(--border);border-radius:999px;padding:0.2rem 0.55rem;font-size:0.68rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;}
+.native-empty{padding:1.1rem 1.2rem;background:var(--bg-subtle);border:1px dashed var(--border);border-radius:var(--radius);color:var(--text-muted);font-size:0.82rem;}
+.native-note{padding:0.85rem 1rem;background:var(--bg-subtle);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:0.78rem;color:var(--text-muted);}
+.artifact-viewer{position:fixed;inset:0;background:rgba(22,18,15,0.55);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:1.5rem;z-index:5000;}
+.artifact-viewer.show{display:flex;}
+.artifact-viewer-dialog{width:min(1480px,100%);height:min(92vh,100%);background:var(--bg-card);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow-lg);display:flex;flex-direction:column;overflow:hidden;}
+.artifact-viewer-header{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;padding:1rem 1.2rem;border-bottom:1px solid var(--border);background:linear-gradient(180deg,#fbfaf7 0%,#f6f2ec 100%);}
+.artifact-viewer-title{font-size:1rem;font-weight:800;color:var(--text);}
+.artifact-viewer-meta{font-size:0.76rem;color:var(--text-muted);margin-top:0.2rem;word-break:break-word;}
+.artifact-viewer-actions{display:flex;gap:0.5rem;flex-wrap:wrap;justify-content:flex-end;}
+.artifact-viewer-body{flex:1;overflow:auto;background:#fff;}
+.artifact-viewer-frame{width:100%;height:100%;min-height:78vh;border:none;background:#fff;}
+.viewer-doc{padding:1rem 1.15rem;}
+.viewer-doc-head{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:0.75rem;flex-wrap:wrap;}
+.viewer-doc pre{background:var(--bg-subtle);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;overflow:auto;font-size:0.76rem;line-height:1.55;}
+.viewer-table-shell{padding:1rem 1.1rem 1.2rem;}
+.viewer-table-toolbar{display:flex;align-items:center;gap:0.65rem;flex-wrap:wrap;margin-bottom:0.75rem;}
+.viewer-columns{display:flex;gap:0.75rem;flex-wrap:wrap;padding:0.8rem 0.9rem;background:var(--bg-subtle);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:0.75rem;}
+.viewer-pagination{display:flex;align-items:center;justify-content:space-between;gap:0.8rem;flex-wrap:wrap;margin-bottom:0.75rem;}
+.viewer-table-wrap{border:1px solid var(--border);border-radius:var(--radius);overflow:auto;max-height:68vh;box-shadow:var(--shadow-sm);}
+.upload-preview{display:none;margin-top:1rem;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);}
+.upload-preview.show{display:block;}
+.upload-preview-head{padding:0.85rem 1rem;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;}
+.upload-preview-meta{font-size:0.74rem;color:var(--text-muted);}
+.upload-preview-body{padding:0.9rem 1rem 1rem;}
+.upload-preview-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:0.8rem;margin-bottom:0.9rem;}
+.preview-chip{background:var(--bg-subtle);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.55rem 0.7rem;font-size:0.76rem;color:var(--text-muted);}
+.preview-chip strong{color:var(--primary);}
+.upload-detection{border:1px solid var(--border);background:#fff;border-radius:var(--radius-sm);padding:0.75rem 0.85rem;margin:0 0 0.9rem;font-size:0.78rem;color:var(--text-muted);}
+.upload-detection.warn{border-color:rgba(183,130,10,0.45);background:rgba(183,130,10,0.06);}
+.upload-detection strong{color:var(--text);margin-right:0.4rem;text-transform:capitalize;}
+.upload-detection-detail{display:flex;gap:0.45rem;flex-wrap:wrap;margin-top:0.5rem;}
+.upload-detection-detail span{background:var(--bg-subtle);border:1px solid var(--border);border-radius:999px;padding:0.22rem 0.5rem;}
+.upload-detection-warning{margin-top:0.55rem;color:var(--warning);font-weight:650;}
+.preview-table-wrap{border:1px solid var(--border);border-radius:var(--radius);overflow:auto;max-height:300px;box-shadow:var(--shadow-sm);}
+.section-actions{display:flex;align-items:center;justify-content:space-between;gap:0.75rem;flex-wrap:wrap;margin-bottom:0.9rem;}
+.analysis-step-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:0.8rem;margin-bottom:1.5rem;}
+.analysis-step{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:0.95rem 1rem;box-shadow:var(--shadow-sm);}
+.analysis-step.running{border-color:var(--primary);background:#faf7f3;}
+.analysis-step.complete{border-color:#b8dece;background:#f2faf5;}
+.analysis-step.failed{border-color:#f0b8b2;background:#fff5f4;}
+.analysis-step.skipped{border-style:dashed;background:#faf8f5;}
+.analysis-step-title{font-size:0.78rem;font-weight:700;color:var(--text);margin-bottom:0.25rem;}
+.analysis-step-status{font-size:0.72rem;color:var(--text-muted);margin-bottom:0.35rem;}
+.analysis-step-msg{font-size:0.74rem;color:var(--text-muted);line-height:1.5;min-height:2.2em;}
+.progress-fill.failed{background:var(--danger);}
+.page-sub.failed{color:var(--danger);font-weight:600;}
+.run-failure-banner{background:rgba(192,57,43,0.06);border:1px solid rgba(192,57,43,0.25);color:var(--danger);border-radius:8px;padding:0.85rem 1.25rem;margin-top:0.65rem;display:flex;align-items:flex-start;gap:0.75rem;font-size:0.84rem;line-height:1.5;}
+.run-failure-banner i{font-size:1rem;flex-shrink:0;margin-top:0.1rem;}
+.top-table-toolbar{display:flex;align-items:center;gap:0.65rem;flex-wrap:wrap;margin-bottom:0.8rem;}
+.top-table-wrap{border:1px solid var(--border);border-radius:var(--radius);overflow:auto;max-height:430px;box-shadow:var(--shadow-sm);}
+.volcano-table-wrap{border:1px solid var(--border);border-radius:var(--radius);overflow:auto;max-height:520px;box-shadow:var(--shadow-sm);}
+.viewer-filter{font-size:0.72rem;padding:0.45rem 0.55rem;}
+@media (max-width:768px){.artifact-frame{height:480px;}.artifact-head{flex-direction:column;}.artifact-actions{width:100%;}.run-row{grid-template-columns:1fr;}.run-summary{justify-content:flex-start;}.run-main{cursor:default;}}
+@media (max-width:768px){.artifact-viewer{padding:0.75rem;}.artifact-viewer-dialog{height:94vh;}.artifact-viewer-frame{min-height:64vh;}.viewer-columns{gap:0.45rem;}.container,.container-wide{padding:1.5rem 1rem;}}
+.modal-overlay{position:fixed;inset:0;background:rgba(42,36,32,0.45);z-index:2000;display:none}
+.modal-overlay.active{display:flex;align-items:center;justify-content:center;padding:1.5rem}
+.modal-box{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-lg);max-width:880px;width:100%;max-height:90vh;overflow-y:auto}
+.modal-header{padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:1rem;font-weight:600;color:var(--text)}
+.modal-body{padding:1.5rem;display:grid;grid-template-columns:1fr;gap:1.25rem}
+.trait-align-banner{background:var(--bg-subtle);border:1px solid var(--border);border-radius:var(--radius-sm,0.375rem);padding:0.75rem 1.1rem;margin-top:0.75rem;font-size:0.83rem}
+.trait-align-summary{font-weight:600;color:var(--text)}
+.trait-align-detail{font-size:0.78rem;color:var(--text-muted);margin-top:0.35rem}
+
+/* ═══════════════════════════════════════════════════════ AI CHAT SHELL (P1) */
+/* Responsive height: prefer 640px but never push the shell past the viewport.
+   The 240px budget accounts for nav (60px) + tab header (~110px) + small padding. */
+.chat-shell{display:grid;grid-template-columns:240px 1fr 300px;gap:0;height:min(640px, calc(100vh - 240px));min-height:480px;background:var(--bg-subtle);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.chat-shell.ctx-collapsed{grid-template-columns:240px 1fr}
+/* P9 — Context Panel */
+.context-panel{display:flex;flex-direction:column;min-width:0;min-height:0;border-left:1px solid var(--border);background:var(--bg-card)}
+.chat-shell.ctx-collapsed .context-panel{display:none}
+.ctx-header{padding:0.7rem 0.85rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:var(--bg-card);flex-shrink:0}
+.ctx-title{font-weight:600;font-size:0.85rem;color:var(--text);display:flex;align-items:center;gap:0.4rem}
+.ctx-title i{color:var(--accent)}
+.ctx-collapse-btn{background:transparent;border:none;color:var(--text-muted);cursor:pointer;padding:0.25rem 0.4rem;border-radius:4px;font-size:0.82rem}
+.ctx-collapse-btn:hover{background:var(--bg-subtle);color:var(--text)}
+.ctx-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0}
+.ctx-tab{flex:1;padding:0.5rem 0.4rem;background:transparent;border:none;border-bottom:2px solid transparent;cursor:pointer;font-size:0.75rem;color:var(--text-muted);font-family:inherit;transition:color 0.15s}
+.ctx-tab:hover{color:var(--text)}
+.ctx-tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+.ctx-body{flex:1 1 0;min-height:0;overflow-y:auto;padding:0.4rem}
+.ctx-group-h{font-size:0.66rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-light);font-weight:700;padding:0.6rem 0.45rem 0.3rem}
+.ctx-item{display:flex;align-items:center;gap:0.45rem;padding:0.34rem 0.4rem;border-radius:5px}
+.ctx-item:hover{background:var(--bg-subtle)}
+.ctx-item-icon{color:var(--text-muted);width:15px;text-align:center;flex-shrink:0;font-size:0.78rem}
+.ctx-item-name{flex:1;font-size:0.76rem;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ctx-item-size{font-size:0.64rem;color:var(--text-light);flex-shrink:0;font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+.ctx-pin-btn{background:transparent;border:none;color:var(--text-muted);cursor:pointer;padding:0.15rem 0.32rem;border-radius:4px;flex-shrink:0;font-size:0.8rem;opacity:0.55;transition:opacity 0.12s,color 0.12s}
+.ctx-item:hover .ctx-pin-btn{opacity:1}
+.ctx-pin-btn:hover{color:var(--accent);background:var(--bg-card)}
+.ctx-pin-btn.pinned{color:var(--accent);opacity:1}
+.ctx-empty{padding:1.2rem 0.8rem;text-align:center;color:var(--text-muted);font-size:0.78rem;line-height:1.5}
+.ctx-foot{padding:0.5rem 0.7rem;border-top:1px solid var(--border);font-size:0.68rem;color:var(--text-light);flex-shrink:0}
+.ctx-foot code{background:var(--bg-input);padding:0.02rem 0.28rem;border-radius:3px;font-size:0.66rem}
+/* pinned-refs chip strip */
+.composer-pinned-strip{display:flex;flex-wrap:wrap;gap:0.35rem}
+.pinned-chip{display:inline-flex;align-items:center;gap:0.35rem;background:rgba(74,124,111,0.10);border:1px solid var(--accent-lt);color:var(--accent);border-radius:999px;padding:0.18rem 0.55rem;font-size:0.72rem;max-width:240px}
+.pinned-chip.persistent{background:rgba(49,94,145,0.10);border-color:rgba(49,94,145,0.35);color:#315e91}
+.pinned-chip .pinned-chip-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pinned-chip button{background:none;border:none;color:inherit;cursor:pointer;padding:0;font-size:0.72rem;line-height:1;flex-shrink:0}
+.pinned-chip button:hover{color:var(--danger)}
+/* @-mention dropdown */
+.conv-composer{position:relative}
+.mention-dropdown{position:absolute;left:0.8rem;right:0.8rem;bottom:calc(100% - 0.2rem);background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);box-shadow:var(--shadow-lg);max-height:240px;overflow-y:auto;z-index:60;display:none}
+.mention-dropdown.open{display:block}
+.mention-dd-h{font-size:0.64rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-light);font-weight:700;padding:0.45rem 0.6rem 0.2rem}
+.mention-opt{display:flex;align-items:center;gap:0.45rem;padding:0.4rem 0.6rem;cursor:pointer;font-size:0.78rem}
+.mention-opt:hover,.mention-opt.active{background:var(--bg-subtle)}
+.mention-opt-icon{color:var(--text-muted);width:15px;text-align:center;flex-shrink:0;font-size:0.76rem}
+.mention-opt-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mention-opt-tag{font-size:0.64rem;color:var(--text-light)}
+.mention-empty{padding:0.7rem;color:var(--text-muted);font-size:0.76rem;text-align:center}
+.conv-list{display:flex;flex-direction:column;background:var(--bg-card);border-right:1px solid var(--border);min-width:0;min-height:0}
+.conv-list-header{padding:0.6rem;display:flex;gap:0.4rem;border-bottom:1px solid var(--border);align-items:center}
+.conv-list-header .btn{flex:1;justify-content:center}
+.conv-list-items{list-style:none;flex:1;overflow-y:auto;padding:0;margin:0;min-height:0}
+.conv-item{padding:0.7rem 0.85rem;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.15s;position:relative}
+.conv-item:hover{background:var(--bg-subtle)}
+.conv-item.active{background:var(--bg-input);border-left:3px solid var(--accent);padding-left:calc(0.85rem - 3px)}
+.conv-item-row{display:flex;align-items:flex-start;gap:0.4rem}
+.conv-item-body{flex:1;min-width:0}
+.conv-item-title{font-size:0.84rem;font-weight:600;margin-bottom:0.18rem;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.conv-item-meta{font-size:0.7rem;color:var(--text-muted);display:flex;gap:0.35rem}
+.conv-item-empty{padding:1rem;font-size:0.8rem;color:var(--text-muted);text-align:center}
+.conv-item-actions{display:flex;gap:0.15rem;opacity:0;transition:opacity 0.12s;flex-shrink:0}
+.conv-item:hover .conv-item-actions,.conv-item.active .conv-item-actions{opacity:1}
+.conv-icon-btn{background:transparent;border:none;color:var(--text-muted);padding:0.25rem 0.35rem;border-radius:4px;cursor:pointer;font-size:0.72rem;line-height:1}
+.conv-icon-btn:hover{background:var(--bg-card);color:var(--text)}
+.conv-icon-btn-danger:hover{background:rgba(192,57,43,0.1);color:var(--danger)}
+.conv-item-rename-input{width:100%;font-size:0.84rem;font-weight:600;padding:0.18rem 0.3rem;border:1px solid var(--accent);border-radius:4px;background:var(--bg-card);font-family:inherit;color:var(--text);outline:none}
+.conv-thread-title-input{font-weight:600;font-size:0.92rem;padding:0.18rem 0.4rem;border:1px solid var(--accent);border-radius:4px;background:var(--bg-card);font-family:inherit;color:var(--text);outline:none;min-width:240px}
+.conv-thread-title{cursor:text}
+/* CRITICAL: `min-height: 0` on flex children that need overflow:auto to
+   actually scroll. Without it, the child grows to fit its content (the
+   long assistant bubble) instead of constraining and scrolling, which
+   pushes the composer off the bottom of the shell. */
+.conv-thread{display:flex;flex-direction:column;min-width:0;min-height:0}
+.conv-thread-header{padding:0.7rem 1rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:0.75rem;background:var(--bg-card);flex-wrap:wrap;flex-shrink:0}
+.conv-thread-title{font-weight:600;font-size:0.92rem;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.conv-thread-meta{display:flex;gap:0.5rem;align-items:center;font-size:0.8rem}
+.conv-thread-meta-text{font-size:0.72rem;color:var(--text-muted);margin-right:0.4rem}
+.conv-thread-body{flex:1 1 0;min-height:0;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:0.85rem;background:var(--bg-subtle)}
+.conv-composer{padding:0.65rem 0.8rem 0.75rem;border-top:1px solid var(--border);background:var(--bg-card);display:flex;flex-direction:column;gap:0.45rem;flex-shrink:0}
+.composer-input{flex:1;resize:vertical;min-height:42px;padding:0.55rem 0.85rem;border-radius:var(--radius-sm);border:1px solid var(--border);font-family:'Inter',sans-serif;font-size:0.85rem;line-height:1.45;background:var(--bg-input);color:var(--text);outline:none;transition:border-color 0.2s}
+.composer-input:focus{border-color:var(--border-focus)}
+.composer-input:disabled{opacity:0.55;cursor:not-allowed}
+.composer-actions{display:flex;justify-content:flex-end;gap:0.4rem}
+.composer-attach-strip{display:flex;flex-wrap:wrap;gap:0.35rem}
+.attach-chip{display:inline-flex;align-items:center;gap:0.3rem;background:var(--bg-input);border:1px solid var(--border);border-radius:999px;padding:0.2rem 0.6rem;font-size:0.74rem}
+.msg-empty{text-align:center;color:var(--text-muted);padding:2.5rem 1rem;font-size:0.86rem;line-height:1.6}
+/* Empty-chat starter questions */
+.chat-starter{max-width:540px;margin:2rem auto;padding:0 1rem;}
+.chat-starter-title{font-size:1.05rem;font-weight:700;color:var(--text);}
+.chat-starter-sub{font-size:0.82rem;color:var(--text-muted);margin:0.25rem 0 1.1rem;}
+.chat-starter-list{display:flex;flex-direction:column;gap:0.55rem;}
+.chat-starter-chip{display:flex;align-items:center;gap:0.6rem;width:100%;text-align:left;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.7rem 0.85rem;font-size:0.84rem;color:var(--text);cursor:pointer;transition:border-color 0.15s,background 0.15s,transform 0.06s;}
+.chat-starter-chip:hover{border-color:var(--accent);background:var(--bg-subtle);}
+.chat-starter-chip:active{transform:translateY(1px);}
+.chat-starter-chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+.chat-starter-chip i{color:var(--accent);font-size:0.8rem;flex-shrink:0;}
+/* Auto-detected input-format badge on the upload card */
+.detected-badge{display:inline-flex;align-items:center;gap:0.4rem;background:rgba(74,124,111,0.10);color:var(--accent);border:1px solid rgba(74,124,111,0.35);border-radius:999px;padding:0.3rem 0.7rem;font-size:0.74rem;font-weight:600;white-space:nowrap;}
+.detected-badge strong{color:var(--accent);font-weight:700;}
+.msg-stream::after{content:"▍";display:inline-block;margin-left:2px;animation:cblink 1s steps(2) infinite;color:var(--accent)}
+@keyframes cblink{50%{opacity:0}}
+.msg-thinking{display:flex;align-items:center;gap:0.5rem;color:var(--text-muted);font-size:0.84rem}
+.thinking-dots{display:inline-flex;gap:3px}
+.thinking-dots span{width:6px;height:6px;border-radius:50%;background:var(--accent);display:inline-block;opacity:0.4;animation:tdots 1.2s infinite ease-in-out}
+.thinking-dots span:nth-child(2){animation-delay:0.2s}
+.thinking-dots span:nth-child(3){animation-delay:0.4s}
+@keyframes tdots{0%,80%,100%{opacity:0.3;transform:translateY(0)}40%{opacity:1;transform:translateY(-3px)}}
+.msg-error{background:rgba(192,57,43,0.06);border:1px solid rgba(192,57,43,0.25);padding:0.7rem 0.9rem;border-radius:8px;color:var(--danger);font-size:0.84rem}
+.msg-citations{margin-top:0.55rem;font-size:0.74rem;color:var(--text-muted)}
+.msg-citations strong{color:var(--text)}
+.msg-citations ul{margin:0.25rem 0 0 1.1rem;padding:0}
+.msg-citations code{background:var(--bg-input);padding:0.05rem 0.35rem;border-radius:4px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:0.72rem}
+.msg-meta-footer{margin-top:0.45rem;font-size:0.7rem;color:var(--text-muted);font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+.msg-action-bar{display:flex;align-items:center;gap:0.4rem;margin-top:0.65rem;padding-top:0.5rem;border-top:1px solid var(--bg-subtle)}
+.msg-action-spacer{flex:1}
+.msg-action-btn{background:transparent;border:none;color:var(--text-muted);font-size:0.78rem;padding:0.2rem 0.45rem;border-radius:4px;cursor:pointer;transition:all 0.15s}
+.msg-action-btn:hover{background:var(--bg-subtle);color:var(--text)}
+.prov-badge{display:inline-flex;align-items:center;gap:0.3rem;font-size:0.72rem;font-weight:600;padding:0.2rem 0.55rem;border-radius:999px;border:1px solid transparent}
+.prov-badge-grounded{background:rgba(46,125,90,0.08);color:var(--success);border-color:rgba(46,125,90,0.25)}
+.prov-badge-bg{background:rgba(183,130,10,0.08);color:var(--warning);border-color:rgba(183,130,10,0.25)}
+.prov-badge-error{background:rgba(192,57,43,0.08);color:var(--danger);border-color:rgba(192,57,43,0.25)}
+.prov-badge-external{background:rgba(37,99,235,0.08);color:#2563eb;border-color:rgba(37,99,235,0.28)}
+.prov-ext{display:flex;align-items:center;gap:0.35rem;flex-wrap:wrap}
+.prov-ext a{color:#2563eb;text-decoration:none}
+.prov-ext a:hover{text-decoration:underline}
+.prov-ext i{color:#2563eb}
+.prov-ext-unavailable{color:var(--warning);font-size:0.72rem}
+.prov-ext-unavailable i{color:var(--warning)}
+.prov-panel{margin-top:0.55rem;background:var(--bg-subtle);border:1px solid var(--border);border-radius:6px;padding:0.45rem 0.75rem;font-size:0.75rem}
+.prov-panel summary{cursor:pointer;color:var(--text-muted);font-weight:500;outline:none;list-style:none}
+.prov-panel summary::-webkit-details-marker{display:none}
+.prov-panel summary::before{content:"▸ ";display:inline-block;margin-right:0.3rem;transition:transform 0.15s}
+.prov-panel[open] summary::before{transform:rotate(90deg)}
+.prov-panel summary:hover{color:var(--text)}
+.prov-counts{color:var(--text-light);font-weight:400;margin-left:0.4rem}
+.prov-section{margin-top:0.55rem;padding-top:0.45rem;border-top:1px solid var(--bg-card)}
+.prov-section-h{font-weight:600;color:var(--text);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:0.3rem}
+.prov-list{list-style:none;padding-left:0;margin:0}
+.prov-list li{padding:0.18rem 0;line-height:1.4}
+.prov-list code{background:var(--bg-card);padding:0.05rem 0.3rem;border-radius:3px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:0.72rem}
+.prov-run{color:var(--text-light);font-size:0.7rem;font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+.prov-rows{display:block;color:var(--text-muted);font-size:0.7rem;margin-top:0.1rem;margin-left:0.3rem}
+.prov-tool{display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap}
+.prov-tool-ok i{color:var(--success)}
+.prov-tool-error i{color:var(--danger)}
+.prov-args{color:var(--text-muted);font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:0.7rem}
+.prov-meta{color:var(--text-light);font-size:0.68rem}
+.prov-catalog-link{display:inline-flex;align-items:center;gap:0.35rem;color:var(--success);font-weight:650;text-decoration:none}
+.prov-catalog-link:hover{text-decoration:underline}
+.prov-catalog-note{margin-top:0.2rem;color:var(--text-light);font-size:0.68rem}
+.session-meter{display:inline-flex;align-items:center;gap:0.3rem;padding:0.2rem 0.55rem;border-radius:999px;background:var(--bg-input);color:var(--text-muted);font-size:0.7rem;font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+.session-meter:empty{display:none}
+.quota-gauge{display:inline-flex;align-items:center;gap:0.3rem;padding:0.2rem 0.55rem;border-radius:999px;background:var(--bg-input);color:var(--text-muted);font-size:0.7rem;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;border:1px solid transparent;cursor:help}
+.quota-gauge:empty{display:none}
+.quota-gauge.quota-warn{background:rgba(183,130,10,0.10);color:var(--warning);border-color:rgba(183,130,10,0.30)}
+.quota-gauge.quota-crit{background:rgba(192,57,43,0.10);color:var(--danger);border-color:rgba(192,57,43,0.30)}
+.conv-cost{font-size:0.7rem;color:var(--text-light);margin-left:0.3rem}
+.ws-usage{display:flex;flex-direction:column;gap:0.3rem;margin-top:0.25rem}
+.ws-usage-row{display:flex;align-items:center;gap:0.5rem;font-size:0.74rem}
+.ws-usage-name{min-width:64px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--text-muted)}
+.ws-usage-bar{flex:1;height:6px;background:var(--bg-input);border-radius:999px;overflow:hidden}
+.ws-usage-fill{display:block;height:100%;border-radius:999px}
+.ws-usage-ok{background:var(--success)}
+.ws-usage-warn{background:var(--warning)}
+.ws-usage-crit{background:var(--danger)}
+.ws-usage-num{min-width:72px;text-align:right;color:var(--text-light);font-size:0.7rem;font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+.diff-metrics{display:flex;flex-wrap:wrap;gap:0.75rem;margin-top:0.9rem}
+.diff-metrics .metric{background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.55rem 0.85rem;min-width:140px}
+.diff-metrics .metric-label{font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em}
+.diff-metrics .metric-value{font-size:0.95rem;font-weight:600;color:var(--text);margin-top:0.15rem}
+.msg-ai table{max-height:none}
+.msg-ai .table-collapsed{max-height:240px;overflow:hidden;position:relative}
+.msg-ai .table-collapsed::after{content:"";position:absolute;left:0;right:0;bottom:0;height:64px;background:linear-gradient(to bottom, transparent, var(--bg-card))}
+.table-toggle-btn{margin-top:0.4rem;font-size:0.74rem;background:transparent;border:1px solid var(--border);border-radius:4px;padding:0.25rem 0.6rem;cursor:pointer;color:var(--text-muted)}
+.table-toggle-btn:hover{border-color:var(--accent);color:var(--accent)}
+.tool-breadcrumb-group{align-self:flex-start;background:var(--bg-subtle);border:1px dashed var(--border);border-radius:6px;padding:0.4rem 0.7rem;margin:0.2rem 0;font-size:0.76rem;color:var(--text-muted);cursor:pointer}
+.tool-breadcrumb-group summary{cursor:pointer;list-style:none;outline:none}
+.tool-breadcrumb-group summary::-webkit-details-marker{display:none}
+.msg-background{background:var(--bg-input);border-left:3px solid var(--accent-lt);padding:0.55rem 0.85rem;margin:0.5rem 0;border-radius:0 6px 6px 0;font-size:0.84rem}
+.followup-chips{display:flex;flex-wrap:wrap;gap:0.35rem;margin-top:0.6rem}
+.followup-chip{cursor:pointer;padding:0.3rem 0.7rem;background:var(--bg-input);border:1px solid var(--border);border-radius:999px;font-size:0.74rem;transition:all 0.15s;color:var(--text-muted)}
+.followup-chip:hover{border-color:var(--accent);color:var(--accent);background:var(--bg-card)}
+.tool-breadcrumb{align-self:flex-start;background:var(--bg-subtle);border:1px dashed var(--border);border-radius:6px;padding:0.4rem 0.7rem;margin:0.2rem 0;font-size:0.76rem;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--text-muted);max-width:90%;display:flex;align-items:center;gap:0.55rem;flex-wrap:wrap}
+.tool-breadcrumb .tool-icon{color:var(--accent);flex-shrink:0}
+.tool-breadcrumb .tool-name{color:var(--text);font-weight:600}
+.tool-breadcrumb .tool-args{color:var(--text-muted);overflow:hidden;text-overflow:ellipsis}
+.tool-breadcrumb .tool-status{color:var(--text-muted);margin-left:auto;font-size:0.72rem;font-family:'Inter',sans-serif}
+.tool-breadcrumb-running{border-color:var(--accent-lt)}
+.tool-breadcrumb-ok{border-style:solid;border-color:var(--success);background:rgba(46,125,90,0.04)}
+.tool-breadcrumb-ok .tool-icon{color:var(--success)}
+.tool-breadcrumb-error{border-style:solid;border-color:var(--danger);background:rgba(192,57,43,0.04)}
+.tool-breadcrumb-error .tool-icon{color:var(--danger)}
+.tool-breadcrumb-external{border-style:solid;border-color:rgba(37,99,235,0.35);background:rgba(37,99,235,0.04)}
+.tool-breadcrumb-external .tool-icon{color:#2563eb}
+.tool-refs{flex-basis:100%;display:flex;flex-wrap:wrap;gap:0.35rem 0.9rem;margin-top:0.35rem;padding-top:0.35rem;border-top:1px solid var(--border);font-family:'Inter',sans-serif}
+.tool-ref{color:#2563eb;text-decoration:none;font-size:0.72rem;display:inline-flex;align-items:center;gap:0.25rem}
+.tool-ref:hover{text-decoration:underline}
+.conv-thread-body.dragover{outline:2px dashed var(--accent);outline-offset:-6px;background:linear-gradient(0deg,rgba(74,124,111,0.05),rgba(74,124,111,0.05)),var(--bg-subtle)}
+.conv-jump-pill{position:absolute;bottom:96px;left:50%;transform:translateX(-50%);padding:0.4rem 0.9rem;border-radius:999px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);font-size:0.78rem;cursor:pointer;box-shadow:var(--shadow);display:flex;align-items:center;gap:0.35rem;z-index:5;animation:fadeIn 0.2s ease}
+.conv-jump-pill:hover{border-color:var(--accent);color:var(--accent)}
+.conv-thread{position:relative}
+.toggle-ext-lookups{display:inline-flex;align-items:center;gap:0.35rem;font-size:0.78rem;color:var(--text-muted);cursor:pointer;user-select:none}
+.toggle-ext-lookups input{accent-color:var(--accent);cursor:pointer}
+.toggle-ext-lookups input:disabled{cursor:not-allowed;opacity:0.5}
+.chat-mini-select{height:28px;border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:6px;font-size:0.75rem;padding:0 0.35rem;max-width:128px}
+.chat-mini-select:disabled{opacity:0.55;cursor:not-allowed}
+
+.ai-drawer{display:none;position:fixed;inset:0;background:rgba(42,36,32,0.35);z-index:2100}
+.ai-drawer.open{display:block}
+.ai-drawer-panel{position:absolute;right:0;top:0;bottom:0;width:440px;max-width:100vw;background:var(--bg-card);box-shadow:var(--shadow-lg);display:flex;flex-direction:column;animation:slideInRight 0.22s ease}
+.ai-drawer-header{padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.ai-drawer-header h3{font-size:1rem;font-weight:600;margin:0}
+.ai-drawer-body{padding:1.1rem 1.25rem;flex:1 1 0;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:1rem}
+.ai-drawer-section{padding-top:0.75rem;border-top:1px solid var(--border)}
+.ai-drawer-section:first-child{padding-top:0;border-top:none}
+.ai-drawer-field label{display:block;font-size:0.78rem;font-weight:600;margin-bottom:0.35rem;color:var(--text)}
+.ai-drawer-field input,.ai-drawer-field select{width:100%;padding:0.5rem 0.7rem;border-radius:var(--radius-sm);border:1px solid var(--border);font-family:'Inter',sans-serif;font-size:0.85rem;background:var(--bg-input);color:var(--text);outline:none}
+.ai-drawer-field input:focus,.ai-drawer-field select:focus{border-color:var(--border-focus)}
+.ai-drawer-field .hint{font-size:0.72rem;color:var(--text-muted);margin-top:0.3rem}
+.ai-drawer-quota{background:var(--bg-input);border-radius:var(--radius-sm);padding:0.6rem 0.8rem;font-size:0.76rem;color:var(--text-muted);line-height:1.55}
+.key-status-card{background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.6rem 0.75rem}
+.key-status-row{display:flex;align-items:center;justify-content:space-between;gap:0.5rem}
+.key-status-label{font-weight:600;font-size:0.84rem;color:var(--text);display:flex;align-items:center;gap:0.4rem}
+.key-status-preview{margin-top:0.3rem;font-size:0.78rem;color:var(--text-muted)}
+.key-status-preview code{background:var(--bg-card);padding:0.1rem 0.45rem;border-radius:4px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:0.5px}
+@keyframes slideInRight{from{transform:translateX(20px);opacity:0}to{transform:translateX(0);opacity:1}}
+
+.modal-footer{padding:0.85rem 1.25rem;border-top:1px solid var(--border);display:flex;gap:0.5rem;justify-content:flex-end}
+.modal-body p{font-size:0.86rem;line-height:1.55;margin:0}
+.modal-body p + p{margin-top:0.6rem}
+
+@media (max-width:900px){.chat-shell,.chat-shell.ctx-collapsed{grid-template-columns:1fr;height:auto}.conv-list{max-height:200px;border-right:none;border-bottom:1px solid var(--border)}.conv-thread{min-height:480px}.context-panel{display:none}}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo"><i class="fa-solid fa-dna"></i> ProteomicsAI</div>
+  <div class="nav-links" id="navLinks">
+    <button class="nav-link active" onclick="APP.go('landing')">Home</button>
+    <button class="nav-link" onclick="APP.go('upload')">Upload</button>
+    <button class="nav-link" onclick="APP.go('config')">Configure</button>
+    <button class="nav-link" onclick="APP.go('analysis')">Analysis</button>
+    <button class="nav-link" onclick="APP.go('runs')">Run History</button>
+    <button class="nav-link" onclick="APP.go('results')">Results</button>
+    <button class="nav-link" onclick="APP.go('export')">Export</button>
+  </div>
+  <div class="nav-right">
+    <div class="nav-pill" id="platformPill"><span class="status-dot"></span> Local Session</div>
+    <div class="nav-pill" id="workspacePill">Workspace loading…</div>
+    <div class="nav-pill" id="projectPill">Project loading…</div>
+  </div>
+</nav>
+
+<!-- LANDING -->
+<section class="page active" id="page-landing">
+  <div class="hero">
+    <div class="hero-eyebrow"><i class="fa-solid fa-flask-vial"></i> AI-Powered Proteomics Platform</div>
+    <h1>From peptides to <span>publishable insights</span> — without a bioinformatician</h1>
+    <p>Upload your proteomics data, run fully-automated 3-stage analysis, compare unlimited experiments, and query all results in plain language. Built for biopharma and biotech researchers.</p>
+    <div class="hero-actions">
+      <button class="btn btn-primary btn-lg" onclick="APP.go('upload')"><i class="fa-solid fa-rocket"></i> Start Analysis</button>
+      <button class="btn btn-outline btn-lg" onclick="APP.go('runs')"><i class="fa-solid fa-clock-rotate-left"></i> View Run History</button>
+    </div>
+  </div>
+  <div class="trust-bar">
+    <p>Built for actual PEAKS, Spectronaut, MaxQuant, and DIA-NN studies</p>
+    <div class="trust-logos">
+      <span class="trust-logo">PEAKS</span>
+      <span class="trust-logo">SPECTRONAUT</span>
+      <span class="trust-logo">MAXQUANT</span>
+      <span class="trust-logo">DIA-NN</span>
+      <span class="trust-logo">GMT / CELLTYPE</span>
+    </div>
+  </div>
+  <div class="pipe-grid">
+    <div class="pipe-card">
+      <div class="pipe-num">1</div>
+      <h3>Normalization &amp; Network</h3>
+      <p>Automated QC, family-aware normalization, differential expression, and real WGCNA module detection backed by the same R ecosystem used in the manual scientific workflows.</p>
+      <ul class="feat-list">
+        <li><i class="fa-solid fa-circle-check"></i> Median / mean / quantile / TIN normalization</li>
+        <li><i class="fa-solid fa-circle-check"></i> t-test / Wilcoxon with BH FDR correction</li>
+        <li><i class="fa-solid fa-circle-check"></i> Real WGCNA soft-threshold and blockwise modules</li>
+        <li><i class="fa-solid fa-circle-check"></i> Module eigengenes, kME, and trait correlations</li>
+      </ul>
+    </div>
+    <div class="pipe-card">
+      <div class="pipe-num">2</div>
+      <h3>GO &amp; Pathway Enrichment</h3>
+      <p>FET enrichment against curated GO term sets covering BP, MF, and CC categories with BH FDR correction — no internet required.</p>
+      <ul class="feat-list">
+        <li><i class="fa-solid fa-circle-check"></i> GO BP / MF / CC embedded gene sets</li>
+        <li><i class="fa-solid fa-circle-check"></i> Fisher's Exact Test per module</li>
+        <li><i class="fa-solid fa-circle-check"></i> BH FDR correction</li>
+        <li><i class="fa-solid fa-circle-check"></i> Z-score matrix for heatmap visualization</li>
+      </ul>
+    </div>
+    <div class="pipe-card">
+      <div class="pipe-num">3</div>
+      <h3>Cell Type Deconvolution</h3>
+      <p>Map module membership to brain cell type markers using embedded Sharma/Zhang reference datasets for spatial context.</p>
+      <ul class="feat-list">
+        <li><i class="fa-solid fa-circle-check"></i> 5 major brain cell types</li>
+        <li><i class="fa-solid fa-circle-check"></i> Neurons, Astrocytes, Oligos, Microglia, OPCs</li>
+        <li><i class="fa-solid fa-circle-check"></i> FET enrichment per module × cell type</li>
+        <li><i class="fa-solid fa-circle-check"></i> −log₁₀(FDR) heatmap output</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- UPLOAD -->
+<section class="page" id="page-upload">
+  <div class="container">
+    <div class="page-title">Upload Proteomics Data</div>
+    <div class="page-sub">Supports PEAKS, Spectronaut, MaxQuant, DIA-NN, Olink NPX, and generic abundance matrices. Upload optional clinical/sample metadata when cohort labels are not embedded in the file.</div>
+
+    <div class="dropzone" id="dropzone"
+         onclick="document.getElementById('fileInput').click()"
+         ondragover="event.preventDefault();this.classList.add('over')"
+         ondragleave="this.classList.remove('over')"
+         ondrop="APP.handleDrop(event)">
+      <div class="dropzone-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+      <h3>Drop your peptide matrix here</h3>
+      <p>or click to browse &nbsp;·&nbsp; CSV, TSV, XLSX up to 2 GB</p>
+    </div>
+    <input type="file" id="fileInput" style="display:none" accept=".csv,.tsv,.xlsx,.txt" onchange="APP.handleFileSelect(event)">
+
+    <div class="upload-progress" id="uploadProgress">
+      <div class="progress-track" style="margin-bottom:0.5rem"><div class="progress-fill" id="uploadBar" style="width:0%"></div></div>
+      <div style="font-size:0.75rem;color:var(--text-muted)" id="uploadStatus">Uploading...</div>
+    </div>
+
+    <div class="file-confirm" id="fileConfirm">
+      <i class="fa-solid fa-file-csv" style="font-size:1.5rem;color:var(--accent)"></i>
+      <div>
+        <div style="font-weight:600;font-size:0.875rem" id="fileName">dataset.csv</div>
+        <div style="font-size:0.75rem;color:var(--text-muted)" id="fileStats">Loading...</div>
+      </div>
+    </div>
+    <div class="upload-preview" id="rawPreview"></div>
+    <button class="btn btn-outline btn-sm" onclick="APP.openQcModal()" id="btnPreviewQc" style="display:none;margin-top:0.75rem"><i class="fa-solid fa-chart-bar"></i> Preview QC</button>
+
+    <div class="card card-pad" style="margin-top:1.25rem">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap">
+        <div>
+          <div style="font-weight:700;font-size:0.88rem">Optional traits / clinical metadata</div>
+          <div class="form-hint" style="margin-top:0.2rem">Use this when raw exports do not already include Control vs Disease style sample labels.</div>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="document.getElementById('traitsInput').click()"><i class="fa-solid fa-file-medical"></i> Upload Traits File</button>
+      </div>
+      <input type="file" id="traitsInput" style="display:none" accept=".csv,.tsv,.xlsx,.txt" onchange="APP.handleTraitsSelect(event)">
+      <div class="file-confirm" id="traitsConfirm">
+        <i class="fa-solid fa-file-lines" style="font-size:1.5rem;color:var(--accent)"></i>
+        <div>
+          <div style="font-weight:600;font-size:0.875rem" id="traitsFileName">traits.csv</div>
+          <div style="font-size:0.75rem;color:var(--text-muted)" id="traitsFileStats">Metadata file attached</div>
+        </div>
+      </div>
+      <div class="upload-preview" id="traitsPreview"></div>
+      <div id="traitAlignmentPreview" class="trait-align-banner" style="display:none"></div>
+      <button class="btn btn-outline btn-sm" onclick="APP.openTraitsQcModal()" id="btnPreviewTraitsQc" style="display:none;margin-top:0.75rem"><i class="fa-solid fa-chart-line"></i> Preview Traits QC</button>
+    </div>
+
+    <div class="divider"></div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem;">
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Cohort 1 Label (Reference/Control)</label>
+        <input class="form-control" id="cohort1" value="Control" placeholder="e.g. Control">
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Cohort 2 Label (Case/Disease)</label>
+        <input class="form-control" id="cohort2" value="Disease" placeholder="e.g. Disease">
+      </div>
+    </div>
+
+    <div style="margin-top:2rem;display:flex;justify-content:flex-end;gap:0.75rem">
+      <button class="btn btn-outline" onclick="APP.go('landing')"><i class="fa-solid fa-arrow-left"></i> Back</button>
+      <button class="btn btn-primary" id="configBtn" onclick="APP.go('config')" disabled><i class="fa-solid fa-sliders"></i> Configure Pipeline</button>
+    </div>
+  </div>
+</section>
+
+<!-- CONFIG -->
+<section class="page" id="page-config">
+  <div class="container" style="padding-bottom:80px">
+    <div class="page-title">Pipeline Configuration</div>
+    <div class="page-sub">Adjust parameters or use detected defaults. Every unique parameter set creates a new versioned run.</div>
+    <div class="ai-banner" id="configDetectionHint" style="margin-top:0;margin-bottom:1.25rem">
+      <i class="fa-solid fa-sliders" style="color:var(--accent)"></i>
+      <span>Upload a dataset to auto-apply format-aware defaults. If cohort membership cannot be determined from the file alone, attach a traits/clinical metadata file before running.</span>
+    </div>
+
+    <div class="form-group" style="max-width:420px">
+      <label class="form-label">Analysis Name</label>
+      <input class="form-control" id="analysisName" value="New-Analysis" placeholder="e.g. Sweden-AD-Cohort-v1">
+    </div>
+
+    <details class="accordion" open>
+      <summary><span><i class="fa-solid fa-filter" style="color:var(--accent);margin-right:0.5rem"></i>Normalization &amp; QC</span><i class="fa-solid fa-chevron-down acc-icon"></i></summary>
+      <div class="accordion-body">
+        <div class="param-grid">
+          <div class="param-item">
+            <label>Normalization Method</label>
+            <select class="form-control" id="p_norm">
+              <option value="median" selected>Median</option>
+              <option value="mean">Mean</option>
+              <option value="quantile">Quantile</option>
+              <option value="tin">TIN</option>
+              <option value="zscore">Z-score</option>
+              <option value="none">None</option>
+            </select>
+          </div>
+          <div class="param-item">
+            <label>Missing Value Threshold <span class="param-value" id="mvt-v">0.50</span></label>
+            <input type="range" min="0" max="1" step="0.05" value="0.50" id="p_mvt" oninput="document.getElementById('mvt-v').textContent=parseFloat(this.value).toFixed(2)">
+          </div>
+          <div class="param-item">
+            <label>Min Samples Present</label>
+            <input type="number" class="form-control" id="p_minsamples" value="3" min="1" max="20">
+          </div>
+          <div class="param-item">
+            <label>Log Handling</label>
+            <label class="check-row" style="margin-top:0.55rem"><input type="checkbox" id="p_log2" checked> Auto log₂-transform raw intensity-scale data</label>
+            <div class="form-hint">Recommended for raw PEAKS, Spectronaut, MaxQuant, and DIA-NN exports. Already-logged matrices are auto-detected and left unchanged.</div>
+          </div>
+        </div>
+      </div>
+    </details>
+
+    <details class="accordion">
+      <summary><span><i class="fa-solid fa-chart-scatter" style="color:var(--accent);margin-right:0.5rem"></i>Differential Expression</span><i class="fa-solid fa-chevron-down acc-icon"></i></summary>
+      <div class="accordion-body">
+        <div class="param-grid">
+          <div class="param-item">
+            <label>Statistical Test</label>
+            <select class="form-control" id="p_test">
+              <option value="t-test">t-test</option>
+              <option value="wilcoxon">Wilcoxon</option>
+            </select>
+          </div>
+          <div class="param-item">
+            <label>p-value Threshold <span class="param-value" id="pv-v">0.050</span></label>
+            <input type="range" min="0.001" max="0.1" step="0.001" value="0.05" id="p_pval" oninput="document.getElementById('pv-v').textContent=parseFloat(this.value).toFixed(3)">
+          </div>
+          <div class="param-item">
+            <label>Fold Change Threshold <span class="param-value" id="fc-v">1.50</span></label>
+            <input type="range" min="1" max="4" step="0.1" value="1.5" id="p_fc" oninput="document.getElementById('fc-v').textContent=parseFloat(this.value).toFixed(2)">
+          </div>
+          <div class="param-item">
+            <label>Significance Mode</label>
+            <label class="check-row" style="margin-top:0.55rem"><input type="checkbox" id="p_adjp" checked> Use BH-adjusted p-value (FDR)</label>
+            <div class="form-hint">Turn this off only when you explicitly want raw p-values to drive hit calls and volcano ranking.</div>
+          </div>
+        </div>
+      </div>
+    </details>
+
+    <details class="accordion" open>
+      <summary><span><i class="fa-solid fa-network-wired" style="color:var(--accent);margin-right:0.5rem"></i>WGCNA Network</span><i class="fa-solid fa-chevron-down acc-icon"></i></summary>
+      <div class="accordion-body">
+        <div class="param-grid">
+          <div class="param-item">
+            <label>Soft Power (β) <span class="param-value" id="pw-v">8</span></label>
+            <input type="range" min="1" max="20" step="1" value="8" id="p_power" oninput="document.getElementById('pw-v').textContent=this.value">
+          </div>
+          <div class="param-item">
+            <label>Min Module Size</label>
+            <input type="number" class="form-control" id="p_minmod" value="20" min="5" max="200">
+          </div>
+          <div class="param-item">
+            <label>Deep Split <span class="param-value" id="ds-v">3</span></label>
+            <input type="range" min="0" max="4" step="1" value="3" id="p_deepsplit" oninput="document.getElementById('ds-v').textContent=this.value">
+          </div>
+          <div class="param-item">
+            <label>Merge Cut Height <span class="param-value" id="mh-v">0.30</span></label>
+            <input type="range" min="0" max="1" step="0.01" value="0.30" id="p_mergeheight" oninput="document.getElementById('mh-v').textContent=parseFloat(this.value).toFixed(2)">
+          </div>
+          <div class="param-item">
+            <label>Network Type</label>
+            <select class="form-control" id="p_nettype">
+              <option value="signed" selected>signed</option>
+              <option value="unsigned">unsigned</option>
+            </select>
+          </div>
+          <div class="param-item">
+            <label>Correlation Type</label>
+            <select class="form-control" id="p_cortype">
+              <option value="bicor" selected>bicor</option>
+              <option value="pearson">pearson</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </details>
+
+    <details class="accordion">
+      <summary><span><i class="fa-solid fa-circle-nodes" style="color:var(--accent);margin-right:0.5rem"></i>GO &amp; Cell Type Enrichment</span><i class="fa-solid fa-chevron-down acc-icon"></i></summary>
+      <div class="accordion-body">
+        <div class="param-grid">
+          <div class="param-item">
+            <label>GO Categories</label>
+            <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-top:0.4rem">
+              <label class="check-row"><input type="checkbox" id="go_bp" checked> BP</label>
+              <label class="check-row"><input type="checkbox" id="go_mf" checked> MF</label>
+              <label class="check-row"><input type="checkbox" id="go_cc" checked> CC</label>
+            </div>
+          </div>
+          <div class="param-item">
+            <label>FDR Threshold <span class="param-value" id="fdr-v">0.050</span></label>
+            <input type="range" min="0.001" max="0.2" step="0.001" value="0.05" id="p_fdr" oninput="document.getElementById('fdr-v').textContent=parseFloat(this.value).toFixed(3)">
+          </div>
+          <div class="param-item">
+            <label>Min Hits Per Ontology</label>
+            <input type="number" class="form-control" id="p_minhits" value="3" min="1" max="50">
+          </div>
+          <div class="param-item" style="padding-top:0.2rem">
+            <label class="toggle-wrap">
+              <span class="toggle-label">
+                <span class="toggle-title">Adjust FET Lookup Efficiency</span>
+                <span class="toggle-help">Disabled until cross-species lookup accounting is implemented end-to-end.</span>
+              </span>
+              <span class="toggle">
+                <input type="checkbox" id="p_adj_fet" disabled>
+                <span class="toggle-track"></span>
+                <span class="toggle-thumb"></span>
+              </span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </details>
+
+    <details class="accordion">
+      <summary><span><i class="fa-solid fa-sliders" style="color:var(--accent);margin-right:0.5rem"></i>Advanced Controls</span><i class="fa-solid fa-chevron-down acc-icon"></i></summary>
+      <div class="accordion-body">
+        <div class="param-grid">
+          <div class="param-item">
+            <label>Outlier Z-threshold</label>
+            <input type="number" class="form-control" id="p_outlier_z" value="3.0" step="0.1">
+          </div>
+          <div class="param-item">
+            <label>Outlier Mode</label>
+            <select class="form-control" id="p_outlier_mode">
+              <option value="low_connectivity" selected>Low-connectivity bicor screen</option>
+            </select>
+            <div class="form-hint">Only low network-connectivity samples are flagged. Two-sided outlier calls are gated until validated for this workflow.</div>
+          </div>
+          <div class="param-item">
+            <label>Normalization Strategy</label>
+            <select class="form-control" id="p_norm_strategy">
+              <option value="column" selected>Column-based</option>
+            </select>
+            <div class="form-hint">TAMPOR is gated until required GIS/batch metadata is wired into upload validation.</div>
+          </div>
+          <div class="param-item">
+            <label>Normalization Center</label>
+            <select class="form-control" id="p_norm_center">
+              <option value="median" selected>Median</option>
+            </select>
+          </div>
+          <div class="param-item">
+            <label>TAMPOR Mode</label>
+            <select class="form-control" id="p_tampor_mode" disabled>
+              <option value="one_way" selected>One-way</option>
+            </select>
+          </div>
+          <div class="param-item">
+            <label>TAMPOR Iterations</label>
+            <input type="number" class="form-control" id="p_tampor_iterations" value="1" min="1" max="10" disabled>
+          </div>
+          <div class="param-item">
+            <label>Variance Correction</label>
+            <label class="check-row" style="margin-top:0.55rem"><input type="checkbox" id="p_varcorr_enabled" disabled> Enable covariate correction</label>
+            <div class="form-hint">Disabled until covariate selection and model-rank checks are available.</div>
+          </div>
+          <div class="param-item">
+            <label>Variance Method</label>
+            <select class="form-control" id="p_varcorr_method" disabled>
+              <option value="linear_regression" selected>Linear regression</option>
+            </select>
+          </div>
+          <div class="param-item">
+            <label>Multiple Testing Method</label>
+            <select class="form-control" id="p_multitest">
+              <option value="fdr_bh" selected>BH / FDR</option>
+              <option value="bonferroni">Bonferroni</option>
+            </select>
+          </div>
+          <div class="param-item">
+            <label>WGCNA Power Mode</label>
+            <select class="form-control" id="p_power_mode">
+              <option value="fixed" selected>Fixed power</option>
+              <option value="auto_pick">Auto-pick cutoff</option>
+            </select>
+          </div>
+          <div class="param-item">
+            <label>Auto-pick Power Cutoff</label>
+            <input type="number" class="form-control" id="p_power_cutoff" value="0.8" min="0.1" max="0.99" step="0.01">
+          </div>
+          <div class="param-item">
+            <label>TOM Type</label>
+            <select class="form-control" id="p_tom_type">
+              <option value="signed" selected>Signed</option>
+              <option value="unsigned">Unsigned</option>
+            </select>
+          </div>
+          <div class="param-item">
+            <label>PAM Stage</label>
+            <label class="check-row" style="margin-top:0.55rem"><input type="checkbox" id="p_pam_stage" checked> Use PAM refinement</label>
+          </div>
+          <div class="param-item">
+            <label>GO Redundancy Removal</label>
+            <select class="form-control" id="p_go_redundancy">
+              <option value="kappa" selected>Kappa / K-best</option>
+              <option value="none">None</option>
+            </select>
+          </div>
+          <div class="param-item">
+            <label>GO Background</label>
+            <select class="form-control" id="p_go_background">
+              <option value="measured_features" selected>Measured features</option>
+              <option value="gmt_universe">GMT universe</option>
+            </select>
+          </div>
+          <div class="param-item">
+            <label>CellTypeFET Reference</label>
+            <select class="form-control" id="p_celltype_reference">
+              <option value="human_sharma_zhang_union" selected>Human Sharma/Zhang union</option>
+              <option value="mouse_reference">Mouse reference</option>
+            </select>
+          </div>
+          <div class="param-item">
+            <label>CellTypeFET Duplicate Handling</label>
+            <select class="form-control" id="p_celltype_duplicates">
+              <option value="allow" selected>Allow duplicates</option>
+              <option value="collapse">Collapse duplicates</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <div class="sticky-bar">
+    <div class="runtime-note"><i class="fa-solid fa-clock" style="color:var(--text-muted)"></i> Runtime depends on dataset size, file format, and local hardware</div>
+    <button class="btn btn-primary" onclick="APP.runPipeline()"><i class="fa-solid fa-play"></i> Run Analysis</button>
+  </div>
+</section>
+
+<!-- ANALYSIS -->
+<section class="page" id="page-analysis">
+  <div class="container">
+    <div class="page-title">Pipeline Executing</div>
+    <div class="page-sub" id="analysisSubtitle">Starting analysis...</div>
+
+    <div class="analysis-step-list" id="analysisStepList"></div>
+
+    <div style="display:flex;justify-content:space-between;font-size:0.78rem;color:var(--text-muted);margin-bottom:0.4rem">
+      <span>Overall progress</span><span id="pct">0%</span>
+    </div>
+    <div class="progress-track" style="margin-bottom:1.75rem">
+      <div class="progress-fill" id="progressBar" style="width:0%"></div>
+    </div>
+
+    <div class="card card-pad" style="padding:0;margin-bottom:1.25rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:0.85rem 1.25rem;border-bottom:1px solid var(--border)">
+        <span style="font-weight:600;font-size:0.85rem">Live Analysis Log</span>
+        <span style="font-size:0.73rem;color:var(--text-muted)" id="logTimer">00:00</span>
+      </div>
+      <div class="terminal" id="logOutput"></div>
+    </div>
+
+    <div id="stageCards"></div>
+  </div>
+</section>
+
+<!-- RUN HISTORY -->
+<section class="page" id="page-runs">
+  <div class="container-wide">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem">
+      <div>
+        <div class="page-title">Run History</div>
+        <div class="page-sub" style="margin-bottom:0">All past analyses — click any run to view its full report, or compare two runs side-by-side</div>
+      </div>
+      <button class="btn btn-primary" onclick="APP.go('upload')"><i class="fa-solid fa-plus"></i> New Analysis</button>
+    </div>
+
+    <div class="registry-toolbar">
+      <div class="search-box">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input class="form-control" placeholder="Search runs..." id="runSearch" oninput="APP.filterRuns()">
+      </div>
+      <select class="form-control" style="max-width:160px" id="statusFilter" onchange="APP.filterRuns()">
+        <option value="">All statuses</option>
+        <option value="complete">Complete</option>
+        <option value="running">Running</option>
+        <option value="failed">Failed</option>
+        <option value="queued">Queued</option>
+        <option value="trashed">Trash</option>
+      </select>
+      <button class="btn btn-outline btn-sm" id="toggleTrashBtn" onclick="APP.toggleTrashView()"><i class="fa-solid fa-trash"></i> View Trash</button>
+      <button class="btn btn-outline btn-sm" onclick="APP.showDiff()"><i class="fa-solid fa-code-compare"></i> Compare Selected</button>
+      <button class="btn btn-ghost btn-sm" onclick="APP.renderRuns()"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
+    </div>
+
+    <div class="section-actions">
+      <div id="compareTray" class="run-compare-slot"><i class="fa-solid fa-code-compare"></i> No runs selected for compare</div>
+    </div>
+
+    <div id="runList"><div class="loading-state"><i class="fa-solid fa-circle-notch"></i>Loading runs...</div></div>
+
+    <div id="diffPanel" style="display:none">
+      <div class="divider"></div>
+      <div style="font-weight:700;font-size:0.9rem;margin-bottom:0.75rem;display:flex;align-items:center;gap:0.5rem">
+        <i class="fa-solid fa-code-compare" style="color:var(--primary)"></i> Parameter Diff — <span id="diffLabel" style="color:var(--text-muted)"></span>
+      </div>
+      <div class="diff-panel">
+        <table class="diff-table" id="diffTable"></table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- RESULTS -->
+<section class="page" id="page-results">
+  <div class="container-wide">
+    <div style="display:flex;align-items:center;gap:1rem;margin-bottom:0.5rem;flex-wrap:wrap">
+      <div class="page-title" style="margin-bottom:0" id="resultsTitle">Results</div>
+      <span class="badge badge-green" id="resultsRunBadge">—</span>
+      <button class="btn btn-outline btn-sm" onclick="APP.go('runs')"><i class="fa-solid fa-clock-rotate-left"></i> All Runs</button>
+    </div>
+    <div class="page-sub" id="resultsSub">Select a run from Run History to view results</div>
+
+    <div class="metric-strip" id="metricStrip">
+      <div class="m-chip">Select a completed run to load results</div>
+    </div>
+
+    <div class="tab-nav">
+      <button class="tab-btn active" onclick="APP.tab('overview',event)">Overview</button>
+      <button class="tab-btn" onclick="APP.tab('qc',event)">QC &amp; Normalization</button>
+      <button class="tab-btn" onclick="APP.tab('volcano',event)">Volcano Plot</button>
+      <button class="tab-btn" onclick="APP.tab('network',event)">Module Network</button>
+      <button class="tab-btn" onclick="APP.tab('go',event)">GO Enrichment</button>
+      <button class="tab-btn" onclick="APP.tab('cells',event)">Cell Types</button>
+      <button class="tab-btn" onclick="APP.tab('tables',event)">Tables</button>
+      <button class="tab-btn" onclick="APP.tab('parameters',event)"><i class="fa-solid fa-sliders"></i> Parameters</button>
+      <button class="tab-btn" onclick="APP.tab('files',event)">📁 Intermediate Files</button>
+      <button class="tab-btn" onclick="APP.tab('ai',event)">✦ AI Insights</button>
+    </div>
+
+    <!-- Overview -->
+    <div class="tab-pane active" id="tab-overview">
+      <div class="chart-card">
+        <div class="chart-title">Pipeline-Native Overview</div>
+        <div class="chart-sub">Interactive HTML dashboards and QC artifacts generated by the pipeline itself</div>
+        <div id="overviewNative"><div class="loading-state"><i class="fa-solid fa-circle-notch"></i>Load a run to display native outputs</div></div>
+      </div>
+      <div class="sum-grid" id="sumGrid">
+        <div class="sum-card"><div class="num" style="color:var(--text-muted)">—</div><div class="lbl">Upregulated</div></div>
+        <div class="sum-card"><div class="num" style="color:var(--text-muted)">—</div><div class="lbl">Downregulated</div></div>
+        <div class="sum-card"><div class="num" style="color:var(--primary)">—</div><div class="lbl">Modules</div></div>
+        <div class="sum-card"><div class="num" style="color:var(--accent)">—</div><div class="lbl">Enriched GO</div></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Top Differentially Expressed Proteins</div>
+        <div class="chart-sub" id="topProteinsSub">Ranked by adjusted p-value · FDR &lt; 0.05</div>
+        <div class="top-table-toolbar">
+          <input class="form-control" style="max-width:240px" id="topProteinsSearch" placeholder="Search proteins / peptides / modules..." oninput="APP.updateTopProteinsSearch(this.value)">
+          <input class="form-control" style="max-width:170px" id="topProteinsPFilter" placeholder="p-value filter e.g. <0.01" oninput="APP.updateTopProteinsFilter('pvalue', this.value)">
+          <input class="form-control" style="max-width:150px" id="topProteinsModuleFilter" placeholder="Filter module" oninput="APP.updateTopProteinsFilter('module', this.value)">
+          <button class="btn btn-outline btn-sm" id="topProteinsOpenTableBtn" disabled><i class="fa-solid fa-table"></i> Open Full Table</button>
+        </div>
+        <div class="top-table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Gene / Protein</th><th>Log₂ FC</th><th id="topProteinsMetricHeader">Adj p-value</th><th>Module</th><th>Direction</th></tr></thead>
+            <tbody id="topProteinsTable"><tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:2rem">No results loaded</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- QC -->
+    <div class="tab-pane" id="tab-qc">
+      <div class="chart-card">
+        <div class="chart-title">QC &amp; Normalization</div>
+        <div class="chart-sub">MDS, QC, normalization summaries, and sample-level checks emitted by the pipeline bundle</div>
+        <div id="qcNative"><div class="loading-state"><i class="fa-solid fa-circle-notch"></i>Load a run to display QC outputs</div></div>
+      </div>
+    </div>
+
+    <!-- Volcano -->
+    <div class="tab-pane" id="tab-volcano">
+      <div class="chart-card">
+        <div class="chart-title">Volcano Plot</div>
+        <div class="chart-sub" id="volcanoSub">Pipeline-native interactive and static volcano outputs</div>
+        <div id="volcanoNative"><div class="loading-state"><i class="fa-solid fa-circle-notch"></i>Load a run to display native volcano outputs</div></div>
+        <hr style="border:none;border-top:1px solid var(--border);margin:1.5rem 0">
+        <div class="section-label">DE Results</div>
+        <div class="top-table-toolbar" id="volcanoTableToolbar">
+          <input class="form-control" style="max-width:240px" id="volcanoTableSearch"
+                 placeholder="Search proteins..."
+                 oninput="APP.volcanoTableSearch(this.value)">
+          <select class="form-control" style="max-width:160px" id="volcanoTableDirection"
+                  onchange="APP.volcanoTableFilter('direction', this.value)">
+            <option value="">All directions</option>
+            <option value="up">Up</option>
+            <option value="down">Down</option>
+          </select>
+          <select class="form-control" style="max-width:180px" id="volcanoTableSignificance"
+                  onchange="APP.volcanoTableFilter('significant', this.value)">
+            <option value="1" selected>Significant only</option>
+            <option value="">All features</option>
+          </select>
+          <span id="volcanoRowCount"
+                style="font-size:0.83rem;color:var(--text-muted);white-space:nowrap;margin-left:auto">
+            Showing — of — features
+          </span>
+        </div>
+        <div class="volcano-table-wrap" style="margin-bottom:0.75rem">
+          <table class="data-table" id="volcanoResultsTable">
+            <thead>
+              <tr>
+                <th data-col="gene" style="cursor:pointer" onclick="APP.volcanoTableSort('gene')">Gene / Peptide <span id="volcanoSort_gene"></span></th>
+                <th data-col="log2fc" style="cursor:pointer;min-width:80px" onclick="APP.volcanoTableSort('log2fc')">Log₂FC <span id="volcanoSort_log2fc"></span></th>
+                <th data-col="adj_pvalue" style="cursor:pointer;min-width:100px" onclick="APP.volcanoTableSort('adj_pvalue')">Adj p-value <span id="volcanoSort_adj_pvalue">▲</span></th>
+                <th data-col="pvalue" style="cursor:pointer;min-width:90px" onclick="APP.volcanoTableSort('pvalue')">p-value <span id="volcanoSort_pvalue"></span></th>
+                <th style="min-width:90px">Direction</th>
+              </tr>
+            </thead>
+            <tbody id="volcanoResultsTableBody">
+              <tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:2rem">Load a run to display DE results</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div id="volcanoTablePagination" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:0.5rem">
+          <button class="btn btn-outline btn-sm" id="volcanoPrevPage"
+                  aria-label="Previous page" disabled
+                  onclick="APP.volcanoTablePage(-1)">
+            <i class="fa-solid fa-chevron-left"></i>
+          </button>
+          <span id="volcanoPageInfo" style="font-size:0.83rem;color:var(--text-muted)">
+            Page 1 of 1
+          </span>
+          <button class="btn btn-outline btn-sm" id="volcanoNextPage"
+                  aria-label="Next page" disabled
+                  onclick="APP.volcanoTablePage(1)">
+            <i class="fa-solid fa-chevron-right"></i>
+          </button>
+          <select class="form-control" style="max-width:120px;margin-left:auto"
+                  id="volcanoPageSize" onchange="APP.volcanoTableSetPageSize(this.value)">
+            <option value="25" selected>25 / page</option>
+            <option value="50">50 / page</option>
+            <option value="100">100 / page</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Network -->
+    <div class="tab-pane" id="tab-network">
+      <div class="chart-card">
+        <div class="chart-title">WGCNA Module Network</div>
+        <div class="chart-sub">Pipeline-generated module, dendrogram, power, trait-correlation, and hub-protein outputs</div>
+        <div id="networkNative"><div class="loading-state"><i class="fa-solid fa-circle-notch"></i>Load a run to display native WGCNA outputs</div></div>
+      </div>
+    </div>
+
+    <!-- GO -->
+    <div class="tab-pane" id="tab-go">
+      <div class="chart-card">
+        <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;flex-wrap:wrap">
+          <div><div class="chart-title">GO Enrichment</div><div class="chart-sub">Pipeline-generated GO and pathway outputs</div></div>
+        </div>
+        <div id="goNative"><div class="loading-state"><i class="fa-solid fa-circle-notch"></i>Load a run to display native GO outputs</div></div>
+      </div>
+    </div>
+
+    <!-- Cell types -->
+    <div class="tab-pane" id="tab-cells">
+      <div class="chart-card">
+        <div class="chart-title">Brain Cell Type Enrichments</div>
+        <div class="chart-sub">Pipeline-generated cell type enrichment outputs</div>
+        <div id="cellNative"><div class="loading-state"><i class="fa-solid fa-circle-notch"></i>Load a run to display native cell type outputs</div></div>
+      </div>
+    </div>
+
+    <!-- Tables -->
+    <div class="tab-pane" id="tab-tables">
+      <div class="chart-card">
+        <div class="chart-title">Interactive Tables</div>
+        <div class="chart-sub">Search, filter, sort, paginate, and inspect client-safe tabular outputs directly in-app</div>
+        <div id="tablesNative"><div class="loading-state"><i class="fa-solid fa-circle-notch"></i>Load a run to display interactive tables</div></div>
+      </div>
+    </div>
+
+    <!-- Parameters -->
+    <div class="tab-pane" id="tab-parameters">
+      <div class="chart-card">
+        <div class="chart-title">Pipeline Parameters</div>
+        <div class="chart-sub">Curated parameter audit trail frozen at run submission time</div>
+        <div id="parametersPane"><div class="loading-state"><i class="fa-solid fa-circle-notch"></i>Load a run to display parameters</div></div>
+      </div>
+    </div>
+
+    <!-- Intermediate Files -->
+    <div class="tab-pane" id="tab-files">
+      <div class="chart-card">
+        <div class="chart-title">Intermediate File Store</div>
+        <div class="chart-sub">Client-safe pipeline files generated during this run — internal R workspace/session files are hidden</div>
+        <div id="fileTreeContainer">
+          <div class="loading-state"><i class="fa-solid fa-circle-notch"></i>Loading file manifest...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI -->
+    <div class="tab-pane" id="tab-ai">
+      <div class="ai-banner" id="aiBanner">
+        <i class="fa-solid fa-circle-nodes" style="color:var(--accent)"></i>
+        <span>AI Insights now runs in one isolated Pi sidecar. It opens the selected completed run in the standalone research workspace.</span>
+      </div>
+      <div id="aiInsightsLauncher" class="chart-card" style="padding:2rem;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2rem;align-items:center">
+        <div>
+          <div class="chart-title" style="font-size:1.25rem">Run-scoped AI research workspace</div>
+          <div class="chart-sub" style="max-width:720px;margin-top:.5rem">Use Standard or Deep Research policy on the same Pi session runtime, switch Anthropic/OpenRouter models per turn, inspect immutable context, and retain generated artifacts, costs, feedback, and notes with this run.</div>
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:1rem">
+            <span class="badge badge-purple">One Pi runtime</span>
+            <span class="badge badge-blue">Encrypted BYOK</span>
+            <span class="badge badge-green">Run-owned artifacts</span>
+          </div>
+        </div>
+        <button id="openAIInsightsBtn" class="btn btn-primary btn-lg" onclick="APP.openAIInsights()"><i class="fa-solid fa-arrow-up-right-from-square"></i> Open AI Insights</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="artifact-viewer" id="artifactViewer" onclick="if(event.target===this) APP.closeArtifactViewer()">
+  <div class="artifact-viewer-dialog">
+    <div class="artifact-viewer-header">
+      <div>
+        <div class="artifact-viewer-title" id="artifactViewerTitle">Artifact Viewer</div>
+        <div class="artifact-viewer-meta" id="artifactViewerMeta">Client-safe deliverable view</div>
+      </div>
+      <div class="artifact-viewer-actions" id="artifactViewerActions"></div>
+    </div>
+    <div class="artifact-viewer-body" id="artifactViewerBody">
+      <div class="loading-state"><i class="fa-solid fa-circle-notch"></i>Select an artifact to open it here</div>
+    </div>
+  </div>
+</div>
+
+<!-- EXPORT -->
+<section class="page" id="page-export">
+  <div class="container">
+    <div class="page-title">Export &amp; Share</div>
+    <div class="page-sub">Download results for publication or integrate with your data warehouse</div>
+
+    <div class="export-grid">
+      <div class="export-card" onclick="APP.downloadResults('bundle_zip')">
+        <div class="exp-icon">📦</div>
+        <h3>Full Run Bundle</h3>
+        <p>Complete run directory including canonical inputs, stage outputs, manifests, and logs.</p>
+        <button class="btn btn-primary btn-sm"><i class="fa-solid fa-download"></i> Download ZIP</button>
+      </div>
+      <div class="export-card" onclick="APP.downloadResults('bundle_xlsx')">
+        <div class="exp-icon">📘</div>
+        <h3>Workbook Export</h3>
+        <p>Multi-sheet workbook containing DEP, module, GO, and cell type tables for downstream review.</p>
+        <button class="btn btn-primary btn-sm"><i class="fa-solid fa-download"></i> Download XLSX</button>
+      </div>
+      <div class="export-card" onclick="APP.downloadResults('bundle_summary')">
+        <div class="exp-icon">📝</div>
+        <h3>Run Summary</h3>
+        <p>Machine-readable markdown summary with parameters, format metadata, and run completion details.</p>
+        <button class="btn btn-primary btn-sm"><i class="fa-solid fa-download"></i> Download Markdown</button>
+      </div>
+      <div class="export-card" onclick="APP.downloadResults('volcano')">
+        <div class="exp-icon">📊</div>
+        <h3>Volcano Results</h3>
+        <p>Differential expression table with log₂ FC, adjusted p-values, module assignments, and significance flags.</p>
+        <button class="btn btn-primary btn-sm"><i class="fa-solid fa-download"></i> Download TSV</button>
+      </div>
+      <div class="export-card" onclick="APP.downloadResults('modules')">
+        <div class="exp-icon">🕸️</div>
+        <h3>Module Assignments</h3>
+        <p>All peptides with WGCNA module color, kME membership scores, and trait correlations.</p>
+        <button class="btn btn-primary btn-sm"><i class="fa-solid fa-download"></i> Download CSV</button>
+      </div>
+      <div class="export-card" onclick="APP.downloadResults('go')">
+        <div class="exp-icon">🧬</div>
+        <h3>GO Enrichment Table</h3>
+        <p>All GO enrichment results per module with raw p-values, FDR, and gene overlap counts.</p>
+        <button class="btn btn-primary btn-sm"><i class="fa-solid fa-download"></i> Download CSV</button>
+      </div>
+      <div class="export-card" onclick="APP.downloadResults('celltype')">
+        <div class="exp-icon">🧠</div>
+        <h3>Cell Type FDR Matrix</h3>
+        <p>Module × cell type −log₁₀(FDR) matrix for all brain cell types.</p>
+        <button class="btn btn-primary btn-sm"><i class="fa-solid fa-download"></i> Download CSV</button>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div style="text-align:center;padding:0.75rem 0">
+      <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:1rem">Run another analysis?</p>
+      <button class="btn btn-primary btn-lg" onclick="APP.go('upload')"><i class="fa-solid fa-plus"></i> New Analysis</button>
+    </div>
+  </div>
+</section>
+
+<div id="traitsQcModal" class="modal-overlay" onclick="if(event.target===this) APP.closeTraitsQcModal()">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title">Clinical Traits Summary</span>
+      <button onclick="APP.closeTraitsQcModal()" class="btn btn-ghost btn-sm" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body" id="traitsQcModalBody">
+      <p style="color:var(--text-muted)">Upload a traits file to view summary statistics.</p>
+    </div>
+  </div>
+</div>
+
+<div id="qcModal" class="modal-overlay" onclick="if(event.target===this) APP.closeQcModal()">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title">Sample Quality Preview</span>
+      <button onclick="APP.closeQcModal()" class="btn btn-ghost btn-sm" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body" id="qcModalBody">
+      <p style="color:var(--text-muted)">Upload a dataset to view quality metrics.</p>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="/app.js"></script>
+</body>
+</html>
