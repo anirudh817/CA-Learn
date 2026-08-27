@@ -241,6 +241,7 @@ async def upload_dataset(
         "sample_count": dataset.sample_count,
         "dataset_hash": dataset.dataset_hash,
         "file_kind": dataset.file_kind.value,
+        "run_ready": bool(sniff.get("run_ready", True)),
         "pipeline_profile": recommendations["pipeline_profile"],
         "recommended_defaults": recommendations,
     }

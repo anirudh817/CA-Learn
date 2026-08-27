@@ -724,6 +724,7 @@ const APP = {
 
     if (page === "runs" && STATE.currentWorkspaceId) this.renderRuns();
     if (page === "results" && STATE.currentRunId) this.loadResults(STATE.currentRunId);
+    if (page === "config") this.updateConfigSummary();
   },
 
   handleDrop(event) {
@@ -741,6 +742,136 @@ const APP = {
   handleTraitsSelect(event) {
     const file = event.target.files[0];
     if (file) this.prepareUpload(file, "traits");
+  },
+
+  async loadFormatsCatalog() {
+    if (STATE.formatsCatalog) return STATE.formatsCatalog;
+    try {
+      const data = await this.apiJson("/api/formats");
+      STATE.formatsCatalog = data.formats || [];
+    } catch (error) {
+      STATE.formatsCatalog = [];
+    }
+    return STATE.formatsCatalog;
+  },
+
+  async showFormatPicker(meta) {
+    const card = document.getElementById("formatPickerCard");
+    if (!card) return;
+    const formats = await this.loadFormatsCatalog();
+    const familySel = document.getElementById("p_format_family");
+    if (!familySel || !formats.length) return;
+    familySel.innerHTML = formats
+      .map((f) => `<option value="${escapeHtml(f.family)}">${escapeHtml(f.label)}</option>`)
+      .join("");
+    const detectedFamily = meta?.format_family || "Generic";
+    familySel.value = formats.some((f) => f.family === detectedFamily) ? detectedFamily : "Generic";
+    this.syncAssayOptions(meta?.assay_level);
+    document.getElementById("formatMappingPanel").style.display = "none";
+    document.getElementById("formatPickerStatus").innerHTML =
+      `<span style="color:var(--text-muted)">Auto-detected <strong>${escapeHtml(detectedFamily)}</strong>. Adjust if needed.</span>`;
+    card.style.display = "";
+    this.refreshQuickRun(meta);
+  },
+
+  syncAssayOptions(preferred) {
+    const formats = STATE.formatsCatalog || [];
+    const family = document.getElementById("p_format_family")?.value;
+    const entry = formats.find((f) => f.family === family);
+    const levels = (entry && entry.assay_levels) || ["protein", "peptide", "unknown"];
+    const assaySel = document.getElementById("p_assay_level");
+    if (!assaySel) return;
+    assaySel.innerHTML = levels
+      .map((l) => `<option value="${escapeHtml(l)}">${escapeHtml(l.charAt(0).toUpperCase() + l.slice(1))}</option>`)
+      .join("");
+    if (preferred && levels.includes(preferred)) assaySel.value = preferred;
+  },
+
+  async onFormatPicked() {
+    // Assay options depend on the chosen family; keep them in sync first.
+    const currentAssay = document.getElementById("p_assay_level")?.value;
+    this.syncAssayOptions(currentAssay);
+    if (!STATE.currentFileId) return;
+    const family = document.getElementById("p_format_family").value;
+    const assay = document.getElementById("p_assay_level").value;
+    const statusEl = document.getElementById("formatPickerStatus");
+    statusEl.innerHTML = `<span style="color:var(--text-muted)">Applying ${escapeHtml(family)}...</span>`;
+    try {
+      const body = { format_family: family, assay_level: assay };
+      if (STATE.pendingColumnMap) body.column_map = STATE.pendingColumnMap;
+      const data = await this.apiJson(`/api/datasets/${STATE.currentFileId}/format`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      STATE.currentFileMeta = Object.assign({}, STATE.currentFileMeta, data);
+      this.applyDetectedDefaults(data);
+      if (data.validation && data.validation.needs_mapping) {
+        this.renderMappingPanel(data.validation);
+        statusEl.innerHTML = `<span class="log-warn">This ${escapeHtml(family)} file needs column mapping before it can run.</span>`;
+      } else {
+        document.getElementById("formatMappingPanel").style.display = "none";
+        STATE.pendingColumnMap = null;
+        statusEl.innerHTML = `<span style="color:var(--success)"><i class="fa-solid fa-circle-check"></i> Ready: ${escapeHtml(family)} · ${escapeHtml(assay)}</span>`;
+      }
+      this.refreshQuickRun(data);
+    } catch (error) {
+      statusEl.innerHTML = `<span class="log-error">Could not apply format: ${escapeHtml(error.message)}</span>`;
+    }
+  },
+
+  renderMappingPanel(validation) {
+    const panel = document.getElementById("formatMappingPanel");
+    if (!panel) return;
+    const roles = validation.missing_roles || [];
+    const columns = validation.available_columns || [];
+    const options = columns.map((c) => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+    panel.innerHTML =
+      `<div class="form-hint" style="margin-bottom:0.5rem">Map the required field(s) to columns in your file:</div>` +
+      roles
+        .map(
+          (role) => `
+        <div class="form-group" style="margin-bottom:0.5rem">
+          <label class="form-label" style="text-transform:capitalize">${escapeHtml(role)} column</label>
+          <select class="form-control" data-role="${escapeHtml(role)}">${options}</select>
+        </div>`
+        )
+        .join("") +
+      `<button class="btn btn-outline btn-sm" onclick="APP.applyColumnMap()"><i class="fa-solid fa-wand-magic-sparkles"></i> Apply mapping</button>`;
+    panel.style.display = "";
+  },
+
+  applyColumnMap() {
+    const panel = document.getElementById("formatMappingPanel");
+    if (!panel) return;
+    const map = {};
+    panel.querySelectorAll("select[data-role]").forEach((sel) => {
+      map[sel.getAttribute("data-role")] = sel.value;
+    });
+    STATE.pendingColumnMap = map;
+    this.onFormatPicked();
+  },
+
+  refreshQuickRun(data) {
+    const ready = !data || data.run_ready !== false;
+    const quick = document.getElementById("quickRunBtn");
+    if (quick) {
+      quick.style.display = "";
+      quick.disabled = !ready;
+    }
+    const cfg = document.getElementById("configBtn");
+    if (cfg) cfg.disabled = !ready;
+  },
+
+  async runWithRecommended() {
+    // Recommended defaults are already applied to the config inputs via
+    // applyDetectedDefaults(), so this reuses the same run path — it just skips
+    // the manual Configure step for the one-click flow.
+    if (!STATE.currentFileId) {
+      toast("Upload a dataset first", "error");
+      return;
+    }
+    await this.runPipeline();
   },
 
   applyDetectedDefaults(meta) {
@@ -775,6 +906,35 @@ const APP = {
 
     const message = recommendations.hint_text || `Detected ${meta?.format_detected || "dataset"} with ${Number(meta?.sample_count || 0).toLocaleString()} samples. Review parameters before launching the run.`;
     if (hint) hint.innerHTML = `<i class="fa-solid fa-sliders" style="color:var(--accent)"></i><span>${escapeHtml(message)}</span>`;
+    this.updateConfigSummary();
+  },
+
+  // Compact, always-visible readout of the key active settings so advanced
+  // controls can stay tucked inside their accordions.
+  updateConfigSummary() {
+    const host = document.getElementById("configSummaryChips");
+    if (!host) return;
+    const val = (id, fallback) => {
+      const el = document.getElementById(id);
+      if (!el) return fallback;
+      if (el.type === "checkbox") return el.checked;
+      return el.value;
+    };
+    const meta = STATE.currentFileMeta || {};
+    const chips = [
+      meta.format_family ? `${meta.format_family}${meta.assay_level ? " · " + meta.assay_level : ""}` : null,
+      `Norm: ${val("p_norm", "median")}`,
+      `Test: ${val("p_test", "t-test")}`,
+      val("p_adjp", true) ? "FDR: BH-adjusted" : "FDR: raw p",
+      `WGCNA power: ${val("p_power", "8")}`,
+      val("p_log2", true) ? "log₂: auto" : "log₂: off",
+    ].filter(Boolean);
+    host.innerHTML = chips
+      .map(
+        (c) =>
+          `<span style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:16px;padding:0.28rem 0.7rem;font-size:0.74rem;font-weight:600;color:var(--text)">${escapeHtml(String(c))}</span>`
+      )
+      .join("");
   },
 
   async uploadFile(file, fileKind = "primary") {
@@ -811,6 +971,8 @@ const APP = {
         document.getElementById("configBtn").disabled = false;
         document.getElementById("analysisName").value = data.original_name.replace(/\.[^.]+$/, "").replace(/[^a-zA-Z0-9-_]/g, "-");
         this.applyDetectedDefaults(data);
+        STATE.pendingColumnMap = null;
+        await this.showFormatPicker(data);
         const btnQc = document.getElementById("btnPreviewQc");
         if (btnQc) btnQc.style.display = "";
       } else {
@@ -1022,6 +1184,67 @@ const APP = {
     const percent = ordered.length ? Math.round(((doneCount + (running ? 0.5 : 0)) / total) * 100) : 0;
     bar.style.width = `${percent}%`;
     pct.textContent = `${percent}%`;
+
+    this.renderPipelineTrack(ordered);
+    this.renderEta(ordered, doneCount, total);
+  },
+
+  // Collapse the fine-grained stage list into the three coarse phases shown on
+  // the landing page, so users get an at-a-glance sense of where the run is.
+  COARSE_PHASES: [
+    { label: "Normalization & Network", icon: "diagram-project", keys: ["etl", "processing_sample_alignment", "outlier_removal", "normalization", "variance_batch_correction", "differential_expression", "wgcna_network"] },
+    { label: "GO & Pathway", icon: "dna", keys: ["goparallel"] },
+    { label: "Cell Type", icon: "microscope", keys: ["celltypefet", "deliverable_packaging"] },
+  ],
+
+  renderPipelineTrack(stages = []) {
+    const track = document.getElementById("pipelineTrack");
+    if (!track) return;
+    const statusOf = (key) => String((stages.find((s) => s.stage_key === key) || {}).status || "pending").toLowerCase();
+    const nodes = this.COARSE_PHASES.map((phase) => {
+      const present = phase.keys.filter((k) => stages.some((s) => s.stage_key === k));
+      const relevant = present.length ? present : phase.keys;
+      const statuses = relevant.map(statusOf);
+      let cls = "";
+      if (statuses.length && statuses.every((s) => ["complete", "skipped"].includes(s))) cls = "done";
+      else if (statuses.some((s) => s === "running")) cls = "running";
+      const statusText = cls === "done" ? "Complete" : cls === "running" ? "Running" : "Pending";
+      const icon = cls === "done" ? "circle-check" : cls === "running" ? "spinner" : phase.icon;
+      return `
+        <div class="p-node ${cls}">
+          <div class="p-node-icon"><i class="fa-solid fa-${icon}"></i></div>
+          <div class="p-node-label">${escapeHtml(phase.label)}</div>
+          <div class="p-node-status">${statusText}</div>
+        </div>`;
+    });
+    // Interleave connectors between nodes; connector is "done" when the phase before it is done.
+    const parts = [];
+    nodes.forEach((node, index) => {
+      if (index > 0) {
+        const prevDone = /p-node done/.test(nodes[index - 1]);
+        const curActive = /p-node (done|running)/.test(nodes[index]);
+        parts.push(`<div class="p-conn ${prevDone ? "done" : curActive ? "active" : ""}"></div>`);
+      }
+      parts.push(node);
+    });
+    track.innerHTML = parts.join("");
+  },
+
+  renderEta(stages, doneCount, total) {
+    const el = document.getElementById("etaText");
+    if (!el) return;
+    const running = stages.some((s) => String(s.status || "").toLowerCase() === "running");
+    const remaining = total - doneCount;
+    if (!running || doneCount <= 0 || remaining <= 0 || !STATE.analysisStartMs) {
+      el.textContent = "";
+      return;
+    }
+    const elapsedSec = (Date.now() - STATE.analysisStartMs) / 1000;
+    const perStage = elapsedSec / doneCount;
+    const etaSec = Math.max(0, Math.round(perStage * remaining));
+    const mins = Math.floor(etaSec / 60);
+    const secs = etaSec % 60;
+    el.textContent = mins > 0 ? `~${mins}m ${secs}s left` : `~${secs}s left`;
   },
 
   addAnalysisCard(message, icon = "circle-check", color = "#2e7d5a") {
@@ -1094,6 +1317,7 @@ const APP = {
   startTimer() {
     if (STATE.timerInterval) clearInterval(STATE.timerInterval);
     const started = Date.now();
+    STATE.analysisStartMs = started;
     STATE.timerInterval = setInterval(() => {
       const seconds = Math.floor((Date.now() - started) / 1000);
       const minutes = String(Math.floor(seconds / 60)).padStart(2, "0");
@@ -1319,4 +1543,9 @@ window.downloadViaAuth = downloadViaAuth;
 window.openViaAuth = openViaAuth;
 window.addEventListener("load", () => {
   APP.init();
+  const configPage = document.getElementById("page-config");
+  if (configPage) {
+    configPage.addEventListener("input", () => APP.updateConfigSummary());
+    configPage.addEventListener("change", () => APP.updateConfigSummary());
+  }
 });
