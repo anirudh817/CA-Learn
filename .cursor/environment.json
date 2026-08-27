@@ -1,0 +1,20 @@
+{
+  "name": "SignalFold",
+  "install": "bash .cursor/install.sh",
+  "terminals": [
+    {
+      "name": "main-app",
+      "command": "DATA_DIR=./data DATABASE_URL=sqlite:///data/proteomics.db ENABLE_DEMO_BOOTSTRAP=1 .venv/bin/python -m proteomics_ai.devserver",
+      "description": "SignalFold FastAPI monolith — REST API (/api/*) + vanilla-JS SPA on http://127.0.0.1:8000. Runs the R proteomics pipeline in a background thread."
+    },
+    {
+      "name": "ai-sidecar",
+      "command": "cd ai-sidecar && node --import tsx src/index.ts",
+      "description": "AI Insights v2 Node/Pi sidecar on http://127.0.0.1:4317 (UI + /operations). Live AI answers need a provider key in ai-sidecar/.env; Deep Research free-form execution additionally needs Docker."
+    }
+  ],
+  "ports": [
+    { "name": "main app", "port": 8000 },
+    { "name": "AI Insights sidecar", "port": 4317 }
+  ]
+}
