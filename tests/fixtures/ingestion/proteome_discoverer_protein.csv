@@ -1,0 +1,4 @@
+Accession,Gene Symbol,Abundances (Grouped): Control_1,Abundances (Grouped): Control_2,Abundances (Grouped): Disease_1,Abundances (Grouped): Disease_2,Abundance Ratio: (Disease) / (Control)
+P02649,APOE,1000,1100,4000,4200,4.0
+P10909,CLU,800,820,2400,2500,3.0
+P01024,C3,700,690,1900,1950,2.7

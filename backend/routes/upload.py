@@ -12,17 +12,61 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from config import ALLOWED_EXTENSIONS, MAX_UPLOAD_SIZE, UPLOADS_DIR
 from database import UploadKind, UploadedDataset, User, get_db
 from deps import get_current_user, require_workspace_access
 from services.audit_service import record_audit
+from services.ingestion import (
+    SUPPORTED_FORMATS,
+    ColumnMappingRequired,
+    catalog_entry,
+    is_supported_family,
+    normalizer_for,
+)
 from services.input_detector import detect_input_format
 from services.profile_defaults import recommended_defaults_for_profile
 from utils import file_sha256
 
 router = APIRouter()
+
+
+def _apply_format_override(
+    sniff: dict,
+    format_family: Optional[str],
+    assay_level: Optional[str],
+) -> dict:
+    """Overlay a user-selected format/assay onto a sniff dict.
+
+    The manual picker is authoritative: the user's selection always wins, while
+    the auto-sniffer's other findings (columns, counts, evidence) are preserved
+    as context. Supported families are marked ``run_ready`` because they have a
+    real routing path (normalizer, PEAKS R-ETL, Olink native, or generic).
+    """
+    family = (format_family or "").strip()
+    if not family:
+        return sniff
+    level = (assay_level or "").strip().lower() or sniff.get("assay_level") or "unknown"
+    entry = catalog_entry(family)
+    canonical_family = entry["family"] if entry else family
+    updated = dict(sniff)
+    updated["format_family"] = canonical_family
+    updated["assay_level"] = level
+    updated["format_detected"] = f"{canonical_family} ({level})"
+    updated["run_ready"] = bool(is_supported_family(canonical_family))
+    updated["user_override"] = True
+    updated["auto_detected_family"] = sniff.get("format_family")
+    updated["manual_override_recommended"] = False
+    if not updated["run_ready"]:
+        warnings = list(updated.get("warnings") or [])
+        warnings.append(
+            f"Format '{canonical_family}' is not yet supported for analysis; "
+            "choose a supported format or use Generic."
+        )
+        updated["warnings"] = warnings
+    return updated
 
 
 def _load_frame(file_path: Path) -> pd.DataFrame:
@@ -128,6 +172,8 @@ async def upload_dataset(
     workspace_id: str = Form(...),
     project_id: Optional[str] = Form(default=None),
     file_kind: str = Form(default="primary"),
+    format_family: Optional[str] = Form(default=None),
+    assay_level: Optional[str] = Form(default=None),
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -145,6 +191,10 @@ async def upload_dataset(
     stored_path.write_bytes(content)
     kind = UploadKind(file_kind)
     sniff = _sniff_format(stored_path, kind)
+    # Manual picker (authoritative) — the user-selected format/assay overrides the
+    # auto-sniffer while keeping its other findings as context.
+    if kind == UploadKind.PRIMARY and (format_family or assay_level):
+        sniff = _apply_format_override(sniff, format_family, assay_level)
     dataset_hash = file_sha256(stored_path)
 
     dataset = UploadedDataset(
@@ -193,6 +243,97 @@ async def upload_dataset(
         "file_kind": dataset.file_kind.value,
         "pipeline_profile": recommendations["pipeline_profile"],
         "recommended_defaults": recommendations,
+    }
+
+
+@router.get("/formats")
+def list_supported_formats(current_user: User = Depends(get_current_user)):
+    """Catalog for the manual format/assay picker."""
+    return {"formats": SUPPORTED_FORMATS}
+
+
+class FormatOverrideRequest(BaseModel):
+    format_family: str
+    assay_level: Optional[str] = None
+    column_map: Optional[dict] = None
+
+
+def _validate_format_columns(stored_path: Path, format_family: str, assay_level: str, column_map: Optional[dict]) -> dict:
+    """Dry-run the chosen format's normalizer against the file header.
+
+    Returns a ``needs_mapping`` payload when required columns are missing (so the
+    UI can render a manual column-mapping fallback), else ``{"needs_mapping": False}``.
+    Families without a dedicated normalizer (PEAKS/Olink/Generic) never need mapping.
+    """
+    if normalizer_for(format_family) is None:
+        return {"needs_mapping": False}
+    try:
+        frame = _load_frame(stored_path)
+    except Exception as error:  # noqa: BLE001
+        return {"needs_mapping": False, "warning": f"Could not read file for validation: {error}"}
+    try:
+        normalizer_for(format_family)(frame.head(200), assay_level=assay_level, params={"column_map": column_map or {}})
+        return {"needs_mapping": False}
+    except ColumnMappingRequired as exc:
+        return exc.to_payload()
+    except Exception:  # noqa: BLE001 — validation is best-effort; real ETL will surface hard errors
+        return {"needs_mapping": False}
+
+
+def _persist_format_override(dataset: UploadedDataset, req: FormatOverrideRequest) -> dict:
+    sniff = json.loads(dataset.sniff_metadata_json or "{}")
+    sniff = _apply_format_override(sniff, req.format_family, req.assay_level)
+    if req.column_map:
+        sniff["column_map"] = req.column_map
+    validation = _validate_format_columns(
+        Path(dataset.stored_path), sniff["format_family"], sniff["assay_level"], req.column_map
+    )
+    if validation.get("needs_mapping"):
+        sniff["run_ready"] = False
+        sniff["needs_mapping"] = True
+    else:
+        sniff.pop("needs_mapping", None)
+    dataset.format_family = sniff["format_family"]
+    dataset.assay_level = sniff["assay_level"]
+    dataset.format_detected = sniff["format_detected"]
+    dataset.sniff_metadata_json = json.dumps(sniff, sort_keys=True)
+    return validation
+
+
+@router.patch("/datasets/{dataset_id}/format")
+def override_dataset_format(
+    dataset_id: str,
+    req: FormatOverrideRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    dataset = db.query(UploadedDataset).filter(UploadedDataset.id == dataset_id).first()
+    if not dataset:
+        raise HTTPException(status_code=404, detail="Dataset not found")
+    require_workspace_access(db, current_user.id, dataset.workspace_id)
+
+    validation = _persist_format_override(dataset, req)
+    db.commit()
+    record_audit(
+        db,
+        "upload.format_override",
+        user_id=current_user.id,
+        workspace_id=dataset.workspace_id,
+        project_id=dataset.project_id,
+        details={"dataset_id": dataset.id, "format_family": dataset.format_family, "assay_level": dataset.assay_level},
+    )
+    recommendations = recommended_defaults_for_profile(
+        dataset.format_family, dataset.assay_level, dataset.format_detected
+    )
+    return {
+        "dataset_id": dataset.id,
+        "format_family": dataset.format_family,
+        "assay_level": dataset.assay_level,
+        "format_detected": dataset.format_detected,
+        "run_ready": json.loads(dataset.sniff_metadata_json).get("run_ready", True),
+        "pipeline_profile": recommendations["pipeline_profile"],
+        "recommended_defaults": recommendations,
+        "validation": validation,
     }
 
 
