@@ -794,6 +794,12 @@ const APP = {
     if (!STATE.currentFileId) return;
     const family = document.getElementById("p_format_family").value;
     const assay = document.getElementById("p_assay_level").value;
+    // A column map is format-specific; drop it if the family changed so a stale
+    // mapping can't leak into a different format.
+    if (STATE.lastPickedFamily && STATE.lastPickedFamily !== family) {
+      STATE.pendingColumnMap = null;
+    }
+    STATE.lastPickedFamily = family;
     const statusEl = document.getElementById("formatPickerStatus");
     statusEl.innerHTML = `<span style="color:var(--text-muted)">Applying ${escapeHtml(family)}...</span>`;
     try {
