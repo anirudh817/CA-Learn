@@ -1299,6 +1299,29 @@ def _build_canonical_bundle(input_file: str, params: dict, run_dir: Path, log_fn
             log_fn(f"[{_ts()}] WARNING: R PEAKS ETL failed ({exc}); falling back to Python ETL")
             bundle = None
 
+    # Format-aware routing (pre-ETL vendor normalizer layer): for non-PEAKS
+    # vendor exports with a dedicated normalizer, map the raw file into the
+    # canonical wide matrix that _canonicalize_input already understands, then
+    # let the shared ETL take over. Olink/Generic keep their native paths.
+    if bundle is None:
+        try:
+            from services.ingestion import ColumnMappingRequired, normalize_to_file
+
+            normalized_path = normalize_to_file(
+                input_file,
+                format_family=format_family,
+                assay_level=str(params.get("input_level") or "unknown"),
+                params=params,
+                out_dir=input_dir,
+                log_fn=lambda msg: log_fn(f"[{_ts()}] {msg}"),
+            )
+            if normalized_path is not None:
+                input_file = str(normalized_path)
+        except ColumnMappingRequired as exc:  # noqa: BLE001
+            log_fn(f"[{_ts()}] WARNING: {format_family} normalizer needs column mapping ({exc}); falling back to generic ETL")
+        except Exception as exc:  # noqa: BLE001 — fail-soft: fall back to generic ETL
+            log_fn(f"[{_ts()}] WARNING: {format_family} normalizer failed ({exc}); falling back to generic ETL")
+
     if bundle is None:
         bundle = _canonicalize_input(input_file, params, log_fn)
 

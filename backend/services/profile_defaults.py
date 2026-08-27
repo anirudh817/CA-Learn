@@ -62,6 +62,33 @@ def resolve_profile_identity(format_family: str | None, assay_level: str | None)
             "format_family": family,
             "input_level": level,
         }
+    if family_key == "fragpipe":
+        return {
+            "pipeline_profile": "fragpipe",
+            "deliverable_prefix": "FRAGPIPE",
+            "display_prefix": "FragPipe",
+            "go_label": "FRAGPIPE",
+            "format_family": family,
+            "input_level": level,
+        }
+    if family_key in {"proteome discoverer", "proteomediscoverer", "pd"}:
+        return {
+            "pipeline_profile": "proteome_discoverer",
+            "deliverable_prefix": "PD",
+            "display_prefix": "Proteome Discoverer",
+            "go_label": "PD",
+            "format_family": family,
+            "input_level": level,
+        }
+    if family_key == "skyline":
+        return {
+            "pipeline_profile": "skyline",
+            "deliverable_prefix": "SKYLINE",
+            "display_prefix": "Skyline",
+            "go_label": "SKYLINE",
+            "format_family": family,
+            "input_level": level,
+        }
     return {
         "pipeline_profile": "generic_matrix",
         "deliverable_prefix": "PROTEOMICS",

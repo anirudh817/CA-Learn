@@ -1,0 +1,4 @@
+Protein	Gene	Control_1 Intensity	Control_2 Intensity	Disease_1 Intensity	Disease_2 Intensity	Control_1 MaxLFQ Intensity	Control_2 MaxLFQ Intensity	Disease_1 MaxLFQ Intensity	Disease_2 MaxLFQ Intensity
+P02649	APOE	999	999	999	999	1000	1100	4000	4200
+P10909	CLU	999	999	999	999	800	820	2400	2500
+P01024	C3	999	999	999	999	700	690	1900	1950

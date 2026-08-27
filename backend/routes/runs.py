@@ -120,6 +120,10 @@ def create_run(
     params_dict["file_path"] = dataset.stored_path
     params_dict["format_family"] = dataset.format_family
     params_dict["input_level"] = dataset.assay_level
+    # Carry a user-supplied manual column mapping (from the picker/mapping UI)
+    # into pipeline params so the vendor normalizer can honor it during ETL.
+    if _sniff.get("column_map"):
+        params_dict["column_map"] = _sniff["column_map"]
     if traits_dataset:
         params_dict["traits_file_path"] = traits_dataset.stored_path
     params_dict["app_version"] = APP_VERSION

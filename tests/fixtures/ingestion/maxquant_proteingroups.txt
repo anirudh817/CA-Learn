@@ -1,0 +1,4 @@
+Protein IDs	Majority protein IDs	Gene names	LFQ intensity Control_1	LFQ intensity Control_2	LFQ intensity Disease_1	LFQ intensity Disease_2
+P02649	P02649	APOE	1000	1100	4000	4200
+P10909	P10909	CLU	800	820	2400	2500
+P01024	P01024	C3	700	690	1900	1950

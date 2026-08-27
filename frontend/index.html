@@ -671,6 +671,25 @@ input[type=number].form-control{max-width:120px;}
         <div style="font-size:0.75rem;color:var(--text-muted)" id="fileStats">Loading...</div>
       </div>
     </div>
+
+    <!-- Manual input-format picker (authoritative; pre-filled by auto-detection) -->
+    <div class="card card-pad" id="formatPickerCard" style="margin-top:1rem;display:none">
+      <div style="font-weight:700;font-size:0.88rem">Input format &amp; assay type</div>
+      <div class="form-hint" style="margin-top:0.2rem">Pre-filled from auto-detection. Your selection is authoritative — change it to match your export tool.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:0.85rem">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label" for="p_format_family">Input format</label>
+          <select class="form-control" id="p_format_family" onchange="APP.onFormatPicked()"></select>
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label" for="p_assay_level">Assay level</label>
+          <select class="form-control" id="p_assay_level" onchange="APP.onFormatPicked()"></select>
+        </div>
+      </div>
+      <div id="formatMappingPanel" style="display:none;margin-top:1rem"></div>
+      <div id="formatPickerStatus" style="margin-top:0.6rem;font-size:0.78rem"></div>
+    </div>
+
     <div class="upload-preview" id="rawPreview"></div>
     <button class="btn btn-outline btn-sm" onclick="APP.openQcModal()" id="btnPreviewQc" style="display:none;margin-top:0.75rem"><i class="fa-solid fa-chart-bar"></i> Preview QC</button>
 
@@ -708,8 +727,9 @@ input[type=number].form-control{max-width:120px;}
       </div>
     </div>
 
-    <div style="margin-top:2rem;display:flex;justify-content:flex-end;gap:0.75rem">
+    <div style="margin-top:2rem;display:flex;justify-content:flex-end;gap:0.75rem;flex-wrap:wrap">
       <button class="btn btn-outline" onclick="APP.go('landing')"><i class="fa-solid fa-arrow-left"></i> Back</button>
+      <button class="btn btn-accent" id="quickRunBtn" onclick="APP.runWithRecommended()" disabled style="display:none"><i class="fa-solid fa-bolt"></i> Run with recommended settings</button>
       <button class="btn btn-primary" id="configBtn" onclick="APP.go('config')" disabled><i class="fa-solid fa-sliders"></i> Configure Pipeline</button>
     </div>
   </div>
@@ -720,10 +740,11 @@ input[type=number].form-control{max-width:120px;}
   <div class="container" style="padding-bottom:80px">
     <div class="page-title">Pipeline Configuration</div>
     <div class="page-sub">Adjust parameters or use detected defaults. Every unique parameter set creates a new versioned run.</div>
-    <div class="ai-banner" id="configDetectionHint" style="margin-top:0;margin-bottom:1.25rem">
+    <div class="ai-banner" id="configDetectionHint" style="margin-top:0;margin-bottom:1rem">
       <i class="fa-solid fa-sliders" style="color:var(--accent)"></i>
       <span>Upload a dataset to auto-apply format-aware defaults. If cohort membership cannot be determined from the file alone, attach a traits/clinical metadata file before running.</span>
     </div>
+    <div id="configSummaryChips" style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1.25rem"></div>
 
     <div class="form-group" style="max-width:420px">
       <label class="form-label">Analysis Name</label>
@@ -988,10 +1009,12 @@ input[type=number].form-control{max-width:120px;}
     <div class="page-title">Pipeline Executing</div>
     <div class="page-sub" id="analysisSubtitle">Starting analysis...</div>
 
+    <div class="pipeline-track" id="pipelineTrack"></div>
+
     <div class="analysis-step-list" id="analysisStepList"></div>
 
     <div style="display:flex;justify-content:space-between;font-size:0.78rem;color:var(--text-muted);margin-bottom:0.4rem">
-      <span>Overall progress</span><span id="pct">0%</span>
+      <span>Overall progress</span><span><span id="etaText" style="margin-right:0.75rem;color:var(--primary)"></span><span id="pct">0%</span></span>
     </div>
     <div class="progress-track" style="margin-bottom:1.75rem">
       <div class="progress-fill" id="progressBar" style="width:0%"></div>
